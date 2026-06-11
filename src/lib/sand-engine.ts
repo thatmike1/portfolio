@@ -18,38 +18,78 @@ export type Material =
     | typeof INK
     | typeof WATER;
 
-/** grain shades per material; tint index picks one so a grain keeps its color while falling */
-export const PALETTES: Record<number, string[]> = {
-    [WALL]: [
-        "oklch(0.2 0.01 357)",
-        "oklch(0.23 0.01 357)",
-        "oklch(0.21 0.012 357)",
-        "oklch(0.24 0.01 357)",
-    ],
-    [RASP]: [
-        "oklch(0.55 0.21 357)",
-        "oklch(0.6 0.21 357)",
-        "oklch(0.51 0.2 357)",
-        "oklch(0.65 0.19 357)",
-    ],
-    [AMBER]: [
-        "oklch(0.78 0.14 75)",
-        "oklch(0.74 0.14 70)",
-        "oklch(0.82 0.13 80)",
-        "oklch(0.76 0.15 72)",
-    ],
-    [INK]: [
-        "oklch(0.25 0.012 357)",
-        "oklch(0.3 0.012 357)",
-        "oklch(0.27 0.012 357)",
-        "oklch(0.33 0.01 357)",
-    ],
-    [WATER]: [
-        "oklch(0.62 0.13 250)",
-        "oklch(0.66 0.12 252)",
-        "oklch(0.6 0.14 248)",
-        "oklch(0.68 0.11 254)",
-    ],
+export type ThemeName = "light" | "dark";
+
+/**
+ * grain shades per material and theme; tint index picks one so a grain
+ * keeps its color while falling. dark shades run brighter because they
+ * double as light emitters for the glow pass.
+ */
+export const PALETTES: Record<ThemeName, Record<number, string[]>> = {
+    light: {
+        [WALL]: [
+            "oklch(0.2 0.01 357)",
+            "oklch(0.23 0.01 357)",
+            "oklch(0.21 0.012 357)",
+            "oklch(0.24 0.01 357)",
+        ],
+        [RASP]: [
+            "oklch(0.55 0.21 357)",
+            "oklch(0.6 0.21 357)",
+            "oklch(0.51 0.2 357)",
+            "oklch(0.65 0.19 357)",
+        ],
+        [AMBER]: [
+            "oklch(0.78 0.14 75)",
+            "oklch(0.74 0.14 70)",
+            "oklch(0.82 0.13 80)",
+            "oklch(0.76 0.15 72)",
+        ],
+        [INK]: [
+            "oklch(0.25 0.012 357)",
+            "oklch(0.3 0.012 357)",
+            "oklch(0.27 0.012 357)",
+            "oklch(0.33 0.01 357)",
+        ],
+        [WATER]: [
+            "oklch(0.62 0.13 250)",
+            "oklch(0.66 0.12 252)",
+            "oklch(0.6 0.14 248)",
+            "oklch(0.68 0.11 254)",
+        ],
+    },
+    dark: {
+        [WALL]: [
+            "oklch(0.52 0.015 357)",
+            "oklch(0.56 0.015 357)",
+            "oklch(0.49 0.018 357)",
+            "oklch(0.59 0.012 357)",
+        ],
+        [RASP]: [
+            "oklch(0.66 0.23 357)",
+            "oklch(0.71 0.21 357)",
+            "oklch(0.62 0.23 357)",
+            "oklch(0.75 0.19 357)",
+        ],
+        [AMBER]: [
+            "oklch(0.83 0.16 80)",
+            "oklch(0.79 0.16 75)",
+            "oklch(0.87 0.14 85)",
+            "oklch(0.81 0.17 78)",
+        ],
+        [INK]: [
+            "oklch(0.85 0.01 357)",
+            "oklch(0.88 0.01 357)",
+            "oklch(0.82 0.012 357)",
+            "oklch(0.9 0.008 357)",
+        ],
+        [WATER]: [
+            "oklch(0.71 0.14 245)",
+            "oklch(0.75 0.13 248)",
+            "oklch(0.68 0.15 242)",
+            "oklch(0.78 0.12 250)",
+        ],
+    },
 };
 
 const FALLERS = new Set<number>([RASP, AMBER, INK]);

@@ -2,7 +2,9 @@
 
 ## Theme
 
-Raspberry on white. A toy on a clean desk: pure white surface, one committed raspberry carrying the whole identity, candy-colored sand grains as the only imagery. Deliberately the opposite of the dark-terminal dev portfolio.
+Raspberry on white, with a night mode. Light: a toy on a clean desk, pure white surface, candy-colored sand grains as the only imagery, a pixel sun in the canvas sky. Dark ("lights off"): near-black, the same grains turned luminous with a blurred glow pass, stars and a pixel moon. The theme toggle is part of the toy: it swaps sun for moon inside the hero canvas.
+
+Raspberry is the accent, not a flood: links, grains, selection, small fills. The footer is an ink block, NOT a raspberry drench (tried it, Mike vetoed the wall of raspberry; the color works grainy, not flat).
 
 ## Color palette (OKLCH only)
 
@@ -12,11 +14,14 @@ Raspberry on white. A toy on a clean desk: pure white surface, one committed ras
 | `--surface` | `oklch(0.955 0.008 357)` | interlude bands, chip bar |
 | `--ink` | `oklch(0.18 0.015 357)` | body text, headings (≥13:1 on bg) |
 | `--muted` | `oklch(0.45 0.02 357)` | secondary text (≥7:1 on bg) |
-| `--rasp` | `oklch(0.55 0.21 357)` | brand fills: footer, selection, buttons. White text on it |
+| `--rasp` | `oklch(0.55 0.21 357)` | brand fills, selection. White text on it |
 | `--rasp-deep` | `oklch(0.49 0.2 357)` | link text on white (≥5:1) |
 | `--accent` | `oklch(0.42 0.15 265)` | indigo, rare: water chip, small details |
+| `--footer-bg` / `--footer-ink` | ink block / near-white | footer is dark in both themes |
 
-Strategy: **Committed.** Raspberry carries 30%+ of the surface (sand word in hero + drenched footer). No gradients anywhere.
+Dark theme overrides live under `:root[data-theme='dark']`: bg `oklch(0.13 0.01 357)`, ink flips near-white, `--rasp-deep` lightens to `oklch(0.74 0.17 357)` for contrast on dark. Theme is set pre-paint by an inline head script (localStorage `theme`, falls back to `prefers-color-scheme`); `<html>` needs `suppressHydrationWarning`.
+
+Strategy: **Committed via the sand.** Raspberry carries identity through the hero word/dunes and links. No gradients anywhere. No flat raspberry surfaces.
 
 Canvas sand palettes (grain shades, oklch strings fed to canvas):
 - raspberry sand: L 0.54–0.66, C ~0.21, H 357

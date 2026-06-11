@@ -8,6 +8,9 @@ const TITLE = "mike pšenčík · i make stuff";
 const DESCRIPTION =
     "frontend dev in czechia. falling-sand toys, claude code skills, a git time-tracker, and landing pages with personality. sometimes it works, sometimes it doesn't.";
 
+// runs before first paint so the saved theme never flashes the wrong colors
+const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme');if(t!=='dark'&&t!=='light'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme='light'}})()`;
+
 export const Route = createRootRoute({
     head: () => ({
         meta: [
@@ -15,7 +18,6 @@ export const Route = createRootRoute({
             { name: "viewport", content: "width=device-width, initial-scale=1" },
             { title: TITLE },
             { name: "description", content: DESCRIPTION },
-            { name: "theme-color", content: "#c2185b" },
             { property: "og:title", content: TITLE },
             { property: "og:description", content: DESCRIPTION },
             { property: "og:type", content: "website" },
@@ -25,14 +27,18 @@ export const Route = createRootRoute({
             { rel: "stylesheet", href: appCss },
             { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
         ],
+        scripts: [{ children: THEME_INIT }],
     }),
     shellComponent: RootDocument,
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
     return (
-        <html lang="en">
+        <html lang="en" suppressHydrationWarning>
             <head>
+                {/* two media-scoped theme-colors; HeadContent dedupes by name, so they live here */}
+                <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+                <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1c1418" />
                 <HeadContent />
             </head>
             <body>

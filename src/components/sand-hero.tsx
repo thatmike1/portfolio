@@ -9,67 +9,154 @@ import {
     WATER,
     stampWord,
 } from "../lib/sand-engine";
+import type { ThemeName } from "../lib/sand-engine";
 
 const CELL = 5; // css pixels per grain
 const FONT_STACK = "'Sora Variable', system-ui, sans-serif";
 
-const TOOLS: Array<{ id: number; label: string; swatch?: string }> = [
-    { id: RASP, label: "raspberry", swatch: PALETTES[RASP][0] },
-    { id: AMBER, label: "amber", swatch: PALETTES[AMBER][0] },
-    { id: WATER, label: "water", swatch: PALETTES[WATER][0] },
-    { id: WALL, label: "wall", swatch: PALETTES[WALL][0] },
+const TOOL_DEFS: Array<{ id: number; label: string }> = [
+    { id: RASP, label: "raspberry" },
+    { id: AMBER, label: "amber" },
+    { id: WATER, label: "water" },
+    { id: WALL, label: "wall" },
     { id: EMPTY, label: "erase" },
 ];
+
+/** pixel-art sky bodies; 1 = body, 2 = detail (ray / crater) */
+const SUN = [
+    "....2....",
+    ".2.....2.",
+    "...111...",
+    "..11111..",
+    "2.11111.2",
+    "..11111..",
+    "...111...",
+    ".2.....2.",
+    "....2....",
+];
+const MOON = [
+    "...1111..",
+    "..11111..",
+    ".1112....",
+    ".111.....",
+    ".1121....",
+    ".111.....",
+    ".1111....",
+    "..11121..",
+    "...1111..",
+];
+const SKY_COLORS: Record<ThemeName, Record<string, string>> = {
+    light: { "1": "oklch(0.82 0.15 80)", "2": "oklch(0.86 0.13 85)" },
+    dark: { "1": "oklch(0.92 0.02 90)", "2": "oklch(0.78 0.03 90)" },
+};
+
+type Star = { x: number; y: number; base: number; phase: number };
 
 /**
  * the hero toy: "mike" written in sand, frozen until the visitor touches it.
  * the engine is imperative; react only owns the chrome around it.
+ * dark mode adds stars, a pixel moon, and a blurred glow pass of the grains.
  */
 export function SandHero() {
     const wrapRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const glowRef = useRef<HTMLCanvasElement>(null);
     const engineRef = useRef<SandEngine | null>(null);
+    const starsRef = useRef<Array<Star>>([]);
     const rafRef = useRef(0);
+    const frameRef = useRef(0);
     const awakeRef = useRef(false);
     const visibleRef = useRef(true);
     const toolRef = useRef<number>(RASP);
     const reducedRef = useRef(false);
+    const themeRef = useRef<ThemeName>("light");
+    const renderRef = useRef<() => void>(() => undefined);
 
     const [awake, setAwake] = useState(false);
     const [tool, setTool] = useState<number>(RASP);
+    const [theme, setTheme] = useState<ThemeName>("light");
     toolRef.current = tool;
 
     useEffect(() => {
         const wrap = wrapRef.current;
         const canvas = canvasRef.current;
-        if (!wrap || !canvas) return;
+        const glow = glowRef.current;
+        if (!wrap || !canvas || !glow) return;
         const ctx = canvas.getContext("2d");
-        if (!ctx) return;
+        const glowCtx = glow.getContext("2d");
+        if (!ctx || !glowCtx) return;
+
+        // the inline head script set this before first paint
+        const initial = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+        themeRef.current = initial;
+        setTheme(initial);
 
         reducedRef.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
         const grain = Math.max(2, Math.round(CELL * dpr));
 
+        const drawSky = (mode: ThemeName) => {
+            const engine = engineRef.current;
+            if (!engine) return;
+            const { cols, rows } = engine;
+            if (mode === "dark") {
+                // stars twinkle only while the simulation is running
+                for (const s of starsRef.current) {
+                    const a = awakeRef.current
+                        ? s.base + Math.sin(frameRef.current * 0.05 + s.phase) * 0.25
+                        : s.base;
+                    ctx.fillStyle = `oklch(0.92 0.015 90 / ${Math.max(0.15, Math.min(1, a))})`;
+                    ctx.fillRect(s.x * grain, s.y * grain, grain, grain);
+                }
+            }
+            const map = mode === "dark" ? MOON : SUN;
+            const colors = SKY_COLORS[mode];
+            const px = 2; // grains per pixel-art pixel
+            const w = map[0].length * px;
+            const bx = Math.max(2, Math.min(Math.round(cols * 0.8), cols - w - 2));
+            const by = Math.max(2, Math.round(rows * 0.1));
+            for (let my = 0; my < map.length; my++) {
+                for (let mx = 0; mx < map[my].length; mx++) {
+                    const ch = map[my][mx];
+                    if (ch === ".") continue;
+                    ctx.fillStyle = colors[ch];
+                    ctx.fillRect(
+                        (bx + mx * px) * grain,
+                        (by + my * px) * grain,
+                        px * grain,
+                        px * grain
+                    );
+                }
+            }
+        };
+
         const render = () => {
             const engine = engineRef.current;
             if (!engine) return;
+            const mode = themeRef.current;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawSky(mode);
             const { cols, rows, cells, tint } = engine;
+            const palette = PALETTES[mode];
             for (let y = 0; y < rows; y++) {
                 const row = y * cols;
                 for (let x = 0; x < cols; x++) {
                     const m = cells[row + x];
                     if (m === EMPTY) continue;
-                    const shades = PALETTES[m];
-                    ctx.fillStyle = shades[tint[row + x] & 3];
+                    ctx.fillStyle = palette[m][tint[row + x] & 3];
                     ctx.fillRect(x * grain, y * grain, grain, grain);
                 }
             }
+            // glow pass: the blurred copy is the lighting, css does the blur on gpu
+            glowCtx.clearRect(0, 0, glow.width, glow.height);
+            if (mode === "dark") glowCtx.drawImage(canvas, 0, 0);
         };
+        renderRef.current = render;
 
         const loop = () => {
             const engine = engineRef.current;
             if (!engine || !awakeRef.current || !visibleRef.current) return;
+            frameRef.current++;
             engine.step();
             render();
             rafRef.current = requestAnimationFrame(loop);
@@ -88,8 +175,17 @@ export function SandHero() {
             const rows = Math.max(30, Math.floor((rect.height * dpr) / grain));
             canvas.width = cols * grain;
             canvas.height = rows * grain;
+            glow.width = cols * grain;
+            glow.height = rows * grain;
             const engine = new SandEngine(cols, rows);
             engineRef.current = engine;
+            const starCount = Math.min(90, Math.floor((cols * rows) / 350));
+            starsRef.current = Array.from({ length: starCount }, () => ({
+                x: Math.floor(Math.random() * cols),
+                y: Math.floor(Math.random() * rows * 0.85),
+                base: 0.3 + Math.random() * 0.55,
+                phase: Math.random() * Math.PI * 2,
+            }));
             // the variable font may still be loading on first paint; stamp after it settles
             document.fonts.ready
                 .catch(() => undefined)
@@ -167,19 +263,41 @@ export function SandHero() {
         };
     }, []);
 
+    const flipTheme = () => {
+        const next: ThemeName = themeRef.current === "dark" ? "light" : "dark";
+        themeRef.current = next;
+        setTheme(next);
+        document.documentElement.dataset.theme = next;
+        try {
+            localStorage.setItem("theme", next);
+        } catch {
+            // private mode etc., the toggle still works for this visit
+        }
+        renderRef.current();
+    };
+
     return (
         <div className="sand-hero" ref={wrapRef}>
+            <canvas ref={glowRef} className="sand-glow" aria-hidden="true" />
             <canvas
                 ref={canvasRef}
                 className="sand-canvas"
                 role="img"
                 aria-label="a falling-sand toy with the word mike written in raspberry sand"
             />
+            <button
+                type="button"
+                className="theme-toggle"
+                onClick={flipTheme}
+                aria-label={theme === "dark" ? "switch to light mode" : "switch to dark mode"}
+            >
+                {theme === "dark" ? "lights on" : "lights off"}
+            </button>
             <p className="sand-hint" aria-hidden="true" data-awake={awake}>
                 touch the sand
             </p>
             <div className="sand-tools" role="toolbar" aria-label="sand materials">
-                {TOOLS.map((t) => (
+                {TOOL_DEFS.map((t) => (
                     <button
                         key={t.label}
                         type="button"
@@ -187,10 +305,13 @@ export function SandHero() {
                         aria-pressed={tool === t.id}
                         onClick={() => setTool(t.id)}
                     >
-                        {t.swatch ? (
-                            <span className="sand-swatch" style={{ background: t.swatch }} />
-                        ) : (
+                        {t.id === EMPTY ? (
                             <span className="sand-swatch sand-swatch-erase" />
+                        ) : (
+                            <span
+                                className="sand-swatch"
+                                style={{ background: PALETTES[theme][t.id][0] }}
+                            />
                         )}
                         {t.label}
                     </button>
