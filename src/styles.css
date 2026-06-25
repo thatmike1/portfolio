@@ -335,6 +335,52 @@ a:hover {
   max-width: 62ch;
 }
 
+.project-name--static {
+  cursor: default;
+}
+
+.project-note {
+  margin-top: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.project-preview {
+  grid-column: 1 / -1;
+  margin: clamp(1.75rem, 3.5vw, 2.75rem) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: clamp(1rem, 2.5vw, 2rem);
+}
+
+.preview-shot {
+  height: auto;
+  max-width: 100%;
+  border-radius: 16px;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+}
+
+.preview-shot--wide {
+  flex: 1 1 30rem;
+  min-width: 0;
+  box-shadow: 0 26px 60px -28px oklch(0.49 0.2 357 / 0.42);
+}
+
+.preview-phones {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: flex-end;
+  gap: clamp(0.75rem, 1.5vw, 1.1rem);
+}
+
+.preview-shot--phone {
+  width: clamp(116px, 13vw, 184px);
+  box-shadow: 0 20px 46px -24px oklch(0.49 0.2 357 / 0.36);
+}
+
 .project-live {
   margin-top: 1rem;
   font-weight: 600;

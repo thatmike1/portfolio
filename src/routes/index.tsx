@@ -4,16 +4,44 @@ import { SandHero } from "../components/sand-hero";
 
 export const Route = createFileRoute("/")({ component: Home });
 
+type Preview = { src: string; alt: string; wide?: boolean };
+
 type Project = {
     name: string;
     tagline: string;
     body: ReactNode;
     stack: string;
-    code: string;
+    code?: string;
+    note?: string;
+    preview?: Array<Preview>;
     live?: { href: string; label: string };
 };
 
 const PROJECTS: Array<Project> = [
+    {
+        name: "ssscribe",
+        tagline: "speak or paste anywhere, it's text everywhere",
+        body: (
+            <>
+                talk to my phone, paste from my laptop, and it all lands as text in one private feed
+                that syncs to every device, copy-ready. then run ai on any capture: tldr it, clean
+                up the transcription, pull out the todos, whatever. self-hosted on my own box,
+                pocketbase doing realtime and storage, installable as a pwa. the snake from the
+                landing pages survives here as a waveform that threads the ai outputs together.
+            </>
+        ),
+        stack: "react 19 · tanstack · pocketbase · pwa · deepgram",
+        note: "private during the build · public at launch",
+        preview: [
+            {
+                src: "/ssscribe/desktop.webp",
+                alt: "ssscribe desktop — watch the stream",
+                wide: true,
+            },
+            { src: "/ssscribe/stream.webp", alt: "ssscribe stream feed on phone" },
+            { src: "/ssscribe/capture.webp", alt: "ssscribe capture screen on phone" },
+        ],
+    },
     {
         name: "powder-lab",
         tagline: "a falling-sand sandbox",
@@ -102,14 +130,21 @@ function Home() {
                         {PROJECTS.map((p) => (
                             <li className="project" key={p.name}>
                                 <div className="project-head">
-                                    <a className="project-name" href={p.code}>
-                                        {p.name}
-                                        <span className="arrow" aria-hidden="true">
-                                            {"↗"}
+                                    {p.code ? (
+                                        <a className="project-name" href={p.code}>
+                                            {p.name}
+                                            <span className="arrow" aria-hidden="true">
+                                                {"↗"}
+                                            </span>
+                                        </a>
+                                    ) : (
+                                        <span className="project-name project-name--static">
+                                            {p.name}
                                         </span>
-                                    </a>
+                                    )}
                                     <p className="project-tagline">{p.tagline}</p>
                                     <p className="project-stack">{p.stack}</p>
+                                    {p.note ? <p className="project-note">{p.note}</p> : null}
                                 </div>
                                 <div className="project-body">
                                     <p>{p.body}</p>
@@ -119,6 +154,33 @@ function Home() {
                                         </p>
                                     ) : null}
                                 </div>
+                                {p.preview ? (
+                                    <figure className="project-preview">
+                                        <img
+                                            className="preview-shot preview-shot--wide"
+                                            src={p.preview.find((s) => s.wide)?.src}
+                                            alt={p.preview.find((s) => s.wide)?.alt}
+                                            loading="lazy"
+                                            width={1392}
+                                            height={868}
+                                        />
+                                        <div className="preview-phones">
+                                            {p.preview
+                                                .filter((s) => !s.wide)
+                                                .map((shot) => (
+                                                    <img
+                                                        key={shot.src}
+                                                        className="preview-shot preview-shot--phone"
+                                                        src={shot.src}
+                                                        alt={shot.alt}
+                                                        loading="lazy"
+                                                        width={392}
+                                                        height={848}
+                                                    />
+                                                ))}
+                                        </div>
+                                    </figure>
+                                ) : null}
                             </li>
                         ))}
                     </ul>
