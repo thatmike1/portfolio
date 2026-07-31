@@ -42,7 +42,7 @@ Canvas sand palettes (grain shades, oklch strings fed to canvas):
 - **sand-hero**: full-bleed canvas band (`clamp(380px, 62vh, 640px)`), falling-sand engine, "mike" stamped in raspberry+amber sand, frozen until first pointer move, then crumbles. Material chips (raspberry / amber / water / wall / erase) + reset, solid white chip bar with 1px ink border, bottom-left. Mono hint "touch the sand" until woken.
 - **project rows**: NOT cards. Full-width rows separated by 1px hairlines, asymmetric 2fr/3fr grid: big lowercase name link + mono stack left, specific prose right. Stacks to one column under 720px.
 - **interlude band**: surface-tinted full-width strip, one centered sentence about the day job.
-- **footer**: raspberry-drenched, white text, big "say hi", direct links, colophon in mono.
+- **footer**: ink block, near-white text, big "say hi", direct links, colophon in mono. Dark in both themes.
 
 ## Layout
 
