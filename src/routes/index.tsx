@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { SandHero } from "../components/sand-hero";
 
 export const Route = createFileRoute("/")({ component: Home });
@@ -17,6 +17,8 @@ type Preview = {
 type ProjectPreview = {
     layout: "wide-phones" | "wide-panels" | "single";
     caption?: string;
+    /** oklch tint for this project's screenshot shadows; falls back to raspberry in css */
+    glow?: string;
     wide: Preview;
     supporting?: Array<Preview>;
 };
@@ -50,6 +52,7 @@ const PROJECTS: Array<Project> = [
         preview: {
             layout: "wide-phones",
             caption: "design mockups · the app itself is mid-build",
+            glow: "oklch(0.62 0.16 60)",
             wide: {
                 src: "/ssscribe/desktop.webp",
                 alt: "ssscribe desktop — watch the stream",
@@ -93,6 +96,7 @@ const PROJECTS: Array<Project> = [
             layout: "wide-panels",
             caption:
                 "the live landing page — it runs the real detection loop on you while you read it",
+            glow: "oklch(0.6 0.15 230)",
             wide: {
                 src: "/on-task/hero.webp",
                 alt: "the on-task landing page: it knows what you said you'd do, and the ink creature is asleep next to it",
@@ -136,6 +140,7 @@ const PROJECTS: Array<Project> = [
             layout: "single",
             caption:
                 "the counters on the page are the benchmark's own code — a guarded build step keeps them from drifting",
+            glow: "oklch(0.45 0.13 30)",
             wide: {
                 src: "/cc-bench/instrument.webp",
                 darkSrc: "/cc-bench/instrument-dark.webp",
@@ -248,8 +253,21 @@ function PreviewFigure({ preview }: { preview: ProjectPreview }) {
     const leadVariant = preview.layout === "single" ? "single" : "wide";
     const supportVariant = preview.layout === "wide-panels" ? "panel" : "phone";
 
+    // react's CSSProperties has no index signature for custom properties, so the cast is
+    // the only way to hand --preview-glow to the stylesheet. a single layout is capped to
+    // its own pixels here rather than on the frame, so the caption centres with the image.
+    const figureStyle = {
+        ...(preview.glow ? { "--preview-glow": preview.glow } : null),
+        ...(preview.layout === "single"
+            ? { maxWidth: `min(100%, ${preview.wide.width}px)` }
+            : null),
+    } as CSSProperties;
+
     return (
-        <figure className={`project-preview project-preview--${preview.layout}`}>
+        <figure
+            className={`project-preview project-preview--${preview.layout}`}
+            style={figureStyle}
+        >
             <PreviewShot shot={preview.wide} variant={leadVariant} />
             {preview.supporting?.length ? (
                 <div className={`preview-supporting preview-supporting--${supportVariant}s`}>
