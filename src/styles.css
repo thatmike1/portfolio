@@ -349,36 +349,79 @@ a:hover {
 .project-preview {
   grid-column: 1 / -1;
   margin: clamp(1.75rem, 3.5vw, 2.75rem) 0 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: clamp(1rem, 2.5vw, 2rem);
+  display: grid;
+  gap: clamp(1rem, 2.2vw, 1.6rem);
 }
 
+/* the anchor is the click-to-enlarge target; block so it adds no inline whitespace */
+.preview-frame {
+  display: block;
+  text-decoration: none;
+}
+
+.preview-frame:focus-visible {
+  border-radius: 18px;
+}
+
+/* this framing is the unifier across three very different screenshot palettes */
 .preview-shot {
+  display: block;
+  width: 100%;
   height: auto;
-  max-width: 100%;
   border-radius: 16px;
   border: 1px solid var(--hairline);
   background: var(--surface);
 }
 
-.preview-shot--wide {
-  flex: 1 1 30rem;
-  min-width: 0;
+.preview-shot--wide,
+.preview-shot--single,
+.preview-shot--panel {
   box-shadow: 0 26px 60px -28px oklch(0.49 0.2 357 / 0.42);
 }
 
-.preview-phones {
-  flex: 1 1 auto;
-  display: flex;
-  align-items: flex-end;
+.preview-shot--phone {
+  box-shadow: 0 20px 46px -24px oklch(0.49 0.2 357 / 0.36);
+}
+
+.preview-supporting {
+  display: grid;
   gap: clamp(0.75rem, 1.5vw, 1.1rem);
 }
 
-.preview-shot--phone {
-  width: clamp(116px, 13vw, 184px);
-  box-shadow: 0 20px 46px -24px oklch(0.49 0.2 357 / 0.36);
+/* phones stay deliberately small — the wide shot above them is the dominant element */
+.preview-supporting--phones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.preview-frame--phone {
+  width: clamp(140px, 16vw, 190px);
+}
+
+.preview-supporting--panels {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.preview-caption {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.8;
+  color: var(--muted);
+  max-width: 62ch;
+}
+
+/* theme-paired shots: both render, css picks one, so the swap needs no javascript */
+.preview-frame--dark {
+  display: none;
+}
+
+:root[data-theme='dark'] .preview-frame--light {
+  display: none;
+}
+
+:root[data-theme='dark'] .preview-frame--dark {
+  display: block;
 }
 
 .project-live {
@@ -483,6 +526,24 @@ a:hover {
   .project {
     grid-template-columns: 1fr;
     gap: 1.1rem;
+  }
+
+  /* phones first: the desktop shot is illegible this narrow, so tap it to enlarge instead */
+  .project-preview--wide-phones .preview-supporting {
+    order: -1;
+  }
+
+  .preview-supporting--phones {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .preview-frame--phone {
+    width: auto;
+  }
+
+  .preview-supporting--panels {
+    grid-template-columns: 1fr;
   }
 
   .sand-tools {

@@ -4,7 +4,22 @@ import { SandHero } from "../components/sand-hero";
 
 export const Route = createFileRoute("/")({ component: Home });
 
-type Preview = { src: string; alt: string; wide?: boolean };
+type Preview = {
+    src: string;
+    alt: string;
+    /** the asset's real pixel size — declared on the img so nothing shifts or upscales */
+    width: number;
+    height: number;
+    /** theme-swapped variant of the same shot, same dimensions */
+    darkSrc?: string;
+};
+
+type ProjectPreview = {
+    layout: "wide-phones" | "wide-panels" | "single";
+    caption?: string;
+    wide: Preview;
+    supporting?: Array<Preview>;
+};
 
 type Project = {
     name: string;
@@ -13,7 +28,7 @@ type Project = {
     stack: string;
     code?: string;
     note?: string;
-    preview?: Array<Preview>;
+    preview?: ProjectPreview;
     live?: { href: string; label: string };
 };
 
@@ -32,15 +47,103 @@ const PROJECTS: Array<Project> = [
         ),
         stack: "react 19 · tanstack · pocketbase · pwa · deepgram",
         note: "private during the build · public at launch",
-        preview: [
-            {
+        preview: {
+            layout: "wide-phones",
+            caption: "design mockups · the app itself is mid-build",
+            wide: {
                 src: "/ssscribe/desktop.webp",
                 alt: "ssscribe desktop — watch the stream",
-                wide: true,
+                width: 1392,
+                height: 868,
             },
-            { src: "/ssscribe/stream.webp", alt: "ssscribe stream feed on phone" },
-            { src: "/ssscribe/capture.webp", alt: "ssscribe capture screen on phone" },
-        ],
+            supporting: [
+                {
+                    src: "/ssscribe/stream.webp",
+                    alt: "ssscribe stream feed on phone",
+                    width: 392,
+                    height: 848,
+                },
+                {
+                    src: "/ssscribe/capture.webp",
+                    alt: "ssscribe capture screen on phone",
+                    width: 392,
+                    height: 848,
+                },
+            ],
+        },
+    },
+    {
+        name: "on-task",
+        tagline: "a creature that knows when i've drifted",
+        body: (
+            <>
+                i declare what i'm working on and a little ink creature in the corner of my screen
+                watches whether i actually do it. regexes over activitywatch handle the obvious
+                calls; when it genuinely can't tell, it screenshots the screen and asks sonnet —
+                announcing itself first, because a thing that watches you should say when it's
+                looking. drift and it gets agitated. ignore it and it deflates rather than nags. the
+                landing page runs the same loop on you while you read it — tab away and it'll
+                notice.
+            </>
+        ),
+        stack: "python · activitywatch · webgl2 · gtk3 · systemd · claude sonnet",
+        note: "private repo · the site is public",
+        live: { href: "https://ontask.ssscribe.app/", label: "it'll watch you read it" },
+        preview: {
+            layout: "wide-panels",
+            caption:
+                "the live landing page — it runs the real detection loop on you while you read it",
+            wide: {
+                src: "/on-task/hero.webp",
+                alt: "the on-task landing page: it knows what you said you'd do, and the ink creature is asleep next to it",
+                width: 1440,
+                height: 790,
+            },
+            supporting: [
+                {
+                    src: "/on-task/log-nudge.webp",
+                    alt: "the session log the daemon writes, with a nudge card saying it won't repeat itself",
+                    width: 1440,
+                    height: 754,
+                },
+                {
+                    src: "/on-task/ladder.webp",
+                    alt: "the precedence ladder of watcher states, from no-task and on-task down to nudge",
+                    width: 1440,
+                    height: 838,
+                },
+            ],
+        },
+    },
+    {
+        name: "cc-bench",
+        tagline: "does your CLAUDE.md actually do anything?",
+        body: (
+            <>
+                everyone writes a CLAUDE.md full of "be concise" and "don't hedge", and nobody knows
+                if any of it lands. this swaps the config, runs the same 48 prompts against a
+                deliberately broken little repo, and counts what changed — words, hedges, lists,
+                tool calls — instead of asking a model whether the answer got better. the first
+                version couldn't produce a negative result, so i killed it and wrote down why. the
+                landing page runs the real counters on whatever you paste in.
+            </>
+        ),
+        stack: "node 22 · zero deps · bwrap sandbox · paired stats · 160 tests",
+        note: "instrument built and tested · no findings yet",
+        code: "https://github.com/thatmike1/cc-bench",
+        live: { href: "https://thatmike1.github.io/cc-bench/", label: "paste your config in" },
+        preview: {
+            layout: "single",
+            caption:
+                "the counters on the page are the benchmark's own code — a guarded build step keeps them from drifting",
+            wide: {
+                src: "/cc-bench/instrument.webp",
+                darkSrc: "/cc-bench/instrument-dark.webp",
+                alt: "the cc-bench fingerprint tool comparing a terse answer against a padded one, counter by counter",
+                width: 916,
+                height: 1097,
+            },
+        },
     },
     {
         name: "powder-lab",
@@ -79,7 +182,8 @@ const PROJECTS: Array<Project> = [
                 an activitywatch watcher that logs which repo and branch i'm actually working in, no
                 matter the editor or terminal. three layers of detection (filesystem events, window
                 cross-checks, git status polling) so long uncommitted thinking still counts. it
-                stores repo and branch, never file paths.
+                stores repo and branch, never file paths. on-task further up this page reads the
+                same activitywatch buckets, so the creature knows which repo i've wandered out of.
             </>
         ),
         stack: "python · watchdog · activitywatch",
@@ -100,6 +204,66 @@ const PROJECTS: Array<Project> = [
         code: "https://github.com/thatmike1/ssscribe-landing-pages",
     },
 ];
+
+type ShotVariant = "wide" | "single" | "panel" | "phone";
+
+/**
+ * one framed screenshot, linked to its own full-size asset so enlarging needs no javascript.
+ * a shot with a darkSrc renders both variants and lets css pick — the dimensions match, so
+ * the hidden one costs no layout.
+ */
+function PreviewShot({ shot, variant }: { shot: Preview; variant: ShotVariant }) {
+    const frame = (src: string, theme?: "light" | "dark") => (
+        <a
+            key={src}
+            className={`preview-frame preview-frame--${variant}${theme ? ` preview-frame--${theme}` : ""}`}
+            href={src}
+            target="_blank"
+            rel="noopener"
+            // never upscale a screenshot past its own pixels; its text stops being readable
+            style={{ maxWidth: `min(100%, ${shot.width}px)` }}
+        >
+            <img
+                className={`preview-shot preview-shot--${variant}`}
+                src={src}
+                alt={shot.alt}
+                loading="lazy"
+                width={shot.width}
+                height={shot.height}
+            />
+        </a>
+    );
+
+    if (!shot.darkSrc) return frame(shot.src);
+
+    return (
+        <>
+            {frame(shot.src, "light")}
+            {frame(shot.darkSrc, "dark")}
+        </>
+    );
+}
+
+function PreviewFigure({ preview }: { preview: ProjectPreview }) {
+    const leadVariant = preview.layout === "single" ? "single" : "wide";
+    const supportVariant = preview.layout === "wide-panels" ? "panel" : "phone";
+
+    return (
+        <figure className={`project-preview project-preview--${preview.layout}`}>
+            <PreviewShot shot={preview.wide} variant={leadVariant} />
+            {preview.supporting?.length ? (
+                <div className={`preview-supporting preview-supporting--${supportVariant}s`}>
+                    {preview.supporting.map((shot) => (
+                        <PreviewShot key={shot.src} shot={shot} variant={supportVariant} />
+                    ))}
+                </div>
+            ) : null}
+            {preview.caption ? (
+                <figcaption className="preview-caption">{preview.caption}</figcaption>
+            ) : null}
+        </figure>
+    );
+}
 
 function Home() {
     return (
@@ -154,33 +318,7 @@ function Home() {
                                         </p>
                                     ) : null}
                                 </div>
-                                {p.preview ? (
-                                    <figure className="project-preview">
-                                        <img
-                                            className="preview-shot preview-shot--wide"
-                                            src={p.preview.find((s) => s.wide)?.src}
-                                            alt={p.preview.find((s) => s.wide)?.alt}
-                                            loading="lazy"
-                                            width={1392}
-                                            height={868}
-                                        />
-                                        <div className="preview-phones">
-                                            {p.preview
-                                                .filter((s) => !s.wide)
-                                                .map((shot) => (
-                                                    <img
-                                                        key={shot.src}
-                                                        className="preview-shot preview-shot--phone"
-                                                        src={shot.src}
-                                                        alt={shot.alt}
-                                                        loading="lazy"
-                                                        width={392}
-                                                        height={848}
-                                                    />
-                                                ))}
-                                        </div>
-                                    </figure>
-                                ) : null}
+                                {p.preview ? <PreviewFigure preview={p.preview} /> : null}
                             </li>
                         ))}
                     </ul>

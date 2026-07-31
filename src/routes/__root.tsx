@@ -21,7 +21,12 @@ export const Route = createRootRoute({
             { property: "og:title", content: TITLE },
             { property: "og:description", content: DESCRIPTION },
             { property: "og:type", content: "website" },
-            { name: "twitter:card", content: "summary" },
+            // must become an absolute url once the production domain is settled — most
+            // scrapers will not resolve a relative og:image
+            { property: "og:image", content: "/og.png" },
+            { property: "og:image:width", content: "1200" },
+            { property: "og:image:height", content: "630" },
+            { name: "twitter:card", content: "summary_large_image" },
         ],
         links: [
             { rel: "stylesheet", href: appCss },
