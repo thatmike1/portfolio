@@ -61,12 +61,6 @@ const PROJECTS: Array<Project> = [
             },
             supporting: [
                 {
-                    src: "/ssscribe/stream.webp",
-                    alt: "ssscribe stream feed on phone",
-                    width: 392,
-                    height: 848,
-                },
-                {
                     src: "/ssscribe/capture.webp",
                     alt: "ssscribe capture screen on phone",
                     width: 392,

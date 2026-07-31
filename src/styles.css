@@ -349,11 +349,19 @@ a:hover {
 .project-preview {
   /* each project's shots glow in their own light; raspberry is the default */
   --preview-glow: oklch(0.49 0.2 357);
+  --glow-contact: color-mix(in oklch, var(--preview-glow) 52%, transparent);
+  --glow-ambient: color-mix(in oklch, var(--preview-glow) 42%, transparent);
 
   grid-column: 1 / -1;
   margin: clamp(1.75rem, 3.5vw, 2.75rem) 0 0;
   display: grid;
   gap: clamp(1rem, 2.2vw, 1.6rem);
+}
+
+/* dark swallows shadows, so the glow has to push harder to read as light */
+:root[data-theme='dark'] .project-preview {
+  --glow-contact: color-mix(in oklch, var(--preview-glow) 72%, transparent);
+  --glow-ambient: color-mix(in oklch, var(--preview-glow) 58%, transparent);
 }
 
 /* capped to the shot's own pixels by an inline max-width, then centred as one block.
@@ -386,11 +394,15 @@ a:hover {
 .preview-shot--wide,
 .preview-shot--single,
 .preview-shot--panel {
-  box-shadow: 0 26px 60px -28px color-mix(in oklch, var(--preview-glow) 42%, transparent);
+  box-shadow:
+    0 26px 60px -28px var(--glow-contact),
+    0 18px 110px -22px var(--glow-ambient);
 }
 
 .preview-shot--phone {
-  box-shadow: 0 20px 46px -24px color-mix(in oklch, var(--preview-glow) 36%, transparent);
+  box-shadow:
+    0 20px 46px -24px var(--glow-contact),
+    0 12px 80px -18px var(--glow-ambient);
 }
 
 .preview-supporting {
@@ -411,12 +423,14 @@ a:hover {
   width: var(--phone-width);
 }
 
-/* ride the phones up over the wide shot's bottom-right corner, which is empty wash */
+/* the phone rides the wide shot's bottom-right corner: two thirds on the image,
+   a short hang below, inset from the edge so the overlap reads deliberate */
 .project-preview--wide-phones .preview-supporting--phones {
   position: relative;
   z-index: 1;
   justify-content: flex-end;
-  margin-top: calc(var(--phone-width) * -0.85);
+  margin-top: calc(var(--phone-width) * -1.5);
+  padding-right: clamp(1.5rem, 4vw, 3.5rem);
 }
 
 .preview-supporting--panels {
@@ -553,16 +567,15 @@ a:hover {
     order: -1;
   }
 
-  /* no overlap here — the phones sit above the wide shot, not on it */
+  /* no overlap here — the phone sits above the wide shot, not on it */
   .project-preview--wide-phones .preview-supporting--phones {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    justify-content: normal;
+    justify-content: flex-start;
     margin-top: 0;
+    padding-right: 0;
   }
 
   .preview-frame--phone {
-    width: auto;
+    width: clamp(150px, 45vw, 200px);
   }
 
   .preview-supporting--panels {
