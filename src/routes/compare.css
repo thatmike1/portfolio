@@ -1,0 +1,62 @@
+/* review-only chrome for /compare. delete with compare.tsx once a version wins. */
+
+.cmp-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.cmp-bar-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  padding-block: 0.85rem;
+}
+
+.cmp-title {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.cmp-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.cmp-tab {
+  padding: 0.4rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--hairline);
+  cursor: pointer;
+  transition: color 180ms var(--ease-out), border-color 180ms var(--ease-out);
+}
+
+.cmp-tab:hover {
+  color: var(--ink);
+}
+
+.cmp-tab[aria-selected='true'] {
+  color: var(--rasp-deep);
+  border-color: var(--rasp);
+}
+
+.cmp-blurb {
+  padding-top: clamp(1.5rem, 4vw, 2.5rem);
+  max-width: 62ch;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cmp-tab {
+    transition: none;
+  }
+}

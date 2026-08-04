@@ -1,0 +1,205 @@
+/*
+ * variant d — "the handover".
+ *
+ * the mirror of the site's .project rows on purpose: there the name sits left
+ * and the prose right, here the *evidence* holds the structural position the
+ * name usually holds. separation is whitespace, not hairlines — hairline rows
+ * are the project list's language and variant a's language.
+ */
+
+.own {
+  padding-block: clamp(3.5rem, 9vw, 6.5rem);
+}
+
+.own h2 {
+  font-size: clamp(1.9rem, 4.5vw, 3.1rem);
+}
+
+.own-sort {
+  margin-top: 0.9rem;
+  padding-bottom: clamp(1.5rem, 4vw, 2.25rem);
+  /* the only hairline in the section */
+  border-bottom: 1px solid var(--hairline);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.own-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.own-item {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1fr) minmax(0, 1.35fr);
+  column-gap: clamp(1.5rem, 4vw, 3.5rem);
+  padding-top: clamp(3.5rem, 8vw, 5.5rem);
+}
+
+.own-claim,
+.own-what {
+  grid-column: 1 / -1;
+}
+
+.own-claim {
+  margin: 0;
+  max-width: 22ch;
+  font-size: clamp(1.45rem, 3vw, 2.15rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.own-what {
+  margin-top: 0.6rem;
+  margin-bottom: clamp(1.5rem, 3.5vw, 2rem);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* --------------------------------------------------------------- */
+/* the inventory                                                     */
+/* --------------------------------------------------------------- */
+
+.own-inventory {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.own-line {
+  position: relative;
+  padding-left: 1.4rem;
+  line-height: 1.5;
+}
+
+.own-line + .own-line {
+  margin-top: 0.55rem;
+}
+
+/*
+ * the custody mark: a filled square at grain scale, not a bullet and not a
+ * rating dot. drawn as an empty box with a background so it never enters the
+ * accessibility tree — the words carry the meaning, the mark just repeats it.
+ */
+.own-line::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 0.5em;
+  height: 0.5em;
+  background: var(--rasp-deep);
+}
+
+/*
+ * not his: hollow. --muted rather than --hairline, because a 0.16-alpha square
+ * disappears entirely on the dark background.
+ */
+.own-line.is-theirs {
+  color: var(--muted);
+}
+
+.own-line.is-theirs::before {
+  background: none;
+  border: 1px solid var(--muted);
+}
+
+/* --------------------------------------------------------------- */
+/* the evidence                                                      */
+/* --------------------------------------------------------------- */
+
+.own-detail {
+  max-width: 62ch;
+}
+
+/* one line of prose-ish mono. the numbers stay smaller than the words */
+.own-receipt,
+.own-stack {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.own-receipt {
+  margin-top: clamp(1.25rem, 3vw, 1.75rem);
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--hairline);
+  font-size: 0.74rem;
+}
+
+.own-num {
+  color: var(--rasp-deep);
+}
+
+.own-stack {
+  margin-top: 0.4rem;
+}
+
+/* --------------------------------------------------------------- */
+/* the tail                                                          */
+/* --------------------------------------------------------------- */
+
+.own-prior {
+  margin-top: clamp(3rem, 7vw, 4.5rem);
+  max-width: 62ch;
+  color: var(--muted);
+}
+
+.own-prior-when {
+  margin-right: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+
+.own-check {
+  margin-top: clamp(1.5rem, 3.5vw, 2.25rem);
+  max-width: 62ch;
+}
+
+.own-availability {
+  margin-top: clamp(1.5rem, 3.5vw, 2.25rem);
+  padding: clamp(1.25rem, 3vw, 1.75rem) clamp(1.25rem, 3vw, 2rem);
+  background: var(--surface);
+  border-left: 2px solid var(--rasp);
+  max-width: 62ch;
+}
+
+.own-availability a {
+  color: var(--rasp-deep);
+}
+
+@media (max-width: 720px) {
+  .own-item {
+    grid-template-columns: 1fr;
+    /* below 720 the vertical rhythm alone stops separating the entries */
+    margin-top: clamp(2.75rem, 7vw, 3.5rem);
+    padding-top: clamp(2.75rem, 7vw, 3.5rem);
+    border-top: 1px solid var(--hairline);
+  }
+
+  .own-item:first-child {
+    border-top: 0;
+  }
+
+  .own-claim {
+    max-width: none;
+    font-size: clamp(1.35rem, 6vw, 1.7rem);
+  }
+
+  /* evidence outranks commentary on a small screen — inventory stays first */
+  .own-evidence {
+    margin-top: clamp(1.5rem, 4vw, 2rem);
+  }
+
+  .own-line {
+    padding-left: 1.15rem;
+  }
+}
