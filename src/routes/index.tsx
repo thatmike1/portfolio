@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { CSSProperties, ReactNode } from "react";
 import { SandHero } from "../components/sand-hero";
+import { Experience } from "../components/experience";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -337,12 +338,15 @@ function Home() {
                 </div>
             </section>
 
+            {/* the hinge: everything above is mine, everything below someone paid for */}
             <section className="interlude">
                 <p className="container">
-                    by day i'm the solo frontend dev on a react marketplace mvp for a czech startup.
-                    by night, see above.
+                    that's the stuff i built because i wanted to. below is the stuff someone paid me
+                    to build. turns out i like that too.
                 </p>
             </section>
+
+            <Experience />
 
             <section className="smaller" aria-labelledby="smaller-heading">
                 <div className="container">
