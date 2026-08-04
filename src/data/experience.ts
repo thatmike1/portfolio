@@ -75,11 +75,14 @@ export const ROLES: Array<Role> = [
             },
         ],
     },
-    {
-        when: "2023 — 2024",
-        title: "freelance web developer",
-        org: "self-employed",
-        note: "local clients",
-        body: "wordpress presentation sites for local businesses. not glamorous, and i'm not going to pretend otherwise — but it's where i learned that a deadline somebody paid for lands differently than a side project does.",
-    },
 ];
+
+/**
+ * the pre-atreo era gets one line, not a row of its own. it was wordpress sites
+ * for local clients — worth being honest about, not worth the same visual weight
+ * as two years of contract react, which is what a second full row would imply.
+ */
+export const PRIOR = {
+    when: "2023 — 2024",
+    body: "before that, wordpress presentation sites for local clients, self-employed. not a career yet, but it's where the invoices started.",
+};

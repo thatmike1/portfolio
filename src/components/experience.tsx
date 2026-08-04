@@ -1,4 +1,4 @@
-import { ROLES } from "../data/experience";
+import { PRIOR, ROLES } from "../data/experience";
 import "./experience.css";
 
 /**
@@ -58,6 +58,12 @@ export function Experience() {
                         </li>
                     ))}
                 </ol>
+
+                {/* a line, not a row — see the note on PRIOR */}
+                <p className="xp-prior">
+                    <span className="xp-prior-when">{PRIOR.when}</span>
+                    {PRIOR.body}
+                </p>
 
                 {/* delete this block and the availability rule in the css to go quiet again */}
                 <p className="xp-availability">
