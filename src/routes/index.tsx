@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { CSSProperties, ReactNode } from "react";
 import { SandHero } from "../components/sand-hero";
-import { Experience } from "../components/experience";
+import { ExperienceCustody } from "../components/experience-custody";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -346,7 +346,7 @@ function Home() {
                 </p>
             </section>
 
-            <Experience />
+            <ExperienceCustody />
 
             <section className="smaller" aria-labelledby="smaller-heading">
                 <div className="container">
