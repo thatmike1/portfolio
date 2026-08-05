@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * the page's sections, in document order. every label is the section's own heading,
- * so the nav never says anything the page doesn't already say.
+ * the page's sections, in document order. labels mirror the section headings,
+ * except where a heading only makes sense with its section's context around it —
+ * the nav then says what the section is instead.
  */
 const SECTIONS = [
     { id: "top", label: "i make stuff" },
     { id: "things-i-made", label: "things i made" },
-    { id: "what-was-mine", label: "what was actually mine" },
+    { id: "what-was-mine", label: "work experience" },
     { id: "smaller-things", label: "smaller things" },
     { id: "say-hi", label: "say hi" },
 ] as const;
