@@ -252,7 +252,11 @@ a:focus-visible {
   padding-block: clamp(3rem, 7vw, 5.5rem) clamp(1.5rem, 4vw, 3rem);
 }
 
+/* the heading is the hop's hover target, so its box has to stop where the words do —
+   a block-level h1 would hand the whole container width to the pointer */
 .hero-copy h1 {
+  width: fit-content;
+  max-width: 100%;
   font-size: clamp(2.6rem, 6.5vw, 5rem);
 }
 
@@ -805,8 +809,15 @@ a:focus-visible {
   animation: hero-stop-land 620ms var(--ease-out) both;
 }
 
-.hero-copy h1:hover .hero-stop {
-  animation: hero-stop-hop 460ms var(--ease-out);
+/* the class is set on hover and cleared by the animationend event, not by the pointer
+   leaving — that is what makes a half-finished hop impossible to interrupt.
+   the landing animation is repeated verbatim as the first entry so that toggling the
+   class only ever adds and removes the second one: rewriting the whole list would
+   restart the drop-in, and the grain would fall out of the sky after every hop */
+.hero-stop.is-hopping {
+  animation:
+    hero-stop-land 620ms var(--ease-out) both,
+    hero-stop-hop 460ms var(--ease-out);
 }
 
 @keyframes hero-stop-land {
@@ -855,7 +866,7 @@ a:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   /* the grain rests where it belongs, no drop and no hop */
   .hero-stop,
-  .hero-copy h1:hover .hero-stop {
+  .hero-stop.is-hopping {
     animation: none;
   }
 
@@ -912,48 +923,6 @@ a:focus-visible {
     .project-body {
       animation-range: entry 18% entry 90%;
     }
-
-    /* a hairline rail in the left margin that fills raspberry as you read down
-       the list — the only progress indicator on the page, and it is the same
-       1px vocabulary as the row rules rather than a bar bolted to the top */
-    .project-list {
-      position: relative;
-    }
-
-    .project-list::before,
-    .project-list::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: -1.25rem;
-      width: 2px;
-      border-radius: 1px;
-      pointer-events: none;
-    }
-
-    .project-list::before {
-      background: var(--hairline);
-    }
-
-    .project-list::after {
-      background: var(--rasp);
-      transform: scaleY(0);
-      transform-origin: top center;
-      animation: rail-fill linear both;
-      animation-timeline: view();
-      /* contain, not cover: the rail tracks the viewport's progress through the
-         list itself, so it is full exactly when the last row is done */
-      animation-range: contain 0% contain 100%;
-    }
-
-    /* no room for the rail once the container margin is all there is */
-    @media (max-width: 720px) {
-      .project-list::before,
-      .project-list::after {
-        display: none;
-      }
-    }
   }
 }
 
@@ -974,10 +943,94 @@ a:focus-visible {
   }
 }
 
-@keyframes rail-fill {
-  to {
-    transform: scaleY(1);
+/* ------------------------------------------------------------------ */
+/* section nav                                                         */
+/* ------------------------------------------------------------------ */
+
+/* the table of contents lives in the page's outer margin and is hidden until that
+   margin is genuinely wide enough to hold it. the container caps at 68rem, so the
+   gutter only clears the nav's width past ~1400px — below that there is nothing to
+   sit in and covering the text would be worse than having no nav at all */
+.section-nav {
+  display: none;
+}
+
+@media (min-width: 1400px) {
+  .section-nav {
+    display: block;
+    position: fixed;
+    z-index: 30;
+    top: 50%;
+    right: 1.25rem;
+    width: 7rem;
+    transform: translateY(-50%);
   }
+
+  .section-nav ul {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* the marker is the page's own square grain, so the nav reads as part of the
+     same object rather than a widget bolted to the side */
+  .section-nav-link {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    gap: 0.55rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    line-height: 1.35;
+    color: var(--muted);
+    text-decoration: none;
+    transition:
+      color 180ms var(--ease-out),
+      opacity 180ms var(--ease-out);
+  }
+
+  .section-nav-mark {
+    width: 6px;
+    height: 6px;
+    margin-top: 0.42em;
+    border: 1px solid currentColor;
+    opacity: 0.55;
+    transition:
+      background 180ms var(--ease-out),
+      opacity 180ms var(--ease-out);
+  }
+
+  .section-nav-link:hover {
+    color: var(--ink);
+  }
+
+  .section-nav-link.is-active {
+    color: var(--rasp-deep);
+  }
+
+  .section-nav-link.is-active .section-nav-mark {
+    background: var(--rasp);
+    border-color: var(--rasp);
+    opacity: 1;
+  }
+}
+
+/* anchor jumps glide only for readers who did not ask for stillness; under reduced
+   motion the same link lands instantly */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+.hero,
+.projects,
+.own,
+.smaller,
+.footer {
+  scroll-margin-top: 1.5rem;
 }
 
 /* ------------------------------------------------------------------ */

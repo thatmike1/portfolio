@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import type { CSSProperties, ReactNode } from "react";
+import { useState } from "react";
+import type { AnimationEvent, CSSProperties, ReactNode } from "react";
 import { SandHero } from "../components/sand-hero";
 import { GrainCursor } from "../components/grain-cursor";
 import { ExperienceCustody } from "../components/experience-custody";
 import { LightboxProvider, useLightbox } from "../components/lightbox";
+import { SectionNav } from "../components/section-nav";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -291,15 +293,29 @@ function PreviewFigure({ preview }: { preview: ProjectPreview }) {
 }
 
 function Home() {
+    // the hop owns itself once it starts: hovering again mid-flight is ignored, so the
+    // grain always finishes the arc it is on instead of snapping back to the start
+    const [hopping, setHopping] = useState(false);
+    const endHop = (event: AnimationEvent<HTMLSpanElement>) => {
+        if (event.animationName.includes("hero-stop-hop")) setHopping(false);
+    };
+
     return (
         <LightboxProvider>
             <main>
                 <GrainCursor />
-                <header className="hero">
+                <SectionNav />
+                <header className="hero" id="top">
                     <SandHero />
                     <div className="container hero-copy">
-                        <h1>
-                            i make stuff<span className="hero-stop">.</span>
+                        <h1 onMouseEnter={() => setHopping(true)}>
+                            i make stuff
+                            <span
+                                className={`hero-stop${hopping ? " is-hopping" : ""}`}
+                                onAnimationEnd={endHop}
+                            >
+                                .
+                            </span>
                         </h1>
                         <p className="lede">
                             i'm mike, a full-stack product engineer in czechia — react and
@@ -315,7 +331,7 @@ function Home() {
                     </div>
                 </header>
 
-                <section className="projects" aria-labelledby="projects-heading">
+                <section className="projects" id="things-i-made" aria-labelledby="projects-heading">
                     <div className="container">
                         <h2 id="projects-heading">things i made</h2>
                         <p className="section-sub">
@@ -366,7 +382,7 @@ function Home() {
 
                 <ExperienceCustody />
 
-                <section className="smaller" aria-labelledby="smaller-heading">
+                <section className="smaller" id="smaller-things" aria-labelledby="smaller-heading">
                     <div className="container">
                         <h2 id="smaller-heading">smaller things</h2>
                         <ul className="smaller-list">
@@ -390,7 +406,7 @@ function Home() {
                     </div>
                 </section>
 
-                <footer className="footer">
+                <footer className="footer" id="say-hi">
                     <div className="container">
                         <h2>say hi</h2>
                         <p className="footer-lede">

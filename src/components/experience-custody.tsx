@@ -247,7 +247,7 @@ const ITEMS: Array<Item> = [
 
 export function ExperienceCustody() {
     return (
-        <section className="own" aria-labelledby="own-heading">
+        <section className="own" id="what-was-mine" aria-labelledby="own-heading">
             <div className="container">
                 <h2 id="own-heading">what was actually mine</h2>
                 <p className="section-sub">
