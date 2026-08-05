@@ -760,7 +760,8 @@ a:hover {
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
-  *::after {
+  *::after,
+  ::backdrop {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
