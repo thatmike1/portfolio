@@ -5,8 +5,10 @@ import { TanStackDevtools } from "@tanstack/react-devtools";
 import appCss from "../styles.css?url";
 
 const TITLE = "mike pšenčík · i make stuff";
+// leads with the commercial work now that the page carries it — this is the text
+// that shows up when someone pastes the link into a hiring channel
 const DESCRIPTION =
-    "frontend dev in czechia. falling-sand toys, claude code skills, a git time-tracker, and landing pages with personality. sometimes it works, sometimes it doesn't.";
+    "frontend dev in czechia. two years of contract react — a staffing marketplace, enterprise internal tools, a react native app on both stores — plus falling-sand toys and claude code skills. sometimes it works, sometimes it doesn't.";
 
 // runs before first paint so the saved theme never flashes the wrong colors
 const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme');if(t!=='dark'&&t!=='light'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme='light'}})()`;
