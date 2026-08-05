@@ -353,11 +353,14 @@ a:hover {
   --preview-glow: oklch(0.49 0.2 357);
   --glow-contact: color-mix(in oklch, var(--preview-glow) 52%, transparent);
   --glow-ambient: color-mix(in oklch, var(--preview-glow) 42%, transparent);
+  --preview-gap: clamp(1rem, 2.2vw, 1.6rem);
 
   grid-column: 1 / -1;
   margin: clamp(1.75rem, 3.5vw, 2.75rem) 0 0;
   display: grid;
-  gap: clamp(1rem, 2.2vw, 1.6rem);
+  /* a definite column so the percentage offsets on the phone resolve against the figure */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--preview-gap);
 }
 
 /* dark swallows shadows, so the glow has to push harder to read as light */
@@ -425,14 +428,24 @@ a:hover {
   width: var(--phone-width);
 }
 
-/* the phone rides the wide shot's bottom-right corner: two thirds on the image,
-   a short hang below, inset from the edge so the overlap reads deliberate */
+/* the phone rides the wide shot's bottom-right corner, lined up with the "today" card
+   inside that shot: 0.59% is the card's own inset from the asset's right edge, and
+   27.65% is where the card's bottom edge falls. both are shares of the figure's width,
+   so the phone keeps a constant 28px of air under the card at every viewport */
 .project-preview--wide-phones .preview-supporting--phones {
   position: relative;
   z-index: 1;
   justify-content: flex-end;
-  margin-top: calc(var(--phone-width) * -1.5);
-  padding-right: clamp(1.5rem, 4vw, 3.5rem);
+  margin-top: calc(28px - 27.65% - var(--preview-gap));
+  padding-right: 0.59%;
+}
+
+/* the phone hangs well past the wide shot, leaving that band empty on the left: the
+   caption climbs into it, one gap plus its own single line, so the two bottoms line up */
+.project-preview--wide-phones .preview-caption {
+  /* start, not stretch: the row is short here, and a stretched caption would sit low in it */
+  align-self: start;
+  margin-top: calc((var(--preview-gap) + 1.3rem) * -1);
 }
 
 .preview-supporting--panels {
@@ -571,13 +584,19 @@ a:hover {
 
   /* no overlap here — the phone sits above the wide shot, not on it */
   .project-preview--wide-phones .preview-supporting--phones {
-    justify-content: flex-start;
+    justify-content: center;
     margin-top: 0;
     padding-right: 0;
   }
 
+  .project-preview--wide-phones .preview-caption {
+    margin-top: 0;
+  }
+
+  /* the phone takes the whole column, stopping at its own 352px of pixels and centring
+     there — upscaling past them would turn the ui text to mush */
   .preview-frame--phone {
-    width: clamp(150px, 45vw, 200px);
+    width: 100%;
   }
 
   .preview-supporting--panels {
