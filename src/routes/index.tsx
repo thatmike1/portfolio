@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { CSSProperties, ReactNode } from "react";
 import { SandHero } from "../components/sand-hero";
+import { GrainCursor } from "../components/grain-cursor";
 import { ExperienceCustody } from "../components/experience-custody";
 import { LightboxProvider, useLightbox } from "../components/lightbox";
 
@@ -293,10 +294,13 @@ function Home() {
     return (
         <LightboxProvider>
             <main>
+                <GrainCursor />
                 <header className="hero">
                     <SandHero />
                     <div className="container hero-copy">
-                        <h1>i make stuff.</h1>
+                        <h1>
+                            i make stuff<span className="hero-stop">.</span>
+                        </h1>
                         <p className="lede">
                             i'm mike, a full-stack product engineer in czechia — react and
                             typescript on top, node underneath, and i'd rather own the whole slice

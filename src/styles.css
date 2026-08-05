@@ -766,3 +766,86 @@ a:hover {
     animation-duration: 0.01ms !important;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* hero + cursor polish                                                */
+/* ------------------------------------------------------------------ */
+
+/* the pointer's sand trail. sits above the page but below the lightbox,
+   which lives in the top layer, and never takes a pointer event */
+.grain-cursor {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* the full stop in the h1 is a grain: it drops in once on load and hops
+   whenever the heading is hovered */
+.hero-stop {
+  display: inline-block;
+  transform-origin: bottom center;
+  color: var(--rasp-deep);
+  animation: hero-stop-land 620ms var(--ease-out) both;
+}
+
+.hero-copy h1:hover .hero-stop {
+  animation: hero-stop-hop 460ms var(--ease-out);
+}
+
+@keyframes hero-stop-land {
+  0% {
+    transform: translateY(-0.7em);
+    opacity: 0;
+  }
+  55% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  72% {
+    transform: scale(1.3, 0.72);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
+}
+
+@keyframes hero-stop-hop {
+  0% {
+    transform: translateY(0);
+  }
+  35% {
+    transform: translateY(-0.45em);
+  }
+  75% {
+    transform: translateY(0) scale(1.25, 0.78);
+  }
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+}
+
+/* the toggle tips like a bucket while it spills its sand */
+.theme-toggle {
+  transition:
+    background 160ms var(--ease-out),
+    transform 160ms var(--ease-out);
+}
+
+.theme-toggle:active {
+  transform: rotate(-5deg) translateY(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* the grain rests where it belongs, no drop and no hop */
+  .hero-stop,
+  .hero-copy h1:hover .hero-stop {
+    animation: none;
+  }
+
+  .theme-toggle:active {
+    transform: none;
+  }
+}

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
     AMBER,
     EMPTY,
+    INK,
     PALETTES,
     RASP,
     SandEngine,
@@ -88,6 +89,8 @@ export function SandHero() {
     const reducedRef = useRef(false);
     const themeRef = useRef<ThemeName>("light");
     const renderRef = useRef<() => void>(() => undefined);
+    const spillRef = useRef<(clientX: number, clientY: number) => void>(() => undefined);
+    const toggleRef = useRef<HTMLButtonElement>(null);
 
     const [awake, setAwake] = useState(false);
     const [tool, setTool] = useState<number>(RASP);
@@ -287,6 +290,23 @@ export function SandHero() {
             if (reducedRef.current || !awakeRef.current) render();
         };
 
+        /**
+         * drop a burst of grains into the toy from a point in page space. the
+         * theme toggle uses it so flipping the lights spills sun dust or moon
+         * dust out of the button instead of just recoloring the page.
+         */
+        const spill = (clientX: number, clientY: number) => {
+            const engine = engineRef.current;
+            if (!engine) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.round(((clientX - rect.left) / rect.width) * (canvas.width / grain));
+            const y = Math.round(((clientY - rect.top) / rect.height) * (canvas.height / grain));
+            engine.pour(x, y, 5, themeRef.current === "dark" ? INK : AMBER);
+            wake();
+            if (reducedRef.current || !awakeRef.current) render();
+        };
+        spillRef.current = spill;
+
         const onPointerMove = (e: PointerEvent) => {
             wake();
             if (e.buttons & 1) pour(e);
@@ -349,6 +369,9 @@ export function SandHero() {
             // private mode etc., the toggle still works for this visit
         }
         renderRef.current();
+        const rect = toggleRef.current?.getBoundingClientRect();
+        // pour from just under the button, so the grains look like they fell out of it
+        if (rect) spillRef.current(rect.left + rect.width / 2, rect.bottom + 6);
     };
 
     return (
@@ -361,6 +384,7 @@ export function SandHero() {
                 aria-label="a falling-sand toy with the word mike written in raspberry sand"
             />
             <button
+                ref={toggleRef}
                 type="button"
                 className="theme-toggle"
                 onClick={flipTheme}
