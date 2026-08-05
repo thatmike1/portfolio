@@ -965,6 +965,23 @@ a:focus-visible {
     right: 1.25rem;
     width: 7rem;
     transform: translateY(-50%);
+    /* the hero owns this margin first — its sand hint pins to the same corner and the
+       canvas wants to be touched — so the nav waits offstage until the hero is gone.
+       visibility rides the same duration as the fade so it flips only once the nav has
+       finished going, and under reduced motion the global duration reset makes both
+       instant */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity 260ms var(--ease-out),
+      visibility 260ms var(--ease-out);
+  }
+
+  .section-nav.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
   }
 
   .section-nav ul {

@@ -301,6 +301,13 @@ function Home() {
     const endHop = (event: AnimationEvent<HTMLSpanElement>) => {
         if (event.animationName.includes("hero-stop-hop")) setHopping(false);
     };
+    // under reduced motion the hop animation is switched off, so nothing would ever fire
+    // animationend to clear the flag — the state would stick and the grain would hop the
+    // moment the reader turned the setting back off. so never start it in the first place
+    const startHop = () => {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        setHopping(true);
+    };
 
     return (
         <LightboxProvider>
@@ -310,7 +317,7 @@ function Home() {
                 <header className="hero" id="top">
                     <SandHero />
                     <div className="container hero-copy">
-                        <h1 onMouseEnter={() => setHopping(true)}>
+                        <h1 onMouseEnter={startHop}>
                             i make stuff
                             <span
                                 className={`hero-stop${hopping ? " is-hopping" : ""}`}
