@@ -87,21 +87,34 @@ p {
   margin: 0;
 }
 
+/* the underline rests at a fraction of the link's own colour and lights up to
+   full strength on hover. the text colour itself never moves, so the contrast
+   a reader gets is the same before and after the pointer arrives */
 a {
   color: var(--rasp-deep);
   text-decoration: underline;
   text-decoration-thickness: 1.5px;
+  text-decoration-color: color-mix(in oklch, currentColor 45%, transparent);
+  text-decoration-skip-ink: auto;
   text-underline-offset: 0.18em;
-  transition: text-underline-offset 180ms var(--ease-out);
+  transition:
+    text-underline-offset 180ms var(--ease-out),
+    text-decoration-color 180ms var(--ease-out);
 }
 
 a:hover {
   text-underline-offset: 0.3em;
+  text-decoration-color: currentColor;
 }
 
 :focus-visible {
   outline: 2px solid var(--rasp);
   outline-offset: 3px;
+}
+
+/* the ring softens its corners only on text links; anything with a shape of its
+   own — the pills, the screenshot frames — keeps that shape while focused */
+a:focus-visible {
   border-radius: 2px;
 }
 
@@ -548,7 +561,8 @@ a:hover {
   font-weight: 700;
   transition:
     color 160ms var(--ease-out),
-    text-underline-offset 180ms var(--ease-out);
+    text-underline-offset 180ms var(--ease-out),
+    text-decoration-color 180ms var(--ease-out);
 }
 
 .footer-links a:hover {
@@ -964,4 +978,53 @@ a:hover {
   to {
     transform: scaleY(1);
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* text details                                                        */
+/* ------------------------------------------------------------------ */
+
+/* every link that leaves the site carries the mark the project names already
+   use: a small arrow that leans out under the pointer. the empty alt text
+   after the slash keeps the glyph out of the accessibility tree, and a parser
+   that doesn't understand that syntax drops the arrow rather than announcing
+   it. currentColor, so the footer's near-white links stay near-white */
+main a[href^='http']:not(.project-name):not(.preview-frame)::after {
+  content: '↗' / '';
+  display: inline-block;
+  margin-left: 0.14em;
+  font-size: 0.78em;
+  line-height: 1;
+  color: currentColor;
+  transition: transform 180ms var(--ease-out);
+}
+
+main a[href^='http']:not(.project-name):not(.preview-frame):hover::after {
+  transform: translate(0.15em, -0.15em);
+}
+
+/* the page keeps its scrollbar gutter whether or not a scrollbar is there, so
+   opening the screenshot viewer — a modal dialog, which locks the page scroll —
+   never nudges the text sideways. the bar itself is thin and raspberry-tinted:
+   the one piece of browser chrome the page gets to dress */
+html {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, var(--rasp) 40%, transparent) transparent;
+}
+
+/* prose already gets pretty wrapping through the p rule; list items and
+   captions are prose too, and they were the ones left with the orphans */
+li,
+figcaption {
+  text-wrap: pretty;
+}
+
+/* selected text stays readable in the dark theme. white on the dark theme's
+   raspberry measures 4.43:1 — under AA by a hair — so the block lights up to
+   the brighter raspberry instead and takes the page's own near-black ink,
+   which is 8:1 and looks like the luminous grains the dark theme is built on */
+:root[data-theme='dark'] ::selection {
+  background: var(--rasp-deep);
+  color: var(--bg);
 }
