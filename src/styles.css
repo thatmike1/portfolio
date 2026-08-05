@@ -568,6 +568,140 @@ a:hover {
 }
 
 /* ------------------------------------------------------------------ */
+/* screenshot viewer                                                   */
+/* ------------------------------------------------------------------ */
+
+/* display is only flipped on [open] so the ua's own dialog:not([open]) rule still hides it,
+   and it transitions discretely so the close still gets to fade */
+.lightbox {
+  display: none;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  margin: 0;
+  padding: clamp(0.75rem, 3vw, 2rem);
+  border: 0;
+  background: transparent;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition:
+    opacity 180ms var(--ease-out),
+    display 180ms allow-discrete,
+    overlay 180ms allow-discrete;
+}
+
+.lightbox[open] {
+  display: flex;
+  opacity: 1;
+}
+
+@starting-style {
+  .lightbox[open] {
+    opacity: 0;
+  }
+}
+
+/* ::backdrop sits outside the cascade of the page, so the ink is spelled out rather than
+   tokened. the wash is the same near-black in both themes: a shot needs a neutral room */
+.lightbox::backdrop {
+  background: oklch(0.13 0.01 357 / 0.88);
+  opacity: 0;
+  transition: opacity 180ms var(--ease-out);
+}
+
+.lightbox[open]::backdrop {
+  opacity: 1;
+}
+
+@starting-style {
+  .lightbox[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+.lightbox-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 100%;
+  /* a definite height down the chain, so the shot's own max-height: 100% has something
+     to resolve against and never grows past the viewport */
+  height: 100%;
+  transform: scale(0.985);
+  transition: transform 180ms var(--ease-out);
+}
+
+.lightbox[open] .lightbox-stage {
+  transform: scale(1);
+}
+
+@starting-style {
+  .lightbox[open] .lightbox-stage {
+    transform: scale(0.985);
+  }
+}
+
+.lightbox-close {
+  align-self: flex-end;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: background 160ms var(--ease-out);
+}
+
+/* on the dark wash the page background is near-black too, so the chip lifts a step */
+:root[data-theme='dark'] .lightbox-close {
+  background: var(--surface);
+}
+
+.lightbox-close:hover {
+  background: var(--surface);
+}
+
+/* the shot doubles as the zoom toggle: fit to the screen, or its own pixels and pan */
+.lightbox-zoom {
+  display: flex;
+  /* safe centring: when the shot is bigger than the box, it scrolls from its top-left
+     instead of having its first pixels pushed out of reach */
+  align-items: safe center;
+  justify-content: safe center;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+
+.lightbox-zoom--actual {
+  overflow: auto;
+  cursor: zoom-out;
+}
+
+.lightbox-img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-height: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+}
+
+.lightbox-zoom--actual .lightbox-img {
+  max-height: none;
+}
+
+/* ------------------------------------------------------------------ */
 /* responsive + motion                                                 */
 /* ------------------------------------------------------------------ */
 

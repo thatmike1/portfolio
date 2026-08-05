@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import type { CSSProperties, ReactNode } from "react";
 import { SandHero } from "../components/sand-hero";
 import { ExperienceCustody } from "../components/experience-custody";
+import { LightboxProvider, useLightbox } from "../components/lightbox";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -208,11 +209,14 @@ const PROJECTS: Array<Project> = [
 type ShotVariant = "wide" | "single" | "panel" | "phone";
 
 /**
- * one framed screenshot, linked to its own full-size asset so enlarging needs no javascript.
+ * one framed screenshot. clicking opens the in-page viewer; the href stays a real link to the
+ * asset, so a modifier-click and a javascript-less visit both still work.
  * a shot with a darkSrc renders both variants and lets css pick — the dimensions match, so
  * the hidden one costs no layout.
  */
 function PreviewShot({ shot, variant }: { shot: Preview; variant: ShotVariant }) {
+    const openShot = useLightbox();
+
     const frame = (src: string, theme?: "light" | "dark") => (
         <a
             key={src}
@@ -220,6 +224,13 @@ function PreviewShot({ shot, variant }: { shot: Preview; variant: ShotVariant })
             href={src}
             target="_blank"
             rel="noopener"
+            onClick={(event) => {
+                // leave every deliberate "open this elsewhere" gesture alone
+                if (!openShot || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+                    return;
+                event.preventDefault();
+                openShot({ ...shot, src });
+            }}
             // never upscale a screenshot past its own pixels; its text stops being readable
             style={{ maxWidth: `min(100%, ${shot.width}px)` }}
         >
@@ -280,120 +291,123 @@ function PreviewFigure({ preview }: { preview: ProjectPreview }) {
 
 function Home() {
     return (
-        <main>
-            <header className="hero">
-                <SandHero />
-                <div className="container hero-copy">
-                    <h1>i make stuff.</h1>
-                    <p className="lede">
-                        i'm mike, a full-stack product engineer in czechia — react and typescript on
-                        top, node underneath, and i'd rather own the whole slice than half of it. i
-                        do stuff, sometimes it works and sometimes it doesn't, but give me enough
-                        time and i'll make it work. <em>probably.</em>
-                    </p>
-                    <p className="hero-note">
-                        the sand up there is real, go make a mess. it's a tiny cousin of{" "}
-                        <a href="https://github.com/thatmike1/powder-lab">powder-lab</a>.
-                    </p>
-                </div>
-            </header>
+        <LightboxProvider>
+            <main>
+                <header className="hero">
+                    <SandHero />
+                    <div className="container hero-copy">
+                        <h1>i make stuff.</h1>
+                        <p className="lede">
+                            i'm mike, a full-stack product engineer in czechia — react and
+                            typescript on top, node underneath, and i'd rather own the whole slice
+                            than half of it. i do stuff, sometimes it works and sometimes it
+                            doesn't, but give me enough time and i'll make it work.{" "}
+                            <em>probably.</em>
+                        </p>
+                        <p className="hero-note">
+                            the sand up there is real, go make a mess. it's a tiny cousin of{" "}
+                            <a href="https://github.com/thatmike1/powder-lab">powder-lab</a>.
+                        </p>
+                    </div>
+                </header>
 
-            <section className="projects" aria-labelledby="projects-heading">
-                <div className="container">
-                    <h2 id="projects-heading">things i made</h2>
-                    <p className="section-sub">
-                        all public, all on github, all built to scratch an itch.
-                    </p>
-                    <ul className="project-list">
-                        {PROJECTS.map((p) => (
-                            <li className="project" key={p.name}>
-                                <div className="project-head">
-                                    {p.code ? (
-                                        <a className="project-name" href={p.code}>
-                                            {p.name}
-                                            <span className="arrow" aria-hidden="true">
-                                                {"↗"}
+                <section className="projects" aria-labelledby="projects-heading">
+                    <div className="container">
+                        <h2 id="projects-heading">things i made</h2>
+                        <p className="section-sub">
+                            all public, all on github, all built to scratch an itch.
+                        </p>
+                        <ul className="project-list">
+                            {PROJECTS.map((p) => (
+                                <li className="project" key={p.name}>
+                                    <div className="project-head">
+                                        {p.code ? (
+                                            <a className="project-name" href={p.code}>
+                                                {p.name}
+                                                <span className="arrow" aria-hidden="true">
+                                                    {"↗"}
+                                                </span>
+                                            </a>
+                                        ) : (
+                                            <span className="project-name project-name--static">
+                                                {p.name}
                                             </span>
-                                        </a>
-                                    ) : (
-                                        <span className="project-name project-name--static">
-                                            {p.name}
-                                        </span>
-                                    )}
-                                    <p className="project-tagline">{p.tagline}</p>
-                                    <p className="project-stack">{p.stack}</p>
-                                    {p.note ? <p className="project-note">{p.note}</p> : null}
-                                </div>
-                                <div className="project-body">
-                                    <p>{p.body}</p>
-                                    {p.live ? (
-                                        <p className="project-live">
-                                            <a href={p.live.href}>{p.live.label}</a>
-                                        </p>
-                                    ) : null}
-                                </div>
-                                {p.preview ? <PreviewFigure preview={p.preview} /> : null}
+                                        )}
+                                        <p className="project-tagline">{p.tagline}</p>
+                                        <p className="project-stack">{p.stack}</p>
+                                        {p.note ? <p className="project-note">{p.note}</p> : null}
+                                    </div>
+                                    <div className="project-body">
+                                        <p>{p.body}</p>
+                                        {p.live ? (
+                                            <p className="project-live">
+                                                <a href={p.live.href}>{p.live.label}</a>
+                                            </p>
+                                        ) : null}
+                                    </div>
+                                    {p.preview ? <PreviewFigure preview={p.preview} /> : null}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </section>
+
+                {/* the hinge: everything above is mine, everything below someone paid for */}
+                <section className="interlude">
+                    <p className="container">
+                        that's the stuff i built because i wanted to. below is the stuff someone
+                        paid me to build. turns out i like that too.
+                    </p>
+                </section>
+
+                <ExperienceCustody />
+
+                <section className="smaller" aria-labelledby="smaller-heading">
+                    <div className="container">
+                        <h2 id="smaller-heading">smaller things</h2>
+                        <ul className="smaller-list">
+                            <li>
+                                <a href="https://github.com/thatmike1/vite-react-supabase-starter">
+                                    vite-react-supabase-starter
+                                </a>{" "}
+                                and{" "}
+                                <a href="https://github.com/thatmike1/vite-react-shadcn-starter">
+                                    vite-react-shadcn-starter
+                                </a>
+                                : the two starters i clone so future me skips a day of wiring. react
+                                19, tanstack query, auth, the boring parts done.
                             </li>
-                        ))}
-                    </ul>
-                </div>
-            </section>
+                            <li>
+                                <a href="https://github.com/thatmike1/backlogged">backlogged</a>: a
+                                game library with an ai recommender that remembers what it already
+                                suggested. probably abandoned. i'm being honest with you.
+                            </li>
+                        </ul>
+                    </div>
+                </section>
 
-            {/* the hinge: everything above is mine, everything below someone paid for */}
-            <section className="interlude">
-                <p className="container">
-                    that's the stuff i built because i wanted to. below is the stuff someone paid me
-                    to build. turns out i like that too.
-                </p>
-            </section>
-
-            <ExperienceCustody />
-
-            <section className="smaller" aria-labelledby="smaller-heading">
-                <div className="container">
-                    <h2 id="smaller-heading">smaller things</h2>
-                    <ul className="smaller-list">
-                        <li>
-                            <a href="https://github.com/thatmike1/vite-react-supabase-starter">
-                                vite-react-supabase-starter
-                            </a>{" "}
-                            and{" "}
-                            <a href="https://github.com/thatmike1/vite-react-shadcn-starter">
-                                vite-react-shadcn-starter
-                            </a>
-                            : the two starters i clone so future me skips a day of wiring. react 19,
-                            tanstack query, auth, the boring parts done.
-                        </li>
-                        <li>
-                            <a href="https://github.com/thatmike1/backlogged">backlogged</a>: a game
-                            library with an ai recommender that remembers what it already suggested.
-                            probably abandoned. i'm being honest with you.
-                        </li>
-                    </ul>
-                </div>
-            </section>
-
-            <footer className="footer">
-                <div className="container">
-                    <h2>say hi</h2>
-                    <p className="footer-lede">
-                        no contact form, i'm one guy. email me or poke around the github.
-                    </p>
-                    <ul className="footer-links">
-                        <li>
-                            <a href="https://github.com/thatmike1">github.com/thatmike1</a>
-                        </li>
-                        <li>
-                            <a href="mailto:misa.psencik@gmail.com">misa.psencik@gmail.com</a>
-                        </li>
-                    </ul>
-                    <p className="colophon">
-                        built with tanstack start, because i lowkey hate next.js. set in sora, which
-                        is also my dog's name. no cookies, no analytics, just sand.
-                        <br />© 2026 michal pšenčík · czechia
-                    </p>
-                </div>
-            </footer>
-        </main>
+                <footer className="footer">
+                    <div className="container">
+                        <h2>say hi</h2>
+                        <p className="footer-lede">
+                            no contact form, i'm one guy. email me or poke around the github.
+                        </p>
+                        <ul className="footer-links">
+                            <li>
+                                <a href="https://github.com/thatmike1">github.com/thatmike1</a>
+                            </li>
+                            <li>
+                                <a href="mailto:misa.psencik@gmail.com">misa.psencik@gmail.com</a>
+                            </li>
+                        </ul>
+                        <p className="colophon">
+                            built with tanstack start, because i lowkey hate next.js. set in sora,
+                            which is also my dog's name. no cookies, no analytics, just sand.
+                            <br />© 2026 michal pšenčík · czechia
+                        </p>
+                    </div>
+                </footer>
+            </main>
+        </LightboxProvider>
     );
 }
