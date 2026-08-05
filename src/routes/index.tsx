@@ -68,8 +68,8 @@ const PROJECTS: Array<Project> = [
                 {
                     src: "/ssscribe/capture.webp",
                     alt: "ssscribe capture screen on phone",
-                    width: 352,
-                    height: 808,
+                    width: 390,
+                    height: 844,
                 },
             ],
         },
@@ -234,7 +234,9 @@ function PreviewShot({ shot, variant }: { shot: Preview; variant: ShotVariant })
                 event.preventDefault();
                 openShot({ ...shot, src });
             }}
-            // never upscale a screenshot past its own pixels; its text stops being readable
+            // never upscale a screenshot past its own 1x css size; its text stops being readable.
+            // the ssscribe shots are 2x assets, so their width/height here are the css size, not
+            // the pixel size — that's also what the lightbox's actual-size mode wants
             style={{ maxWidth: `min(100%, ${shot.width}px)` }}
         >
             <img

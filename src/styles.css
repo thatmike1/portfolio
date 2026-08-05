@@ -446,15 +446,16 @@ a:focus-visible {
 }
 
 /* the phone rides the wide shot's bottom-right corner, lined up with the "today" card
-   inside that shot: 0.59% is the card's own inset from the asset's right edge, and
-   27.65% is where the card's bottom edge falls. both are shares of the figure's width,
-   so the phone keeps a constant 28px of air under the card at every viewport */
+   inside that shot: 1.18% is the card's own inset from the asset's right edge (16 of the
+   shot's 1360 css px), and 25.37% is where the card's bottom edge falls (345 css px up
+   from the bottom). both are shares of the figure's width, so the phone keeps a constant
+   28px of air under the card at every viewport */
 .project-preview--wide-phones .preview-supporting--phones {
   position: relative;
   z-index: 1;
   justify-content: flex-end;
-  margin-top: calc(28px - 27.65% - var(--preview-gap));
-  padding-right: 0.59%;
+  margin-top: calc(28px - 25.37% - var(--preview-gap));
+  padding-right: 1.18%;
 }
 
 /* the phone hangs well past the wide shot, leaving that band empty on the left: the
@@ -745,8 +746,8 @@ a:focus-visible {
     margin-top: 0;
   }
 
-  /* the phone takes the whole column, stopping at its own 352px of pixels and centring
-     there — upscaling past them would turn the ui text to mush */
+  /* the phone takes the whole column, stopping at its own 390px css size and centring
+     there — upscaling past that would turn the ui text to mush */
   .preview-frame--phone {
     width: 100%;
   }
