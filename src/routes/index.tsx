@@ -286,9 +286,10 @@ function Home() {
                 <div className="container hero-copy">
                     <h1>i make stuff.</h1>
                     <p className="lede">
-                        i'm mike, a frontend dev in czechia. i do stuff, sometimes it works and
-                        sometimes it doesn't, but give me enough time and i'll make it work.{" "}
-                        <em>probably.</em>
+                        i'm mike, a full-stack product engineer in czechia — react and typescript on
+                        top, node underneath, and i'd rather own the whole slice than half of it. i
+                        do stuff, sometimes it works and sometimes it doesn't, but give me enough
+                        time and i'll make it work. <em>probably.</em>
                     </p>
                     <p className="hero-note">
                         the sand up there is real, go make a mess. it's a tiny cousin of{" "}
