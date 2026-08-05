@@ -130,13 +130,15 @@ a:hover {
   cursor: crosshair;
 }
 
-/* blurred copy of the grains; the lighting in dark mode */
+/* blurred copy of the grains; the lighting in dark mode. the blur is baked into
+   the canvas at grid resolution, so css only stretches it — a css blur here
+   would re-do the same work once per device pixel */
 .sand-glow {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  filter: blur(10px) saturate(1.3);
+  filter: saturate(1.3);
   opacity: 0.9;
   pointer-events: none;
   display: none;

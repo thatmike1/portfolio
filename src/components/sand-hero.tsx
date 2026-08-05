@@ -12,6 +12,8 @@ import {
 import type { ThemeName } from "../lib/sand-engine";
 
 const CELL = 5; // css pixels per grain
+/** blur radius in GRAIN units — the old css `blur(10px)` was two grains wide */
+const GLOW_RADIUS = 2;
 const FONT_STACK = "'Sora Variable', system-ui, sans-serif";
 
 const TOOL_DEFS: Array<{ id: number; label: string }> = [
@@ -51,6 +53,21 @@ const SKY_COLORS: Record<ThemeName, Record<string, string>> = {
 };
 
 type Star = { x: number; y: number; base: number; phase: number };
+
+/**
+ * resolve any css color string to a packed abgr uint32, the byte order a
+ * little-endian Uint32Array view over ImageData wants. the browser does the
+ * oklch conversion for us — cheap, and it happens once per palette build.
+ */
+function packColor(scratch: CanvasRenderingContext2D, css: string, alpha = 1): number {
+    scratch.clearRect(0, 0, 1, 1);
+    scratch.globalAlpha = alpha;
+    scratch.fillStyle = css;
+    scratch.fillRect(0, 0, 1, 1);
+    scratch.globalAlpha = 1;
+    const [r, g, b, a] = scratch.getImageData(0, 0, 1, 1).data;
+    return ((a << 24) | (b << 16) | (g << 8) | r) >>> 0;
+}
 
 /**
  * the hero toy: "mike" written in sand, frozen until the visitor touches it.
@@ -95,22 +112,58 @@ export function SandHero() {
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
         const grain = Math.max(2, Math.round(CELL * dpr));
 
-        const drawSky = (mode: ThemeName) => {
-            const engine = engineRef.current;
-            if (!engine) return;
-            const { cols, rows } = engine;
+        // everything is composed at GRID resolution — one buffer pixel per grain —
+        // and upscaled once with smoothing off. the old path issued a fillRect per
+        // grain per frame, which at ~20k grains is ~20k canvas state changes; this
+        // is one putImageData and one drawImage. same output, and the win is
+        // largest in firefox, where each fillRect crosses into the c++ canvas
+        // implementation rather than being batched the way skia batches them.
+        const src = document.createElement("canvas");
+        const srcCtx = src.getContext("2d");
+        // 1×1 scratch used only to let the browser resolve oklch strings to bytes
+        const swatch = document.createElement("canvas");
+        swatch.width = 1;
+        swatch.height = 1;
+        const swatchCtx = swatch.getContext("2d", { willReadFrequently: true });
+        if (!srcCtx || !swatchCtx) return;
+
+        let buf = new Uint32Array(0);
+        let image = new ImageData(1, 1);
+        /** packed grain colors: packed[material][tint] */
+        let packed: Record<number, Array<number>> = {};
+        let packedSky: Record<string, number> = {};
+        /** star alpha is quantised to 16 steps so twinkling reuses packed colors */
+        let packedStar: Array<number> = [];
+
+        let paletteMode: ThemeName | null = null;
+
+        const buildPalette = (mode: ThemeName) => {
+            paletteMode = mode;
+            packed = {};
+            for (const [material, shades] of Object.entries(PALETTES[mode])) {
+                packed[Number(material)] = shades.map((c) => packColor(swatchCtx, c));
+            }
+            packedSky = {};
+            for (const [key, css] of Object.entries(SKY_COLORS[mode])) {
+                packedSky[key] = packColor(swatchCtx, css);
+            }
+            packedStar = Array.from({ length: 16 }, (_, i) =>
+                packColor(swatchCtx, "oklch(0.92 0.015 90)", (i + 1) / 16)
+            );
+        };
+
+        const drawSky = (mode: ThemeName, cols: number, rows: number) => {
             if (mode === "dark") {
                 // stars twinkle only while the simulation is running
                 for (const s of starsRef.current) {
                     const a = awakeRef.current
                         ? s.base + Math.sin(frameRef.current * 0.05 + s.phase) * 0.25
                         : s.base;
-                    ctx.fillStyle = `oklch(0.92 0.015 90 / ${Math.max(0.15, Math.min(1, a))})`;
-                    ctx.fillRect(s.x * grain, s.y * grain, grain, grain);
+                    const step = Math.max(0, Math.min(15, Math.round(a * 16) - 1));
+                    buf[s.y * cols + s.x] = packedStar[step];
                 }
             }
             const map = mode === "dark" ? MOON : SUN;
-            const colors = SKY_COLORS[mode];
             const px = 2; // grains per pixel-art pixel
             const w = map[0].length * px;
             const bx = Math.max(2, Math.min(Math.round(cols * 0.8), cols - w - 2));
@@ -119,13 +172,17 @@ export function SandHero() {
                 for (let mx = 0; mx < map[my].length; mx++) {
                     const ch = map[my][mx];
                     if (ch === ".") continue;
-                    ctx.fillStyle = colors[ch];
-                    ctx.fillRect(
-                        (bx + mx * px) * grain,
-                        (by + my * px) * grain,
-                        px * grain,
-                        px * grain
-                    );
+                    const color = packedSky[ch];
+                    for (let dy = 0; dy < px; dy++) {
+                        const y = by + my * px + dy;
+                        if (y < 0 || y >= rows) continue;
+                        const row = y * cols;
+                        for (let dx = 0; dx < px; dx++) {
+                            const x = bx + mx * px + dx;
+                            if (x < 0 || x >= cols) continue;
+                            buf[row + x] = color;
+                        }
+                    }
                 }
             }
         };
@@ -134,22 +191,33 @@ export function SandHero() {
             const engine = engineRef.current;
             if (!engine) return;
             const mode = themeRef.current;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawSky(mode);
+            if (mode !== paletteMode) buildPalette(mode);
             const { cols, rows, cells, tint } = engine;
-            const palette = PALETTES[mode];
-            for (let y = 0; y < rows; y++) {
-                const row = y * cols;
-                for (let x = 0; x < cols; x++) {
-                    const m = cells[row + x];
-                    if (m === EMPTY) continue;
-                    ctx.fillStyle = palette[m][tint[row + x] & 3];
-                    ctx.fillRect(x * grain, y * grain, grain, grain);
-                }
+
+            buf.fill(0);
+            drawSky(mode, cols, rows);
+            for (let i = 0; i < cells.length; i++) {
+                const m = cells[i];
+                if (m === EMPTY) continue;
+                buf[i] = packed[m][tint[i] & 3];
             }
-            // glow pass: the blurred copy is the lighting, css does the blur on gpu
+            srcCtx.putImageData(image, 0, 0);
+
+            ctx.imageSmoothingEnabled = false;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(src, 0, 0, canvas.width, canvas.height);
+
+            // glow pass: blur in SOURCE space, then let the upscale spread it. a
+            // css blur on the full-size glow canvas costs radius work per device
+            // pixel; blurring cols×rows first is ~grain² fewer pixels for the
+            // same look, and firefox runs canvas blur on the cpu, so the
+            // reduction is the difference between smooth and not.
             glowCtx.clearRect(0, 0, glow.width, glow.height);
-            if (mode === "dark") glowCtx.drawImage(canvas, 0, 0);
+            if (mode === "dark") {
+                glowCtx.filter = `blur(${GLOW_RADIUS}px)`;
+                glowCtx.drawImage(src, 0, 0);
+                glowCtx.filter = "none";
+            }
         };
         renderRef.current = render;
 
@@ -175,8 +243,15 @@ export function SandHero() {
             const rows = Math.max(30, Math.floor((rect.height * dpr) / grain));
             canvas.width = cols * grain;
             canvas.height = rows * grain;
-            glow.width = cols * grain;
-            glow.height = rows * grain;
+            // the glow canvas keeps its small backing store and is stretched by
+            // css, so the blur above is the only blur anyone pays for
+            glow.width = cols;
+            glow.height = rows;
+            src.width = cols;
+            src.height = rows;
+            image = new ImageData(cols, rows);
+            buf = new Uint32Array(image.data.buffer);
+            buildPalette(themeRef.current);
             const engine = new SandEngine(cols, rows);
             engineRef.current = engine;
             const starCount = Math.min(90, Math.floor((cols * rows) / 350));
