@@ -4,6 +4,7 @@ import { Experience } from "../components/experience";
 import { ExperienceStrata } from "../components/experience-strata";
 import { ExperienceRunon } from "../components/experience-runon";
 import { ExperienceHandover } from "../components/experience-handover";
+import { ExperienceCustody } from "../components/experience-custody";
 import "./compare.css";
 
 export const Route = createFileRoute("/compare")({ component: Compare });
@@ -38,10 +39,16 @@ const VARIANTS = [
         blurb: "sorted by how much of each build was actually his, descending — which puts the 450-commit mvp above the 900-commit app and the famous clients last. the hollow marks name what wasn't his, which is what makes the rest credible.",
         render: () => <ExperienceHandover />,
     },
+    {
+        id: "custody",
+        label: "e · handover, expanded",
+        blurb: "d's layout with the content corrected from mike's own account: the room planner (babylon.js, asset-optimization pipeline) and the manufacturer platform (whole b2b section) promoted to real entries, the energy-group work no longer reading as a cameo, the pharmacy portal honestly small at the bottom.",
+        render: () => <ExperienceCustody />,
+    },
 ];
 
 function Compare() {
-    const [active, setActive] = useState(VARIANTS[0].id);
+    const [active, setActive] = useState("custody");
     const current = VARIANTS.find((v) => v.id === active) ?? VARIANTS[0];
 
     return (
