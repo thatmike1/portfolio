@@ -849,3 +849,119 @@ a:hover {
     transform: none;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* scroll polish: project rows                                         */
+/* ------------------------------------------------------------------ */
+
+/* everything below is scroll-driven and pure css — no javascript, no observer.
+   the whole block lives inside @supports, so a browser without scroll-driven
+   animations gets the static page exactly as it was: hairlines drawn, rows
+   opaque, no rail. same for anyone who asked for reduced motion */
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* the hairline draws itself left to right as the row arrives, so the list
+       reads like it is being ruled a row at a time. the real border hands over
+       to a pseudo-element of the same colour — same pixel, same place */
+    .project {
+      position: relative;
+      border-top-color: transparent;
+      /* the rule is 1px tall, and a view() timeline of its own would span 1px of
+         scroll — it would pop, not draw. so it rides the row's timeline instead */
+      view-timeline: --row block;
+    }
+
+    .project::before {
+      content: '';
+      position: absolute;
+      inset: -1px 0 auto 0;
+      height: 1px;
+      background: var(--hairline);
+      transform: scaleX(0);
+      transform-origin: left center;
+      animation: row-rule linear both;
+      animation-timeline: --row;
+      animation-range: entry 0% entry 32%;
+    }
+
+    /* the row's two columns rise into place, left column a beat ahead of the
+       right. short and early: it is finished long before the row is the thing
+       you are reading. transform and opacity only, so nothing reflows */
+    .project-head,
+    .project-body {
+      animation: row-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 8% entry 75%;
+    }
+
+    .project-body {
+      animation-range: entry 18% entry 90%;
+    }
+
+    /* a hairline rail in the left margin that fills raspberry as you read down
+       the list — the only progress indicator on the page, and it is the same
+       1px vocabulary as the row rules rather than a bar bolted to the top */
+    .project-list {
+      position: relative;
+    }
+
+    .project-list::before,
+    .project-list::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: -1.25rem;
+      width: 2px;
+      border-radius: 1px;
+      pointer-events: none;
+    }
+
+    .project-list::before {
+      background: var(--hairline);
+    }
+
+    .project-list::after {
+      background: var(--rasp);
+      transform: scaleY(0);
+      transform-origin: top center;
+      animation: rail-fill linear both;
+      animation-timeline: view();
+      /* contain, not cover: the rail tracks the viewport's progress through the
+         list itself, so it is full exactly when the last row is done */
+      animation-range: contain 0% contain 100%;
+    }
+
+    /* no room for the rail once the container margin is all there is */
+    @media (max-width: 720px) {
+      .project-list::before,
+      .project-list::after {
+        display: none;
+      }
+    }
+  }
+}
+
+@keyframes row-rule {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes row-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rail-fill {
+  to {
+    transform: scaleY(1);
+  }
+}
