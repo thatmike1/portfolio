@@ -48,7 +48,7 @@ type Action = {
 const ACTIONS: Array<Action> = [
     { href: "mailto:misa.psencik@gmail.com", label: "misa.psencik@gmail.com", primary: true },
     { href: "https://github.com/thatmike1", label: "github.com/thatmike1" },
-    { href: "https://linkedin.com/in/michal-psencik", label: "linkedin" },
+    { href: "https://www.linkedin.com/in/michal-psencik-304303145/", label: "linkedin" },
     { href: "/cv-michal-psencik-en.pdf", label: "cv (pdf)", newTab: true },
     { href: "/", label: "full portfolio" },
 ];
@@ -212,7 +212,7 @@ function Hire() {
                             <a href="https://github.com/thatmike1">github.com/thatmike1</a>
                         </li>
                         <li>
-                            <a href="https://linkedin.com/in/michal-psencik">linkedin</a>
+                            <a href="https://www.linkedin.com/in/michal-psencik-304303145/">linkedin</a>
                         </li>
                         <li>
                             <a
