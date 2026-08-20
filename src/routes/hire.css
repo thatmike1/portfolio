@@ -1,0 +1,198 @@
+/*
+ * /hire only. everything here is typography and hairlines on the existing tokens:
+ * no new colours, no gradients, no flat raspberry, and no animation beyond the
+ * 180ms hovers the rest of the site already uses. raspberry appears as an
+ * outline, a link colour and one soft hover tint, never as a solid surface.
+ */
+
+.hire-head {
+  /* the custody section brings its own generous top padding, so this side stays short */
+  padding-block: clamp(3.5rem, 9vw, 6rem) clamp(1rem, 2.5vw, 1.75rem);
+}
+
+/* the site's documented h1 step. the name gets it: on this page the person is
+   the headline and the job title is the sub, not the other way round */
+.hire-head h1 {
+  font-size: clamp(2.6rem, 6.5vw, 5rem);
+}
+
+.hire-role {
+  margin-top: clamp(0.6rem, 1.5vw, 0.9rem);
+  font-size: clamp(1.35rem, 3vw, 2.1rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+/* the site's .lede in every respect except the measure: 52ch rather than 38ch,
+   because this one is a fact sheet line and not a hero flourish */
+.hire-lede {
+  margin-top: clamp(1.25rem, 3vw, 1.75rem);
+  max-width: 52ch;
+  font-size: clamp(1.15rem, 2.2vw, 1.45rem);
+  line-height: 1.5;
+  font-weight: 450;
+}
+
+/* --------------------------------------------------------------- */
+/* facts                                                             */
+/* --------------------------------------------------------------- */
+
+/* mono metadata, same size as the stack lines everywhere else. the separator is
+   generated with empty alt text so a screen reader hears four facts, not four
+   facts and three middots. the column gap does the real spacing, so an
+   engine that drops the generated content still reads as four facts */
+.hire-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.75rem;
+  list-style: none;
+  margin: clamp(1.75rem, 4vw, 2.25rem) 0 0;
+  padding: clamp(1rem, 2.5vw, 1.4rem) 0 0;
+  border-top: 1px solid var(--hairline);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.hire-facts li:not(:last-child)::after {
+  content: '·' / '';
+  margin-inline-start: 0.75rem;
+  color: var(--muted);
+}
+
+/* --------------------------------------------------------------- */
+/* actions                                                           */
+/* --------------------------------------------------------------- */
+
+.hire-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+/* the hero's material chips are the precedent, shape included: every chip in the
+   system is a full-radius pill. the border is derived from --ink so it survives
+   the theme flip without a token of its own */
+.hire-action {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.05rem;
+  border: 1px solid color-mix(in oklch, var(--ink) 28%, transparent);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    border-color 180ms var(--ease-out),
+    background-color 180ms var(--ease-out),
+    color 180ms var(--ease-out);
+}
+
+.hire-action:hover {
+  border-color: var(--rasp);
+  color: var(--rasp-deep);
+}
+
+/* one primary: the email address. raspberry as an outline at rest, and a tint
+   rather than a fill under the pointer, because a solid raspberry chip would drop the
+   label below AA in the light theme */
+.hire-action--primary {
+  border-color: var(--rasp);
+  color: var(--rasp-deep);
+}
+
+.hire-action--primary:hover {
+  background: color-mix(in oklch, var(--rasp) 12%, transparent);
+}
+
+/* --------------------------------------------------------------- */
+/* shipped                                                           */
+/* --------------------------------------------------------------- */
+
+.hire-shipped {
+  padding-block: clamp(3rem, 7vw, 5rem);
+}
+
+.hire-shipped h2 {
+  font-size: clamp(1.9rem, 4.5vw, 3.1rem);
+}
+
+.hire-shipped-list {
+  list-style: none;
+  margin: clamp(1.75rem, 4vw, 2.75rem) 0 0;
+  padding: 0;
+}
+
+/* the custody section's column split, not the front page's: those two sit next
+   to each other here and a shared spine is the point. hairline separation and a
+   tighter rhythm, because there is nothing to look at, only to read */
+.hire-row {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1fr) minmax(0, 1.35fr);
+  column-gap: clamp(1.5rem, 4vw, 3.5rem);
+  padding-block: clamp(1.75rem, 4vw, 2.75rem);
+  border-top: 1px solid var(--hairline);
+}
+
+.hire-row-name {
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
+  letter-spacing: -0.02em;
+}
+
+.hire-row-tag,
+.hire-row-stack {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.hire-row-tag {
+  margin-top: 0.5rem;
+}
+
+.hire-row-stack {
+  margin-top: 0.4rem;
+}
+
+.hire-row p {
+  max-width: 62ch;
+}
+
+.hire-row-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.75rem;
+  list-style: none;
+  margin: 0.9rem 0 0;
+  padding: 0;
+  font-size: 0.95rem;
+}
+
+/* --------------------------------------------------------------- */
+/* responsive                                                        */
+/* --------------------------------------------------------------- */
+
+@media (max-width: 720px) {
+  .hire-row {
+    grid-template-columns: 1fr;
+    row-gap: 0.9rem;
+  }
+}
+
+/* on a phone the pills wrap into ragged rows of one and two. stacked full-width
+   they read as a list of ways to reach him, which is what they are */
+@media (max-width: 480px) {
+  .hire-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .hire-action {
+    justify-content: center;
+  }
+}

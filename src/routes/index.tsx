@@ -429,6 +429,9 @@ function Home() {
                                 <a href="mailto:misa.psencik@gmail.com">misa.psencik@gmail.com</a>
                             </li>
                         </ul>
+                        <p className="footer-hire">
+                            <a href="/hire">hiring? there's a page for that</a>
+                        </p>
                         <p className="colophon">
                             built with tanstack start, because i lowkey hate next.js. set in sora,
                             which is also my dog's name. no cookies, no analytics, just sand.
