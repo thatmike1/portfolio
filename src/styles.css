@@ -1055,6 +1055,165 @@ a:focus-visible {
   }
 }
 
+/* registered so the dog-ear on the hire nudge can animate its size; a browser that
+   doesn't know @property just snaps between the two values */
+@property --fold {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 1.1rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* hire nudge                                                          */
+/* ------------------------------------------------------------------ */
+
+/* the recruiter door, offered from the bottom-left corner while the reader is in the
+   side projects. a sheet of the page's own surface with one dog-ear folded over at the
+   top right: the fold grows a touch under the pointer, the closest this page gets to
+   peeling back and showing the other page underneath. the left margin is free on every
+   width (the section nav and theme toggle both live on the right) */
+.hire-nudge {
+  position: fixed;
+  z-index: 30;
+  left: 1.25rem;
+  bottom: 1.25rem;
+  width: min(21rem, calc(100vw - 2.5rem));
+  padding: 1.1rem 1.25rem 1.15rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--hairline);
+  /* --fold is the size of the dog-ear; the corner is clipped away so the fold's own
+     triangle reads as the page behind showing through */
+  --fold: 1.1rem;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--fold)) 0,
+    100% var(--fold),
+    100% 100%,
+    0 100%
+  );
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(0.6rem);
+  transition:
+    opacity 260ms var(--ease-out),
+    transform 320ms var(--ease-out),
+    visibility 260ms var(--ease-out),
+    --fold 220ms var(--ease-out);
+}
+
+.hire-nudge.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+}
+
+/* the turned-over corner: a triangle in the raspberry, sitting exactly where the
+   clip removed the surface, so it looks folded rather than painted on */
+.hire-nudge::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--fold);
+  height: var(--fold);
+  background: linear-gradient(
+    225deg,
+    transparent 50%,
+    var(--rasp) 50%,
+    var(--rasp-deep) 100%
+  );
+  transition: inherit;
+}
+
+@media (hover: hover) {
+  .hire-nudge:hover {
+    --fold: 1.7rem;
+  }
+}
+
+.hire-nudge-title {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  font-size: 1.02rem;
+}
+
+.hire-nudge-body {
+  margin: 0.4rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.hire-nudge-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.55rem 1rem;
+  margin: 0.9rem 0 0;
+  font-size: 0.88rem;
+}
+
+/* the same pill as the hire page's actions, so the card already speaks in the
+   accent of the page it points to */
+.hire-nudge-cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.42rem 0.85rem;
+  border: 1px solid var(--rasp);
+  border-radius: 999px;
+  color: var(--rasp-deep);
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color 180ms var(--ease-out),
+    color 180ms var(--ease-out);
+}
+
+.hire-nudge-cta .arrow {
+  display: inline-block;
+  margin-left: 0.35em;
+  transition: transform 180ms var(--ease-out);
+}
+
+.hire-nudge-cta:hover {
+  background: color-mix(in oklch, var(--rasp) 12%, transparent);
+}
+
+.hire-nudge-cta:hover .arrow {
+  transform: translateX(0.2em);
+}
+
+.hire-nudge-dismiss {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.82rem;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, currentColor 35%, transparent);
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+  transition: color 160ms var(--ease-out);
+}
+
+.hire-nudge-dismiss:hover {
+  color: var(--ink);
+}
+
+@media (max-width: 720px) {
+  .hire-nudge {
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    width: auto;
+  }
+}
+
 /* anchor jumps glide only for readers who did not ask for stillness; under reduced
    motion the same link lands instantly */
 @media (prefers-reduced-motion: no-preference) {

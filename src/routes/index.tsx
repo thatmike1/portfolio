@@ -6,6 +6,7 @@ import { GrainCursor } from "../components/grain-cursor";
 import { ExperienceCustody } from "../components/experience-custody";
 import { LightboxProvider, useLightbox } from "../components/lightbox";
 import { SectionNav } from "../components/section-nav";
+import { HireNudge } from "../components/hire-nudge";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -314,6 +315,7 @@ function Home() {
             <main>
                 <GrainCursor />
                 <SectionNav />
+                <HireNudge />
                 <header className="hero" id="top">
                     <SandHero />
                     <div className="container hero-copy">
