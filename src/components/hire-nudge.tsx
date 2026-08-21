@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 /** the section whose reading the nudge accompanies; it is hidden everywhere else on the page */
 const SECTION_ID = "things-i-made";
-const STORAGE_KEY = "hire-nudge-dismissed";
+const STORAGE_KEY = "hire-nudge-collapsed";
 
 /**
  * a small card pinned bottom-left that offers the recruiter door while the reader is
@@ -11,18 +11,20 @@ const STORAGE_KEY = "hire-nudge-dismissed";
  * that), and once the reader reaches the paid work it has nothing left to say, so
  * it goes.
  *
- * one dismissal lasts the tab: the card is an offer, not a nag.
+ * dismissing folds the card down to a small tab at the edge rather than removing it,
+ * the way a cookie banner leaves a fingerprint behind: the offer stays reachable,
+ * it just stops taking up room. the folded state lasts the browser tab.
  */
 export function HireNudge() {
     const [inSection, setInSection] = useState(false);
-    const [dismissed, setDismissed] = useState(true);
+    const [collapsed, setCollapsed] = useState(false);
 
     // read storage after hydration so server and first client render agree
     useEffect(() => {
         try {
-            setDismissed(sessionStorage.getItem(STORAGE_KEY) === "1");
+            setCollapsed(sessionStorage.getItem(STORAGE_KEY) === "1");
         } catch {
-            setDismissed(false);
+            // no storage: start open
         }
     }, []);
 
@@ -39,39 +41,50 @@ export function HireNudge() {
         return () => observer.disconnect();
     }, []);
 
-    const visible = inSection && !dismissed;
+    const open = inSection && !collapsed;
+    const folded = inSection && collapsed;
 
-    const dismiss = () => {
-        setDismissed(true);
+    const fold = (next: boolean) => {
+        setCollapsed(next);
         try {
-            sessionStorage.setItem(STORAGE_KEY, "1");
+            sessionStorage.setItem(STORAGE_KEY, next ? "1" : "0");
         } catch {
-            // private mode or storage full: the card still goes for this render
+            // private mode or storage full: the state still flips for this render
         }
     };
 
     useEffect(() => {
-        if (!visible) return;
+        if (!open) return;
         const onKey = (event: KeyboardEvent) => {
-            if (event.key === "Escape") dismiss();
+            if (event.key === "Escape") fold(true);
         };
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
-    }, [visible]);
+    }, [open]);
 
     return (
         <aside
-            className={`hire-nudge${visible ? " is-visible" : ""}`}
+            className={`hire-nudge${open ? " is-visible" : ""}${folded ? " is-folded" : ""}`}
             aria-label="hiring?"
-            aria-hidden={visible ? undefined : "true"}
+            aria-hidden={inSection ? undefined : "true"}
         >
+            <button
+                type="button"
+                className="hire-nudge-tab"
+                onClick={() => fold(false)}
+                aria-expanded={open}
+                tabIndex={folded ? undefined : -1}
+            >
+                hiring?
+                <span className="hire-nudge-caret" aria-hidden="true" />
+            </button>
             <p className="hire-nudge-title">not here for the sand?</p>
             <p className="hire-nudge-body">
                 there's a page for people who are hiring: the paid work, the stack, the dates,
                 none of the toys.
             </p>
             <p className="hire-nudge-actions">
-                <a className="hire-nudge-cta" href="/hire" tabIndex={visible ? undefined : -1}>
+                <a className="hire-nudge-cta" href="/hire" tabIndex={open ? undefined : -1}>
                     see the hire page
                     <span className="arrow" aria-hidden="true">
                         {"→"}
@@ -80,8 +93,8 @@ export function HireNudge() {
                 <button
                     type="button"
                     className="hire-nudge-dismiss"
-                    onClick={dismiss}
-                    tabIndex={visible ? undefined : -1}
+                    onClick={() => fold(true)}
+                    tabIndex={open ? undefined : -1}
                 >
                     i'm fine with the sand
                 </button>
