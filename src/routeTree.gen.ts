@@ -11,6 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as HireRouteImport } from './routes/hire'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LabIndexRouteImport } from './routes/lab/index'
+import { Route as LabRedlineRouteImport } from './routes/lab/redline'
+import { Route as LabFrostRouteImport } from './routes/lab/frost'
+import { Route as LabFragileRouteImport } from './routes/lab/fragile'
+import { Route as LabDustRouteImport } from './routes/lab/dust'
 
 const HireRoute = HireRouteImport.update({
   id: '/hire',
@@ -22,31 +27,98 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LabIndexRoute = LabIndexRouteImport.update({
+  id: '/lab/',
+  path: '/lab/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LabRedlineRoute = LabRedlineRouteImport.update({
+  id: '/lab/redline',
+  path: '/lab/redline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LabFrostRoute = LabFrostRouteImport.update({
+  id: '/lab/frost',
+  path: '/lab/frost',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LabFragileRoute = LabFragileRouteImport.update({
+  id: '/lab/fragile',
+  path: '/lab/fragile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LabDustRoute = LabDustRouteImport.update({
+  id: '/lab/dust',
+  path: '/lab/dust',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/hire': typeof HireRoute
+  '/lab/dust': typeof LabDustRoute
+  '/lab/fragile': typeof LabFragileRoute
+  '/lab/frost': typeof LabFrostRoute
+  '/lab/redline': typeof LabRedlineRoute
+  '/lab/': typeof LabIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/hire': typeof HireRoute
+  '/lab/dust': typeof LabDustRoute
+  '/lab/fragile': typeof LabFragileRoute
+  '/lab/frost': typeof LabFrostRoute
+  '/lab/redline': typeof LabRedlineRoute
+  '/lab': typeof LabIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/hire': typeof HireRoute
+  '/lab/dust': typeof LabDustRoute
+  '/lab/fragile': typeof LabFragileRoute
+  '/lab/frost': typeof LabFrostRoute
+  '/lab/redline': typeof LabRedlineRoute
+  '/lab/': typeof LabIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/hire'
+  fullPaths:
+    | '/'
+    | '/hire'
+    | '/lab/dust'
+    | '/lab/fragile'
+    | '/lab/frost'
+    | '/lab/redline'
+    | '/lab/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/hire'
-  id: '__root__' | '/' | '/hire'
+  to:
+    | '/'
+    | '/hire'
+    | '/lab/dust'
+    | '/lab/fragile'
+    | '/lab/frost'
+    | '/lab/redline'
+    | '/lab'
+  id:
+    | '__root__'
+    | '/'
+    | '/hire'
+    | '/lab/dust'
+    | '/lab/fragile'
+    | '/lab/frost'
+    | '/lab/redline'
+    | '/lab/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HireRoute: typeof HireRoute
+  LabDustRoute: typeof LabDustRoute
+  LabFragileRoute: typeof LabFragileRoute
+  LabFrostRoute: typeof LabFrostRoute
+  LabRedlineRoute: typeof LabRedlineRoute
+  LabIndexRoute: typeof LabIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +137,52 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lab/': {
+      id: '/lab/'
+      path: '/lab'
+      fullPath: '/lab/'
+      preLoaderRoute: typeof LabIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lab/redline': {
+      id: '/lab/redline'
+      path: '/lab/redline'
+      fullPath: '/lab/redline'
+      preLoaderRoute: typeof LabRedlineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lab/frost': {
+      id: '/lab/frost'
+      path: '/lab/frost'
+      fullPath: '/lab/frost'
+      preLoaderRoute: typeof LabFrostRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lab/fragile': {
+      id: '/lab/fragile'
+      path: '/lab/fragile'
+      fullPath: '/lab/fragile'
+      preLoaderRoute: typeof LabFragileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lab/dust': {
+      id: '/lab/dust'
+      path: '/lab/dust'
+      fullPath: '/lab/dust'
+      preLoaderRoute: typeof LabDustRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HireRoute: HireRoute,
+  LabDustRoute: LabDustRoute,
+  LabFragileRoute: LabFragileRoute,
+  LabFrostRoute: LabFrostRoute,
+  LabRedlineRoute: LabRedlineRoute,
+  LabIndexRoute: LabIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
