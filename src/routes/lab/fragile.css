@@ -1,0 +1,253 @@
+/* fragile — the front page, printed on glass.
+   no palette of its own: it borrows the global tokens so it reads as the real
+   site in both themes. the only thing this file styles is the sheet and what is
+   printed on it. */
+
+.fragile-page {
+    /* the gutter the crumb and the hint hang off, and the sheet's own margin */
+    --edge: clamp(1.1rem, 2.6vw, 2.25rem);
+
+    position: relative;
+    isolation: isolate;
+    min-height: 100svh;
+    background: var(--bg);
+}
+
+/* while the glass is live the sheet is exactly one viewport and scrolls inside
+   itself, because the shader can only break what it can see. with the effect off
+   the page is an ordinary document again and scrolls the ordinary way. */
+.fragile-page.is-live {
+    height: 100svh;
+    overflow: hidden;
+}
+
+/* ------------------------------------------------------------------ */
+/* chrome: the way out, and the hint                                   */
+/* ------------------------------------------------------------------ */
+
+.fragile-crumb {
+    position: absolute;
+    z-index: 3;
+    top: var(--edge);
+    left: var(--edge);
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+}
+
+.fragile-crumb a {
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 180ms var(--ease-out);
+}
+
+.fragile-crumb a:hover {
+    color: var(--rasp-deep);
+}
+
+.fragile-hint {
+    margin: 0;
+    padding: 0 var(--edge) calc(var(--edge) + 1.4rem);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    line-height: 1.7;
+    color: var(--muted);
+}
+
+/* pinned only while the glass is live: with the effect off the line is just the
+   last thing in the document, and gluing it to the viewport would park it on top
+   of whatever the reader happens to be looking at */
+.fragile-hint--pinned {
+    position: absolute;
+    z-index: 3;
+    left: var(--edge);
+    bottom: var(--edge);
+    padding: 0;
+    pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* the sheet                                                           */
+/* ------------------------------------------------------------------ */
+
+.fragile-pane {
+    height: 100svh;
+}
+
+.fragile-pane--plain {
+    height: auto;
+    min-height: 100svh;
+}
+
+.fragile-scene {
+    width: min(100% - 3rem, 62rem);
+    margin-inline: auto;
+    /* clears the crumb above and the pinned hint below */
+    padding-block: calc(var(--edge) + clamp(3rem, 8vw, 5.5rem))
+        calc(var(--edge) + clamp(3rem, 7vw, 4.5rem));
+}
+
+.fragile-kicker {
+    margin: 0 0 1.1rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+}
+
+.fragile-scene h1 {
+    margin: 0;
+    font-size: clamp(2.6rem, 6.5vw, 5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+    text-wrap: balance;
+}
+
+.fragile-lede {
+    margin: 1.1rem 0 0;
+    max-width: 62ch;
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    text-wrap: pretty;
+}
+
+/* ------------------------------------------------------------------ */
+/* project rows — the front page's grammar, leaner                     */
+/* ------------------------------------------------------------------ */
+
+.fragile-rows {
+    list-style: none;
+    margin: clamp(2.5rem, 6vw, 4rem) 0 0;
+    padding: 0;
+    border-bottom: 1px solid var(--hairline);
+}
+
+.fragile-row {
+    display: grid;
+    grid-template-columns: minmax(14rem, 2fr) 3fr;
+    gap: clamp(1.25rem, 4vw, 3.5rem);
+    padding-block: clamp(1.6rem, 3.6vw, 2.6rem);
+    border-top: 1px solid var(--hairline);
+}
+
+@media (max-width: 720px) {
+    .fragile-row {
+        grid-template-columns: 1fr;
+        gap: 0.9rem;
+    }
+}
+
+.fragile-row-name {
+    display: inline-block;
+    width: fit-content;
+    font-size: clamp(1.7rem, 3.2vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--ink);
+    text-decoration: none;
+    transition: color 180ms var(--ease-out);
+}
+
+.fragile-row-name:hover {
+    color: var(--rasp-deep);
+}
+
+.fragile-row-name--static {
+    cursor: default;
+}
+
+.fragile-arrow {
+    display: inline-block;
+    margin-left: 0.18em;
+    font-size: 0.7em;
+    color: var(--rasp);
+    transition: transform 180ms var(--ease-out);
+}
+
+.fragile-row-name:hover .fragile-arrow {
+    transform: translate(0.15em, -0.15em);
+}
+
+.fragile-row-tagline {
+    margin: 0.5rem 0 0;
+    font-weight: 600;
+    text-wrap: pretty;
+}
+
+.fragile-row-stack {
+    margin: 0.7rem 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    line-height: 1.6;
+    color: var(--muted);
+}
+
+.fragile-row-note {
+    margin: 0.55rem 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    line-height: 1.6;
+    color: var(--muted);
+}
+
+.fragile-row-line {
+    margin: 0;
+    align-self: center;
+    max-width: 62ch;
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    text-wrap: pretty;
+}
+
+/* ------------------------------------------------------------------ */
+/* foot                                                                */
+/* ------------------------------------------------------------------ */
+
+.fragile-foot {
+    margin-top: clamp(2rem, 5vw, 3rem);
+}
+
+.fragile-say {
+    margin: 0;
+    font-size: clamp(1.2rem, 2.4vw, 1.6rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.fragile-say a,
+.fragile-colophon a {
+    color: var(--rasp-deep);
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+    transition: text-underline-offset 180ms var(--ease-out);
+}
+
+.fragile-say a:hover,
+.fragile-colophon a:hover {
+    text-underline-offset: 0.3em;
+}
+
+.fragile-colophon {
+    margin: 1rem 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    line-height: 1.7;
+    color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fragile-crumb a,
+    .fragile-row-name,
+    .fragile-arrow,
+    .fragile-say a,
+    .fragile-colophon a {
+        transition: none;
+    }
+
+    .fragile-row-name:hover .fragile-arrow {
+        transform: none;
+    }
+}

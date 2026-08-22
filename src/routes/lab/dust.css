@@ -1,0 +1,239 @@
+/* ------------------------------------------------------------------ */
+/* dust — the page that admits it is made of grains                     */
+/* ------------------------------------------------------------------ */
+
+/* the page pins the dark palette from styles.css to itself instead of reading the
+   site theme. dust is light-coloured, and light needs a dark room: in the white
+   theme the grains would be soot on paper, which is a different and worse idea.
+   scoped to this element, so nothing else on the site is touched.
+
+   --bg here is handed to the shader verbatim as ParticleReveal's `background`
+   (PAGE_BG in dust.tsx). the two must never drift apart: the effect tells ui from
+   empty room by measuring contrast against that colour, and a mismatch turns the
+   whole background into dust that never settles. */
+.dust-page {
+    --bg: oklch(0.13 0.01 357);
+    --surface: oklch(0.18 0.012 357);
+    --ink: oklch(0.93 0.006 357);
+    --muted: oklch(0.7 0.015 357);
+    --rasp: oklch(0.6 0.22 357);
+    --rasp-deep: oklch(0.74 0.17 357);
+    --hairline: oklch(0.93 0.006 357 / 0.16);
+    /* the second grain colour, in the dose the front page uses it: never a surface,
+       only a mark small enough to read as one stray amber speck */
+    --amber: oklch(0.78 0.14 75);
+
+    /* the crumb and the hint sit in the page's own margin, lined up with the
+       container's edge at every width: past 68rem the gutter grows, below it the
+       1.5rem holds */
+    --gutter: max(1.5rem, calc((100% - 68rem) / 2));
+
+    position: relative;
+    min-height: 100svh;
+    background: var(--bg);
+    color: var(--ink);
+    color-scheme: dark;
+    overscroll-behavior: none;
+}
+
+.dust-crumb,
+.dust-hint {
+    position: absolute;
+    z-index: 2;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+}
+
+.dust-crumb {
+    top: clamp(1rem, 2.5vh, 1.6rem);
+    left: var(--gutter);
+}
+
+.dust-crumb a {
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 180ms var(--ease-out);
+}
+
+.dust-crumb a:hover {
+    color: var(--rasp-deep);
+}
+
+.dust-hint {
+    bottom: clamp(1rem, 2.5vh, 1.6rem);
+    left: var(--gutter);
+    max-width: calc(100% - var(--gutter) * 2);
+    pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* the stage                                                           */
+/* ------------------------------------------------------------------ */
+
+/* with the effect live the canvas needs a definite box to size itself against, and
+   the wrapper's own content div scrolls inside it. with the effect off there is no
+   canvas to satisfy, so the stage grows and the page scrolls normally — on a short
+   phone that is the difference between a nested scroller and an ordinary page */
+.dust-stage {
+    min-height: 100svh;
+}
+
+.dust-stage--live {
+    height: 100svh;
+}
+
+/* content is vertically centred but never clipped: the flex box grows past the
+   viewport when the rows do not fit, rather than pushing the heading off the top */
+.dust-inner {
+    display: flex;
+    align-items: center;
+    min-height: 100svh;
+    padding-block: clamp(3.5rem, 8vh, 5.5rem) clamp(3rem, 7vh, 4.5rem);
+}
+
+/* the site container, but the selector is doubled up so this beats .container's own
+   width whichever order the two stylesheets land in */
+.dust-inner .dust-body {
+    width: min(100% - 3rem, 68rem);
+    margin-inline: auto;
+}
+
+.dust-title {
+    font-size: clamp(2.4rem, 5.6vw, 4.2rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+}
+
+.dust-lede {
+    max-width: 46ch;
+    margin-top: 1.1rem;
+    font-size: clamp(1.1rem, 2vw, 1.35rem);
+    line-height: 1.5;
+    font-weight: 450;
+}
+
+/* the annotation that explains the trick. mono, because it is metadata about the
+   page rather than part of it */
+.dust-meta {
+    max-width: 62ch;
+    margin-top: 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    line-height: 1.75;
+    color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* project rows                                                        */
+/* ------------------------------------------------------------------ */
+
+/* hairlines, not cards: the front page's rule, compressed to one screen. four
+   columns — the grain number, the name, what it is, what it is made of */
+.dust-rows {
+    list-style: none;
+    margin: clamp(1.6rem, 4vh, 2.6rem) 0 0;
+    padding: 0;
+    border-bottom: 1px solid var(--hairline);
+}
+
+.dust-row {
+    display: grid;
+    grid-template-columns: auto minmax(8rem, 11rem) minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 0.25rem 1.4rem;
+    padding-block: clamp(0.7rem, 1.7vh, 1.05rem);
+    border-top: 1px solid var(--hairline);
+}
+
+/* the one amber in the room: a counter small enough to pass for a stray grain */
+.dust-index {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--amber);
+}
+
+.dust-name {
+    font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    text-decoration: none;
+    transition: color 180ms var(--ease-out);
+}
+
+.dust-name:hover {
+    color: var(--rasp-deep);
+}
+
+.dust-name--static {
+    cursor: default;
+}
+
+.dust-tagline {
+    max-width: 62ch;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--ink);
+}
+
+.dust-stack {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    line-height: 1.6;
+    color: var(--muted);
+    text-align: right;
+}
+
+/* ------------------------------------------------------------------ */
+/* contact                                                             */
+/* ------------------------------------------------------------------ */
+
+.dust-contact {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 0.75rem;
+    margin-top: clamp(1.2rem, 3vh, 1.9rem);
+    font-size: 1.0625rem;
+    font-weight: 600;
+}
+
+.dust-sep {
+    color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* narrow                                                              */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 780px) {
+    .dust-page {
+        --gutter: 1.25rem;
+    }
+
+    /* the stack drops under the tagline and both tuck in behind the counter, so the
+       number keeps ruling the left edge the way it does on the wide layout */
+    .dust-row {
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 0.15rem 0.9rem;
+    }
+
+    .dust-tagline,
+    .dust-stack {
+        grid-column: 2;
+        text-align: left;
+    }
+
+    .dust-stack {
+        margin-top: 0.15rem;
+    }
+
+    .dust-inner .dust-body {
+        width: min(100% - 2.5rem, 68rem);
+    }
+}

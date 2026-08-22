@@ -1,0 +1,280 @@
+/* ------------------------------------------------------------------ */
+/* cold start — a window at night, frozen over                         */
+/* ------------------------------------------------------------------ */
+
+/* the palette is redeclared here rather than on :root, so this page is dark
+   whatever the site theme says and nothing leaks back out to the rest of the
+   site. same tokens, same oklch family, one step further into the night than
+   the shipped dark theme: the frost sits on top and lifts everything a little,
+   so the ground underneath has to start lower */
+.frost-page {
+    --bg: oklch(0.11 0.012 357);
+    --surface: oklch(0.16 0.012 357);
+    --ink: oklch(0.94 0.006 357);
+    --muted: oklch(0.68 0.015 357);
+    --rasp: oklch(0.62 0.22 357);
+    --rasp-deep: oklch(0.76 0.17 357);
+    --hairline: oklch(0.94 0.006 357 / 0.14);
+
+    /* the window frame, and what the crumb and the hint hang off */
+    --frame-inset: clamp(0.9rem, 2vw, 1.5rem);
+    --frame-pad: calc(var(--frame-inset) + 1.15rem);
+
+    position: relative;
+    isolation: isolate;
+    min-height: 100svh;
+    background: var(--bg);
+    color: var(--ink);
+}
+
+/* with the effect running the pane owns the scrolling: the frost component
+   scrolls its own content and feeds the offset to the shader, so the document
+   itself has to stay still */
+.frost-page.is-live {
+    height: 100svh;
+    overflow: hidden;
+}
+
+/* the window frame. one hairline, drawn outside the effect, so it stays crisp
+   while the glass in the middle melts */
+.frost-page::after {
+    content: "";
+    position: absolute;
+    z-index: 2;
+    inset: var(--frame-inset);
+    border: 1px solid var(--hairline);
+    pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* chrome: the way out, and the hint                                   */
+/* ------------------------------------------------------------------ */
+
+.frost-crumb {
+    position: absolute;
+    z-index: 3;
+    top: var(--frame-pad);
+    left: var(--frame-pad);
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+}
+
+.frost-crumb a {
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 180ms var(--ease-out);
+}
+
+.frost-crumb a:hover {
+    color: var(--rasp-deep);
+}
+
+.frost-hint {
+    margin: 0;
+    padding: 0 var(--frame-pad) calc(var(--frame-inset) + 1.6rem);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    line-height: 1.7;
+    color: var(--muted);
+}
+
+/* pinned only while the frost is live: with the effect off the page scrolls
+   normally, and the line belongs at the end of it rather than glued to the
+   viewport over whatever happens to be there */
+.frost-hint--pinned {
+    position: absolute;
+    z-index: 3;
+    left: var(--frame-pad);
+    bottom: var(--frame-pad);
+    padding: 0;
+    pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* the pane                                                            */
+/* ------------------------------------------------------------------ */
+
+.frost-pane {
+    height: 100svh;
+}
+
+.frost-pane--plain {
+    height: auto;
+    min-height: 100svh;
+}
+
+.frost-scene {
+    width: min(100% - 3rem, 68rem);
+    margin-inline: auto;
+    padding-block: clamp(5.5rem, 13vh, 9rem) clamp(4.5rem, 10vh, 8rem);
+}
+
+/* ------------------------------------------------------------------ */
+/* copy                                                                */
+/* ------------------------------------------------------------------ */
+
+.frost-kicker {
+    margin: 0 0 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+}
+
+.frost-scene h1 {
+    margin: 0;
+    font-size: clamp(2.6rem, 6.5vw, 5rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+    /* the dark theme already runs a glow pass over the grains; the title gets the
+       faintest version of it, wide and low so it reads as light in the room rather
+       than as a shadow behind the letters */
+    text-shadow: 0 0 44px oklch(0.76 0.17 357 / 0.16);
+}
+
+.frost-lede {
+    max-width: 46ch;
+    margin: 1.4rem 0 0;
+    font-size: clamp(1.15rem, 2.2vw, 1.45rem);
+    font-weight: 450;
+    line-height: 1.5;
+}
+
+.frost-lede em {
+    font-style: normal;
+    font-weight: 700;
+    color: var(--rasp-deep);
+}
+
+/* ------------------------------------------------------------------ */
+/* project rows                                                        */
+/* ------------------------------------------------------------------ */
+
+.frost-rows {
+    list-style: none;
+    margin: clamp(3rem, 7vh, 5rem) 0 0;
+    padding: 0;
+    border-top: 1px solid var(--hairline);
+}
+
+.frost-row {
+    display: grid;
+    grid-template-columns: minmax(13rem, 2fr) 3fr;
+    gap: clamp(1rem, 3vw, 3.5rem);
+    padding-block: clamp(1.6rem, 3.5vh, 2.5rem);
+    border-bottom: 1px solid var(--hairline);
+}
+
+.frost-row-name {
+    display: inline-block;
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    text-decoration: none;
+    /* the names are the one lit thing behind the ice: two raspberry glows, a tight
+       one for the letterforms and a wide one that survives the blur when the frost
+       closes back over the row */
+    text-shadow:
+        0 0 16px oklch(0.76 0.17 357 / 0.3),
+        0 0 46px oklch(0.62 0.22 357 / 0.16);
+    transition:
+        color 180ms var(--ease-out),
+        text-shadow 200ms var(--ease-out);
+}
+
+a.frost-row-name:hover {
+    color: var(--rasp-deep);
+    text-shadow:
+        0 0 16px oklch(0.76 0.17 357 / 0.45),
+        0 0 52px oklch(0.62 0.22 357 / 0.26);
+}
+
+.frost-row-name--static {
+    cursor: default;
+}
+
+.frost-row-tagline {
+    margin: 0.55rem 0 0;
+    font-weight: 600;
+}
+
+.frost-row-stack {
+    margin: 0.6rem 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    line-height: 1.7;
+    color: var(--muted);
+}
+
+.frost-row-line {
+    max-width: 62ch;
+    margin: 0;
+    font-size: 1.0625rem;
+    line-height: 1.65;
+}
+
+.frost-row-live {
+    margin: 0.8rem 0 0;
+    font-weight: 600;
+}
+
+.frost-row-note {
+    margin: 0.7rem 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    line-height: 1.7;
+    color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* foot                                                                */
+/* ------------------------------------------------------------------ */
+
+.frost-foot {
+    margin-top: clamp(2.75rem, 7vh, 4.5rem);
+}
+
+.frost-say {
+    margin: 0;
+    font-size: clamp(1.05rem, 2vw, 1.25rem);
+    font-weight: 600;
+}
+
+.frost-colophon {
+    max-width: 58ch;
+    margin: 1.6rem 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    line-height: 1.9;
+    color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* responsive + motion                                                 */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 720px) {
+    .frost-row {
+        grid-template-columns: 1fr;
+        gap: 0.9rem;
+    }
+
+    .frost-scene {
+        width: min(100% - 2rem, 68rem);
+    }
+}
+
+/* the effect is already switched off in js for anyone who asked for stillness;
+   this is the rest of the page keeping the same promise */
+@media (prefers-reduced-motion: reduce) {
+    .frost-crumb a,
+    .frost-row-name {
+        transition: none;
+    }
+}

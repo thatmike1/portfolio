@@ -70,10 +70,10 @@ function Lab() {
                 </p>
                 <h1>the lab</h1>
                 <p className="lab-lede">
-                    design prototypes, not the portfolio. each one pushes the same identity —
-                    raspberry, sand, lowercase — somewhere the front page doesn't go. built on{" "}
+                    design prototypes, not the portfolio. each one pushes the same identity,
+                    raspberry, sand, lowercase, somewhere the front page doesn't go. built on{" "}
                     <a href="https://canvasui.dev" target="_blank" rel="noreferrer">
-                        canvas ui↗
+                        canvas ui
                     </a>{" "}
                     where marked: real html rendered into canvas, so the text under every effect
                     stays selectable.
@@ -81,8 +81,8 @@ function Lab() {
                 {supported !== null && (
                     <p className="lab-support" data-ok={supported}>
                         {supported
-                            ? "your browser paints html into canvas — full effects are on"
-                            : "your browser can't paint html into canvas yet — the canvas pages fall back to plain html. chrome with the canvas-draw-element flag gets the full thing"}
+                            ? "your browser paints html into canvas. full effects are on"
+                            : "your browser can't paint html into canvas yet, so the canvas pages fall back to plain html. chrome with the canvas-draw-element flag gets the full thing"}
                     </p>
                 )}
             </header>
