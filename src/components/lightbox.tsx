@@ -79,8 +79,8 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
                             className={`lightbox-zoom${actualSize ? " lightbox-zoom--actual" : ""}`}
                             aria-label={
                                 actualSize
-                                    ? `${shot.alt} — fit the shot to the screen`
-                                    : `${shot.alt} — view the shot at full size`
+                                    ? `${shot.alt}: fit the shot to the screen`
+                                    : `${shot.alt}: view the shot at full size`
                             }
                             onClick={() => setActualSize((v) => !v)}
                         >

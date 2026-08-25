@@ -61,7 +61,7 @@ const PROJECTS: Array<Project> = [
             glow: "oklch(0.62 0.16 60)",
             wide: {
                 src: "/ssscribe/desktop.webp",
-                alt: "ssscribe desktop — watch the stream",
+                alt: "ssscribe desktop: watch the stream",
                 width: 1360,
                 height: 836,
             },
@@ -82,10 +82,10 @@ const PROJECTS: Array<Project> = [
             <>
                 i declare what i'm working on and a little ink creature in the corner of my screen
                 watches whether i actually do it. regexes over activitywatch handle the obvious
-                calls; when it genuinely can't tell, it screenshots the screen and asks sonnet —
+                calls; when it genuinely can't tell, it screenshots the screen and asks sonnet,
                 announcing itself first, because a thing that watches you should say when it's
                 looking. drift and it gets agitated. ignore it and it deflates rather than nags. the
-                landing page runs the same loop on you while you read it — tab away and it'll
+                landing page runs the same loop on you while you read it. tab away and it'll
                 notice.
             </>
         ),
@@ -95,7 +95,7 @@ const PROJECTS: Array<Project> = [
         preview: {
             layout: "wide-panels",
             caption:
-                "the live landing page — it runs the real detection loop on you while you read it",
+                "the live landing page runs the real detection loop on you while you read it",
             glow: "oklch(0.6 0.15 230)",
             wide: {
                 src: "/on-task/hero.webp",
@@ -126,8 +126,8 @@ const PROJECTS: Array<Project> = [
             <>
                 everyone writes a CLAUDE.md full of "be concise" and "don't hedge", and nobody knows
                 if any of it lands. this swaps the config, runs the same 48 prompts against a
-                deliberately broken little repo, and counts what changed — words, hedges, lists,
-                tool calls — instead of asking a model whether the answer got better. the first
+                deliberately broken little repo, and counts what changed (words, hedges, lists,
+                tool calls) instead of asking a model whether the answer got better. the first
                 version couldn't produce a negative result, so i killed it and wrote down why. the
                 landing page runs the real counters on whatever you paste in.
             </>
@@ -139,7 +139,7 @@ const PROJECTS: Array<Project> = [
         preview: {
             layout: "single",
             caption:
-                "the counters on the page are the benchmark's own code — a guarded build step keeps them from drifting",
+                "the counters on the page are the benchmark's own code. a guarded build step keeps them from drifting",
             glow: "oklch(0.45 0.13 30)",
             wide: {
                 src: "/cc-bench/instrument.webp",
@@ -329,7 +329,7 @@ function Home() {
                             </span>
                         </h1>
                         <p className="lede">
-                            i'm mike, a full-stack product engineer in czechia — react and
+                            i'm mike, a full-stack product engineer in czechia. react and
                             typescript on top, node underneath, and i'd rather own the whole slice
                             than half of it. i do stuff, sometimes it works and sometimes it
                             doesn't, but give me enough time and i'll make it work.{" "}
@@ -346,7 +346,7 @@ function Home() {
                     <div className="container">
                         <h2 id="projects-heading">things i made</h2>
                         <p className="section-sub">
-                            all public, all on github, all built to scratch an itch.
+                            all built to scratch an itch. most are public, two are still private.
                         </p>
                         <ul className="project-list">
                             {PROJECTS.map((p) => (
@@ -411,7 +411,7 @@ function Home() {
                             <li>
                                 <a href="https://github.com/thatmike1/backlogged">backlogged</a>: a
                                 game library with an ai recommender that remembers what it already
-                                suggested. probably abandoned. i'm being honest with you.
+                                suggested. probably abandoned, if i'm being honest.
                             </li>
                         </ul>
                     </div>

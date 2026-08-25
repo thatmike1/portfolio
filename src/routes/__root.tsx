@@ -8,7 +8,7 @@ const TITLE = "mike pšenčík · i make stuff";
 // leads with the commercial work now that the page carries it — this is the text
 // that shows up when someone pastes the link into a hiring channel
 const DESCRIPTION =
-    "full-stack product engineer in czechia. two years of contract react and node — a staffing marketplace, an energy-management system, a react native app on both stores, the 3d in a b2b planner — plus falling-sand toys and claude code skills. sometimes it works, sometimes it doesn't.";
+    "full-stack product engineer in czechia. two years of contract react and node (a staffing marketplace, an energy-management system, a react native app on both stores, the 3d in a b2b planner) plus falling-sand toys and claude code skills. sometimes it works, sometimes it doesn't.";
 
 // runs before first paint so the saved theme never flashes the wrong colors
 const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme');if(t!=='dark'&&t!=='light'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme='light'}})()`;

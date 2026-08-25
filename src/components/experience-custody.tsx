@@ -39,7 +39,7 @@ const ITEMS: Array<Item> = [
             { text: "state, styling, the component library" },
             { text: "the api contract, agreed before either of us built against it" },
             { text: "every decision nobody else was in the room to argue with" },
-            { text: "the api itself — not mine. an external backend dev owned it.", theirs: true },
+            { text: "the api itself: not mine. an external backend dev owned it.", theirs: true },
         ],
         detail: (
             <>
@@ -64,7 +64,7 @@ const ITEMS: Array<Item> = [
                 text: "the operations calendar: drag to move and resize shifts, live time labels, preview clamped at the grid edges",
             },
             {
-                text: "per-location timezone handling, end to end — the api talks utc, the calendar doesn't lie about local time",
+                text: "per-location timezone handling, end to end: the api talks utc, the calendar doesn't lie about local time",
             },
             {
                 text: "the oidc auth flow, hardened: token sync, 401 logout, the session states nobody specs",
@@ -72,13 +72,13 @@ const ITEMS: Array<Item> = [
             {
                 text: "dashboard widgets and charts, down to the mobile tooltips and sticky table headers",
             },
-            { text: "the backend — not mine.", theirs: true },
+            { text: "the backend: not mine.", theirs: true },
         ],
         detail: (
             <>
                 <span className="own-num">449</span> of the repo's{" "}
                 <span className="own-num">552</span> commits are mine, from the first one. the hard
-                part was never the calendar looking right — it was a drag interaction that stays
+                part was never the calendar looking right. it was a drag interaction that stays
                 honest at 00:00 and 24:00, across timezones, without a single off-by-one day.
             </>
         ),
@@ -103,7 +103,7 @@ const ITEMS: Array<Item> = [
             { text: "the map" },
             { text: "rebrand → play signing → store-ready builds" },
             {
-                text: "the other fifth — not mine. i'm not going to pretend i know what's in it.",
+                text: "the other fifth: not mine. i'm not going to pretend i know what's in it.",
                 theirs: true,
             },
         ],
@@ -142,9 +142,9 @@ const ITEMS: Array<Item> = [
                 text: "automatic dimension detection from the mesh, so a vendor's model doesn't have to be measured by hand",
             },
             {
-                text: "wall, window and door cutouts via csg — and the babylon.js 4 → 8 upgrade underneath all of it",
+                text: "wall, window and door cutouts via csg, and the babylon.js 4 → 8 upgrade underneath all of it",
             },
-            { text: "the rest of the platform — not mine. i owned the 3d.", theirs: true },
+            { text: "the rest of the platform: not mine. i owned the 3d.", theirs: true },
         ],
         detail: (
             <>
@@ -170,17 +170,17 @@ const ITEMS: Array<Item> = [
                 text: "carrier management and tracking numbers: migrations, entities, endpoints, ui, notification emails",
             },
             {
-                text: "an erp export — per-side pricing breakdown, code mapping, xml generation, wired into b2b checkout",
+                text: "an erp export: per-side pricing breakdown, code mapping, xml generation, wired into b2b checkout",
             },
             {
                 text: "a shared price-calculation service, so the frontend and backend stopped disagreeing about totals",
             },
             { text: "shipping breakdown with carrier detection and per-location allocation" },
             {
-                text: "revised through rounds of client feedback — shipped, corrected, shipped again",
+                text: "revised through rounds of client feedback: shipped, corrected, shipped again",
             },
             {
-                text: "the rest of the platform — not mine. it's older than my contract.",
+                text: "the rest of the platform: not mine. it's older than my contract.",
                 theirs: true,
             },
         ],
@@ -210,7 +210,7 @@ const ITEMS: Array<Item> = [
             {
                 text: "overview widgets and charts, plus the fullscreen detail views and csv / xlsx export",
             },
-            { text: "the other half — not mine. this one was a team.", theirs: true },
+            { text: "the other half: not mine. this one was a team.", theirs: true },
         ],
         detail: (
             <>
@@ -232,7 +232,7 @@ const ITEMS: Array<Item> = [
         what: "career portal · the largest czech pharmacy chain",
         inventory: [
             { text: "connected the cms and the plumbing around it" },
-            { text: "the design, the content, most of the rest — not mine.", theirs: true },
+            { text: "the design, the content, most of the rest: not mine.", theirs: true },
         ],
         detail: (
             <>
@@ -249,9 +249,9 @@ export function ExperienceCustody() {
     return (
         <section className="own" id="what-was-mine" aria-labelledby="own-heading">
             <div className="container">
-                <h2 id="own-heading">what was actually mine</h2>
+                <h2 id="own-heading">the day job</h2>
                 <p className="section-sub">
-                    one contract — atreo digital, apr 2024 to august 2026, fully remote — and
+                    one contract (atreo digital, apr 2024 to august 2026, fully remote) and
                     several clients at once, none of whom i can name. so here's the only part worth
                     telling you: how much of each thing i was actually holding.
                 </p>
@@ -288,20 +288,20 @@ export function ExperienceCustody() {
                 </ol>
 
                 <p className="own-prior">
-                    <span className="own-prior-when">2023 — 2024</span>
+                    <span className="own-prior-when">2023–2024</span>
                     before atreo: wordpress presentation sites for local clients, self-employed. not
                     a career yet, but it's where the invoices started.
                 </p>
 
                 <p className="own-check">
                     <strong>the obvious problem with all of this:</strong> every one of those repos
-                    is private and i can't show you a single line. so — get me on a call and pick
+                    is private and i can't show you a single line. so: get me on a call and pick
                     anything above. the decluttering pass, the model pipeline, the timezone handling
                     in the calendar. you'll know inside five minutes whether i wrote it.
                 </p>
 
                 <p className="own-availability">
-                    the atreo contract ends in august 2026, so from september i'm looking — contract
+                    the atreo contract ends in august 2026, so from september i'm looking: contract
                     or full-time, remote, and happy to talk specifics that aren't on this page.{" "}
                     <a href="mailto:misa.psencik@gmail.com">misa.psencik@gmail.com</a>.
                 </p>
