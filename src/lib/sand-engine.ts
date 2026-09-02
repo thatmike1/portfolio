@@ -130,8 +130,14 @@ export class SandEngine {
         }
     }
 
-    /** one simulation tick; bottom-up scan so a grain falls one cell per frame */
-    step(): void {
+    /**
+     * one simulation tick; bottom-up scan so a grain falls one cell per frame.
+     * a caller running its own water model can turn the built-in one off and keep
+     * only the powders, or the other way round.
+     */
+    step(opts: { water?: boolean; powder?: boolean } = {}): void {
+        const water = opts.water ?? true;
+        const powder = opts.powder ?? true;
         this.frame++;
         const { cols, rows, cells } = this;
         const ltr = (this.frame & 1) === 0;
@@ -142,8 +148,11 @@ export class SandEngine {
                 const i = row + x;
                 const m = cells[i];
                 if (m === EMPTY || m === WALL) continue;
-                if (m === WATER) this.stepWater(x, y, i);
-                else if (FALLERS.has(m)) this.stepPowder(x, y, i);
+                if (m === WATER) {
+                    if (water) this.stepWater(x, y, i);
+                } else if (powder && FALLERS.has(m)) {
+                    this.stepPowder(x, y, i);
+                }
             }
         }
     }
@@ -201,11 +210,27 @@ export class SandEngine {
     }
 }
 
+/** where a stamped word goes, in cells. without it the word is centred in the grid */
+export type WordPlacement = {
+    /** x of the word's centre */
+    cx: number;
+    /** y the letters stand on */
+    baseline: number;
+    /** font size in cells, shrunk to fit maxWidth */
+    size: number;
+    maxWidth: number;
+};
+
 /**
  * rasterize a word into sand cells, mostly raspberry with amber flecks.
  * uses a throwaway canvas at grid resolution so one pixel = one grain.
  */
-export function stampWord(engine: SandEngine, word: string, fontFamily: string): void {
+export function stampWord(
+    engine: SandEngine,
+    word: string,
+    fontFamily: string,
+    place?: WordPlacement,
+): void {
     const { cols, rows } = engine;
     const c = document.createElement("canvas");
     c.width = cols;
@@ -213,19 +238,20 @@ export function stampWord(engine: SandEngine, word: string, fontFamily: string):
     const ctx = c.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
 
-    let size = Math.floor(rows * 0.58);
+    let size = Math.floor(place ? place.size : rows * 0.58);
     ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
+    ctx.textBaseline = place ? "alphabetic" : "middle";
     ctx.font = `800 ${size}px ${fontFamily}`;
-    const maxWidth = cols * 0.86;
+    const maxWidth = place ? place.maxWidth : cols * 0.86;
     const measured = ctx.measureText(word).width;
     if (measured > maxWidth) {
         size = Math.floor((size * maxWidth) / measured);
         ctx.font = `800 ${size}px ${fontFamily}`;
     }
     ctx.fillStyle = "#000";
-    // sits a bit above center so the crumble has somewhere to go
-    ctx.fillText(word, cols / 2, rows * 0.44);
+    // by default it sits a bit above center so the crumble has somewhere to go
+    if (place) ctx.fillText(word, place.cx, place.baseline);
+    else ctx.fillText(word, cols / 2, rows * 0.44);
 
     const data = ctx.getImageData(0, 0, cols, rows).data;
     for (let y = 0; y < rows; y++) {

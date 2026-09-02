@@ -1,24 +1,35 @@
-/* weather — full-bleed simulation, chrome floated over it in the site's own type */
+/* weather — the front page's shape (hero band + copy block) with one simulation
+   behind both, chrome floated over it in the site's own type */
 
 .wx {
-    position: fixed;
-    inset: 0;
-    overflow: hidden;
-    background: #0d1426;
+    min-height: 100vh;
+    background: #151214;
+    color: #fdfcfa;
 }
 
 .wx-stage {
-    position: absolute;
-    inset: 0;
+    position: relative;
+    isolation: isolate;
 }
 
 .wx-canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
     display: block;
     width: 100%;
     height: 100%;
     image-rendering: pixelated;
     touch-action: none;
     cursor: crosshair;
+}
+
+/* the hero band, at the front page's height, so the sky is measured against the
+   real thing */
+.wx-band {
+    position: relative;
+    z-index: 1;
+    height: clamp(380px, 62vh, 640px);
 }
 
 /* --- words ------------------------------------------------------------- */
@@ -175,6 +186,42 @@
     text-shadow: 0 1px 2px rgb(0 0 0 / 0.5);
     font-variant-numeric: tabular-nums;
     pointer-events: none;
+}
+
+/* --- the copy block ---------------------------------------------------- */
+
+/* the front page's own classes carry the size and spacing; only the colour is
+   overridden, because this page is always on the dark ground. the block lets
+   the pointer through to the sand, links excepted */
+.wx-copy {
+    position: relative;
+    z-index: 1;
+    color: #fdfcfa;
+    pointer-events: none;
+}
+
+.wx-copy a,
+.wx-copy h1 {
+    pointer-events: auto;
+}
+
+.wx-copy .hero-note {
+    color: rgb(253 252 250 / 0.6);
+}
+
+.wx-copy .hero-note a {
+    color: #fdfcfa;
+}
+
+/* where the canvas ends: the same ground continues, so the falls run off the
+   bottom of the picture into the page rather than hitting an edge */
+.wx-after {
+    padding: clamp(2.5rem, 6vw, 4rem) 0 clamp(4rem, 10vw, 7rem);
+    border-top: 1px solid rgb(253 252 250 / 0.12);
+    text-align: center;
+    font-family: "Martian Mono Variable", monospace;
+    font-size: 0.72rem;
+    color: rgb(253 252 250 / 0.45);
 }
 
 @media (max-width: 640px) {
