@@ -48,8 +48,12 @@ export const Route = createFileRoute("/lab/weather")({
 const FLASH_FRAMES = 12;
 /** css pixels per cell. bigger than the hero's 5 so the cloud tones read as pixels */
 const CELL = 6;
-/** fraction of the grid that is sky; the rest is where sand can pile */
-const SKY_FRACTION = 0.66;
+/** fraction of the grid the cloud deck lives in; below it is the butte and the falls */
+const SKY_FRACTION = 0.46;
+/** the island's rim, as a fraction of the grid's height */
+const ISLAND_TOP = 0.46;
+/** width of open sky on each side of the island, as a fraction of the grid's width */
+const SHAFT = 0.16;
 
 type RGB = [number, number, number];
 
@@ -132,7 +136,7 @@ const LOOKS: Array<Look> = [
         bodyY: 0.14,
         starAlpha: 1,
         sun: 0.26,
-        ambient: [0.62, 0.66, 0.86],
+        ambient: [0.52, 0.56, 0.78],
     },
 ];
 
@@ -263,6 +267,8 @@ function Page() {
         let cloud = new Float32Array(1);
         /** lowest raining row per column, -1 for clear sky */
         let base = new Int16Array(1);
+        /** per cell: is this water resting on ground, or still on its way down */
+        let rest = new Uint8Array(1);
         let stars: Array<{ x: number; y: number; base: number; phase: number }> = [];
 
         /** sand grain colours as raw rgb, before the look's ambient tint */
@@ -272,11 +278,19 @@ function Page() {
         }
         // bedrock is the engine's wall material, but the front page's near-black ink
         // reads as a solid ui bar across a frame this size, so it gets slate instead
+        sandRGB[WATER] = [
+            "oklch(0.6 0.13 250)",
+            "oklch(0.625 0.125 251)",
+            "oklch(0.585 0.135 249)",
+            "oklch(0.61 0.128 250)",
+        ].map((css) => resolve(swatchCtx, css));
+        /** the lit top of the water: one row of it turns a blue mass into a surface */
+        const waterTop = resolve(swatchCtx, "oklch(0.73 0.11 252)");
         sandRGB[WALL] = [
-            "oklch(0.42 0.022 357)",
-            "oklch(0.38 0.02 357)",
+            "oklch(0.425 0.022 357)",
+            "oklch(0.395 0.02 357)",
             "oklch(0.45 0.024 357)",
-            "oklch(0.35 0.018 357)",
+            "oklch(0.37 0.019 357)",
         ].map((css) => resolve(swatchCtx, css));
         /** packed per frame once the ambient tint is known */
         const sandPacked: Record<number, Array<number>> = {
@@ -291,7 +305,16 @@ function Page() {
         // budget, which is what makes the cycle self-limiting instead of hand-tuned
         let waterCount = 0;
         let capacity = 1;
-        let humidity = 1;
+        /** the honest reading: what fraction of the water budget is not on the ground */
+        let airRaw = 1;
+        /**
+         * and the lagged one, which is what everything actually uses. rain and
+         * evaporation move the raw value by a few cells every frame, and feeding that
+         * jitter straight into the cloud threshold makes every cell sitting near the
+         * threshold flip tone on alternate frames: a sky full of dancing pixels.
+         * air moves slowly, so the deck's shape changes at the speed weather does.
+         */
+        let air = 1;
         let frame = 0;
         let drift = 0;
         let wind = 0.12;
@@ -322,23 +345,67 @@ function Page() {
 
         /* ---------------------------------------------------------- terrain */
 
+        /**
+         * the island's rim and keel for one column, or null where there is open sky.
+         *
+         * it floats, and that is not decoration. a waterfall needs height, and height
+         * measured from the bottom of the frame means a slab of rock under the water
+         * taking up half the picture. cut the ground away and the same drop costs
+         * nothing: the falls run off both lips, down through clear sky, and off the
+         * bottom of the world.
+         *
+         * the top is a shallow bowl with a raised rim, which is what makes the water
+         * fall at all. rain fills the bowl, the bowl overflows the rim, and the
+         * overflow is a waterfall instead of a puddle evaporating where it landed.
+         */
+        const islandAt = (x: number): { top: number; bottom: number } | null => {
+            const dEdge = Math.min(x, cols - 1 - x);
+            // the edge wanders, so this is a landform and not a rectangle
+            const wob = (fbm(x * 0.05, 21, 3) - 0.5) * cols * 0.035;
+            const shaftW = cols * SHAFT + wob;
+            if (dEdge < shaftW) return null;
+            const u = (dEdge - shaftW) / Math.max(1, cols * 0.5 - shaftW);
+            const bowl = rows * 0.1 * Math.min(1, u / 0.18);
+            // a notch cut in each rim. without it the surplus dribbles over the whole
+            // length of the lip as a curtain of single drops; with it the lake finds
+            // the notch's level and the entire overflow leaves through one gap, which
+            // is the difference between a wet edge and a waterfall
+            const notchAt = x < cols / 2 ? cols * 0.035 : cols * 0.055;
+            const notch =
+                Math.abs(dEdge - shaftW - notchAt) < cols * 0.014 ? rows * 0.045 : 0;
+            const top = Math.floor(
+                rows * ISLAND_TOP +
+                    Math.max(bowl, notch) +
+                    fbm(x * 0.021, 4.2, 3) * rows * 0.02,
+            );
+            // a keel: thin at the lips, deep under the middle, the way a torn-off chunk
+            // of ground hangs. fbm on the underside keeps it from reading as a lens
+            const keel =
+                rows *
+                (0.035 + 0.17 * Math.pow(Math.min(1, u / 0.6), 0.65)) *
+                (0.75 + fbm(x * 0.03, 8.1, 3) * 0.5);
+            return { top, bottom: Math.min(rows - 1, Math.floor(top + keel)) };
+        };
+
         const terrain = () => {
             engine.cells.fill(EMPTY);
-            // bedrock is a rolling fbm floor rather than a flat slab with posts on it,
-            // so the basins that hold water are part of the landscape's shape
+            const shaftW = cols * SHAFT;
             for (let x = 0; x < cols; x++) {
-                const rock = Math.floor(
-                    rows * 0.87 + fbm(x * 0.014, 4.2, 3) * rows * 0.16 - rows * 0.04,
-                );
-                for (let y = Math.max(0, rock); y < rows; y++) engine.set(x, y, WALL);
-                // dunes ride on the rock, thin over the ridges and deep in the hollows
-                const dune = Math.floor(fbm(x * 0.031, 11.5, 3) * rows * 0.22);
-                for (let y = Math.max(0, rock - dune); y < rock; y++) {
+                const land = islandAt(x);
+                if (!land) continue;
+                for (let y = Math.max(0, land.top); y <= land.bottom; y++) engine.set(x, y, WALL);
+                // sand lines the bowl but never the rim, so the overflow runs on rock
+                const dEdge = Math.min(x, cols - 1 - x);
+                const u = (dEdge - shaftW) / Math.max(1, cols * 0.5 - shaftW);
+                if (u <= 0.26) continue;
+                const dune = Math.floor(fbm(x * 0.031, 11.5, 3) * rows * 0.035);
+                for (let y = Math.max(0, land.top - dune); y < land.top; y++) {
                     engine.set(x, y, Math.random() < 0.14 ? AMBER : RASP);
                 }
             }
             waterCount = 0;
-            humidity = 1;
+            airRaw = 1;
+            air = 1;
         };
 
         const build = () => {
@@ -355,7 +422,8 @@ function Page() {
             engine = new SandEngine(cols, rows);
             cloud = new Float32Array(cols * skyRows);
             base = new Int16Array(cols);
-            capacity = Math.max(600, Math.floor(cols * rows * 0.06));
+            rest = new Uint8Array(cols * rows);
+            capacity = Math.max(600, Math.floor(cols * rows * 0.24));
             stars = Array.from({ length: Math.min(110, Math.floor((cols * skyRows) / 420)) }, () => ({
                 x: Math.floor(Math.random() * cols),
                 y: Math.floor(Math.random() * skyRows),
@@ -375,7 +443,7 @@ function Page() {
          * clears the threshold and becomes cloud.
          */
         const stepClouds = () => {
-            const bias = -0.54 + humidity * 0.36;
+            const bias = -0.54 + air * 0.36;
             for (let x = 0; x < cols; x++) base[x] = -1;
             for (let y = 0; y < skyRows; y++) {
                 // clouds live in a band: thin at the very top, gone near the horizon
@@ -402,7 +470,7 @@ function Page() {
          * the gate travels with the deck, so showers move across the frame.
          */
         const rain = () => {
-            if (humidity <= 0.08) return;
+            if (air <= 0.08) return;
             for (let x = 0; x < cols; x++) {
                 const y = base[x];
                 if (y < 0) continue;
@@ -413,7 +481,7 @@ function Page() {
                                 // squared, not linear: a damp sky barely drizzles while a saturated one
                 // dumps. a linear throttle finds its equilibrium with the ground holding
                 // nearly all the water, which leaves nothing in the sky to look at
-                if (Math.random() > (0.55 + d * 1.6) * humidity * humidity) continue;
+                if (Math.random() > (0.7 + d * 1.9) * air * air) continue;
                 const ty = y + 1;
                 if (ty >= rows) continue;
                 if (engine.cells[ty * cols + x] !== EMPTY) continue;
@@ -437,9 +505,14 @@ function Page() {
                     const i = y * cols + x;
                     const m = cells[i];
                     if (m === EMPTY) continue;
-                    if (m === WATER && Math.random() < 0.03 * strength) {
-                        cells[i] = EMPTY;
-                        waterCount--;
+                    if (m === WATER) {
+                        // only standing water leaves. without this the column scan finds
+                        // the top of a falling stream and eats the waterfall in mid-air
+                        const resting = y + 1 >= rows || cells[i + cols] !== EMPTY;
+                        if (resting && Math.random() < 0.012 * strength) {
+                            cells[i] = EMPTY;
+                            waterCount--;
+                        }
                     }
                     break;
                 }
@@ -447,11 +520,46 @@ function Page() {
         };
 
         /**
-         * extra lateral passes for water that has landed. the shared engine gives a
-         * drop one sideways step per frame, which is enough for the hero's occasional
-         * splash but not for a lake fed by continuous rain: without this the pool
-         * piles into a heap instead of finding its level.
+         * lateral flow for water that has landed. the shared engine gives a drop one
+         * sideways step per frame, which is enough for the hero's occasional splash and
+         * nowhere near enough here: rain lands across the whole bowl but can only leave
+         * over two rims, so a one-cell-per-frame crawl lets the middle pile into a dome
+         * of water standing well above its own container.
+         *
+         * so a landed drop looks sideways for up to REACH cells and jumps to the first
+         * place it could fall from. that is the drainage path, and it is what lets the
+         * bowl behave like a bowl: fill, find its level, and spill the surplus over the
+         * lip. a drop with no hole in reach still takes a single step toward open space,
+         * which is what levels the surface once the draining is done.
          */
+        /**
+         * mark which water is standing on something and which is still falling.
+         *
+         * "is the cell below me solid" is not the test: in a waterfall every drop but
+         * the last has another drop under it, so the whole stream would count as
+         * standing water, get treated as a pool and be spread sideways. walking each
+         * column from the bottom instead carries support up through a resting stack and
+         * loses it at the first gap, which is what actually separates a lake from a fall.
+         */
+        const markResting = () => {
+            const cells = engine.cells;
+            for (let x = 0; x < cols; x++) {
+                let sup = false;
+                for (let y = rows - 1; y >= 0; y--) {
+                    const i = y * cols + x;
+                    const m = cells[i];
+                    if (m === EMPTY) {
+                        sup = false;
+                    } else if (m === WATER) {
+                        rest[i] = sup ? 1 : 0;
+                    } else {
+                        sup = true;
+                    }
+                }
+            }
+        };
+
+        const REACH = 14;
         const relax = (passes: number) => {
             const { cells, tint } = engine;
             for (let p = 0; p < passes; p++) {
@@ -461,18 +569,56 @@ function Page() {
                     for (let xi = 0; xi < cols; xi++) {
                         const x = ltr ? xi : cols - 1 - xi;
                         const i = row + x;
-                        if (cells[i] !== WATER) continue;
-                        if (cells[i + cols] === EMPTY) continue; // still falling
+                        if (cells[i] !== WATER || !rest[i]) continue;
+                        const surface = y === 0 || cells[i - cols] === EMPTY;
                         const dir = Math.random() < 0.5 ? -1 : 1;
+                        let target = 0;
                         for (const d of [dir, -dir]) {
-                            const nx = x + d;
-                            if (nx < 0 || nx >= cols) continue;
-                            if (cells[row + nx] !== EMPTY) continue;
-                            cells[row + nx] = WATER;
-                            tint[row + nx] = tint[i];
-                            cells[i] = EMPTY;
-                            break;
+                            let level = 0;
+                            for (let k = 1; k <= REACH; k++) {
+                                const nx = x + d * k;
+                                if (nx < 0 || nx >= cols) break;
+                                const n = row + nx;
+                                if (cells[n] !== EMPTY) break; // the path is blocked
+                                if (cells[n + cols] === EMPTY) {
+                                    target = n; // somewhere it can carry on falling
+                                    break;
+                                }
+                                // only water with open sky above it bothers levelling;
+                                // buried water moves only when there is a way down, which
+                                // is what keeps a full bowl from turning into a pillar
+                                if (surface && !level) level = n;
+                            }
+                            if (!target && level) target = level;
+                            if (target) break;
                         }
+                        if (!target) continue;
+                        cells[target] = WATER;
+                        tint[target] = tint[i];
+                        cells[i] = EMPTY;
+                    }
+                }
+            }
+        };
+
+        /**
+         * pull water down into any gap under it. the dispersion above moves a drop to
+         * wherever it could fall, which keeps a big mass porous: full of one-cell holes
+         * that read as a translucent block rather than a lake. this compacts it.
+         */
+        const settle = (passes: number) => {
+            const { cells, tint } = engine;
+            for (let p = 0; p < passes; p++) {
+                for (let y = rows - 2; y >= 0; y--) {
+                    const row = y * cols;
+                    for (let x = 0; x < cols; x++) {
+                        const i = row + x;
+                        if (cells[i] !== WATER || !rest[i]) continue;
+                        const b = i + cols;
+                        if (cells[b] !== EMPTY) continue;
+                        cells[b] = WATER;
+                        tint[b] = tint[i];
+                        cells[i] = EMPTY;
                     }
                 }
             }
@@ -533,6 +679,11 @@ function Page() {
             const t = flash / FLASH_FRAMES;
             const lift = flash > 0 ? 0.3 * t * t : 0;
 
+            const topP = pack(
+                clamp255(waterTop[0] * amb[0] + 255 * lift),
+                clamp255(waterTop[1] * amb[1] + 255 * lift),
+                clamp255(waterTop[2] * amb[2] + 255 * lift),
+            );
             for (const m of [WALL, RASP, AMBER, WATER]) {
                 const shades = sandRGB[m];
                 for (let i = 0; i < shades.length; i++) {
@@ -644,11 +795,29 @@ function Page() {
             // the simulation last, so grains occlude everything
             const cells = engine.cells;
             const tint = engine.tint;
-            for (let i = 0; i < cells.length; i++) {
-                const m = cells[i];
-                if (m === EMPTY) continue;
-                const shades = sandPacked[m];
-                if (shades) buf[i] = shades[tint[i] & 3];
+            for (let y = 0; y < rows; y++) {
+                const row = y * cols;
+                // rock takes its shade from the row rather than the grain, so the butte
+                // reads as bedded strata instead of a wall of static
+                const band = ((y / 7) | 0) & 1;
+                for (let x = 0; x < cols; x++) {
+                    const i = row + x;
+                    const m = cells[i];
+                    if (m === EMPTY) continue;
+                    const shades = sandPacked[m];
+                    if (!shades) continue;
+                    // a quarter of rock cells opt out of their band, which keeps the
+                    // bedding legible without turning the butte into a barcode
+                    if (m === WATER && (y === 0 || cells[i - cols] === EMPTY)) {
+                        // the waterline, and every drop still in the air, catch the light
+                        buf[i] = topP;
+                    } else {
+                        buf[i] =
+                            m === WALL && hash2(x, y) > 0.25
+                                ? shades[band]
+                                : shades[tint[i] & 3];
+                    }
+                }
             }
 
             srcCtx.putImageData(image, 0, 0);
@@ -666,7 +835,7 @@ function Page() {
             easeLook(LOOKS[lookRef.current], 0.035);
 
             // wind wanders on its own so the deck never drifts at a constant rate
-            wind = 0.1 + 0.09 * Math.sin(frame * 0.0018) + 0.04 * Math.sin(frame * 0.0071);
+            wind = 0.14 + 0.08 * Math.sin(frame * 0.0018) + 0.03 * Math.sin(frame * 0.0071);
             drift += wind * 0.0035;
 
             // recount now and then: the pointer can add or erase water behind the
@@ -676,17 +845,29 @@ function Page() {
                 for (let i = 0; i < engine.cells.length; i++) if (engine.cells[i] === WATER) n++;
                 waterCount = n;
             }
-            humidity = Math.max(0, Math.min(1, (capacity - waterCount) / capacity));
+            airRaw = Math.max(0, Math.min(1, (capacity - waterCount) / capacity));
+            air += (airRaw - air) * 0.012;
 
             if ((frame & 1) === 0) stepClouds();
             rain();
             blow();
             engine.step();
-            relax(6);
+            markResting();
+            relax(8);
+            settle(2);
             evaporate();
+            // the falls leave the frame, and what leaves rejoins the air. this is the
+            // half of the loop the island made possible: the drop is not a dead end
+            const lastRow = (rows - 1) * cols;
+            for (let x = 0; x < cols; x++) {
+                if (engine.cells[lastRow + x] === WATER) {
+                    engine.cells[lastRow + x] = EMPTY;
+                    waterCount--;
+                }
+            }
 
             if (flash > 0) flash--;
-            else if (cur.starAlpha > 0.35 && humidity > 0.38 && Math.random() < 0.007) strike();
+            else if (cur.starAlpha > 0.35 && air > 0.38 && Math.random() < 0.007) strike();
 
             render();
 
@@ -694,7 +875,7 @@ function Page() {
                 hudAt = frame;
                 let covered = 0;
                 for (let i = 0; i < cloud.length; i++) if (cloud[i] > 0.012) covered++;
-                setHud({ humidity, cover: covered / cloud.length, drops: waterCount });
+                setHud({ humidity: air, cover: covered / cloud.length, drops: waterCount });
             }
 
             raf = requestAnimationFrame(loop);
@@ -745,7 +926,8 @@ function Page() {
                 if (engine.cells[i] === WATER) engine.cells[i] = EMPTY;
             }
             waterCount = 0;
-            humidity = 1;
+            airRaw = 1;
+            air = 1;
         };
 
         canvas.addEventListener("pointerdown", down);
