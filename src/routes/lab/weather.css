@@ -1,0 +1,184 @@
+/* weather — full-bleed simulation, chrome floated over it in the site's own type */
+
+.wx {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: #0d1426;
+}
+
+.wx-stage {
+    position: absolute;
+    inset: 0;
+}
+
+.wx-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    touch-action: none;
+    cursor: crosshair;
+}
+
+/* --- words ------------------------------------------------------------- */
+
+/* the sky behind the copy is generated and can be any brightness, so the words
+   sit on their own scrim rather than relying on the weather to be dark enough */
+.wx-words::before {
+    content: "";
+    position: absolute;
+    inset: -2rem -6rem -4rem -6rem;
+    background: radial-gradient(
+        120% 100% at 20% 30%,
+        rgb(8 12 24 / 0.62),
+        rgb(8 12 24 / 0.28) 45%,
+        transparent 72%
+    );
+    pointer-events: none;
+    z-index: -1;
+}
+
+.wx-words {
+    position: absolute;
+    isolation: isolate;
+    z-index: 2;
+    top: clamp(1.5rem, 4vh, 3rem);
+    left: clamp(1.25rem, 4vw, 3.5rem);
+    max-width: 34ch;
+    pointer-events: none;
+    color: #fdfcfa;
+    /* the sky behind this moves and changes brightness three ways, so the copy
+       carries its own shadow rather than trusting any one look for contrast */
+    text-shadow: 0 1px 2px rgb(0 0 0 / 0.55), 0 0 22px rgb(0 0 0 / 0.4);
+}
+
+.wx-crumb {
+    font-family: "Martian Mono Variable", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    pointer-events: auto;
+}
+
+.wx-crumb a {
+    color: #fdfcfa;
+    text-decoration: none;
+    opacity: 0.75;
+}
+
+.wx-crumb a:hover {
+    opacity: 1;
+    text-decoration: underline;
+    text-underline-offset: 0.35em;
+}
+
+.wx-words h1 {
+    font-size: clamp(2.6rem, 6.5vw, 5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-block: 0.4rem 0.75rem;
+    line-height: 1;
+}
+
+.wx-lede {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    text-wrap: pretty;
+    opacity: 0.86;
+}
+
+/* --- looks ------------------------------------------------------------- */
+
+.wx-looks {
+    position: absolute;
+    left: clamp(1.25rem, 4vw, 3.5rem);
+    bottom: clamp(3.6rem, 8vh, 5rem);
+    display: flex;
+    gap: 0.55rem;
+}
+
+.wx-look {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid rgb(255 255 255 / 0.55);
+    padding: 0;
+    cursor: pointer;
+    transition: transform 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.wx-look:hover {
+    transform: scale(1.12);
+}
+
+.wx-look[data-on="true"] {
+    box-shadow: 0 0 0 2px #0d1426, 0 0 0 3px #fdfcfa;
+}
+
+/* --- tools ------------------------------------------------------------- */
+
+.wx-bar {
+    position: absolute;
+    left: clamp(1.25rem, 4vw, 3.5rem);
+    bottom: clamp(1.25rem, 3.5vh, 2rem);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.3rem 0.4rem;
+    border-radius: 999px;
+    background: rgb(13 20 38 / 0.72);
+    border: 1px solid rgb(255 255 255 / 0.22);
+    backdrop-filter: blur(6px);
+}
+
+.wx-chip {
+    font-family: "Martian Mono Variable", monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.01em;
+    color: #fdfcfa;
+    background: none;
+    border: 0;
+    border-radius: 999px;
+    padding: 0.32rem 0.6rem;
+    cursor: pointer;
+    opacity: 0.62;
+    transition: opacity 160ms ease-out, background 160ms ease-out;
+}
+
+.wx-chip:hover {
+    opacity: 1;
+}
+
+.wx-chip[data-on="true"] {
+    opacity: 1;
+    background: rgb(255 255 255 / 0.16);
+}
+
+.wx-sep {
+    width: 1px;
+    height: 16px;
+    margin-inline: 0.3rem;
+    background: rgb(255 255 255 / 0.22);
+}
+
+/* --- readout ----------------------------------------------------------- */
+
+.wx-hud {
+    position: absolute;
+    right: clamp(1.25rem, 4vw, 3.5rem);
+    bottom: clamp(1.4rem, 3.5vh, 2.15rem);
+    font-family: "Martian Mono Variable", monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.01em;
+    color: #fdfcfa;
+    opacity: 0.72;
+    text-shadow: 0 1px 2px rgb(0 0 0 / 0.5);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+}
+
+@media (max-width: 640px) {
+    .wx-lede {
+        display: none;
+    }
+}

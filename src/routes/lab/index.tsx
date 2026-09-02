@@ -13,7 +13,7 @@ export const Route = createFileRoute("/lab/")({
 });
 
 type Experiment = {
-    slug: "dust" | "frost" | "fragile" | "redline";
+    slug: "dust" | "frost" | "fragile" | "redline" | "weather";
     name: string;
     meta: string;
     body: string;
@@ -42,6 +42,12 @@ const EXPERIMENTS: Array<Experiment> = [
         meta: "canvas-ui shatter · webgl2",
         body: "the front page, but it's glass. tiles lift, tip and refract under the cursor. a portfolio you have to handle with care.",
         canvas: true,
+    },
+    {
+        slug: "weather",
+        name: "weather",
+        meta: "pixel cloud deck + water cycle · canvas 2d",
+        body: "clouds are fractal noise snapped to the sand grid. dense cells rain, rain pools on bedrock, sun evaporates it back into cover. no keyframes anywhere \u2014 the sky and the ground feed each other.",
     },
     {
         slug: "redline",
