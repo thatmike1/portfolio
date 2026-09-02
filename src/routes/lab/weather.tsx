@@ -439,8 +439,11 @@ function Page() {
             if (y <= drop + 1) return shaft0;
             const t = y - drop;
             const recede = shaft0 + Math.min(3, t * 0.5);
+            // ledges only in the hero band. beside the copy the face is plain, because
+            // every ledge is a place for water to be caught behind its own stream
+            if (y >= heroRows) return recede + 1;
             const wob = (fbm(y * 0.07, 77.3, 3) - 0.5) * cols * 0.07;
-            return Math.max(shaft0 - 3, recede + wob);
+            return Math.max(shaft0 - 2, recede + wob);
         };
 
         const terrain = () => {
@@ -768,11 +771,23 @@ function Page() {
                 let n = i;
                 let nx = x;
                 let hole = false;
+                let at = i;
+                let atX = x;
                 for (let k = 0; k < REACH; k++) {
-                    const tx = nx + dir;
+                    const tx = atX + dir;
                     if (tx < 0 || tx >= cols) break;
-                    const t = n + dir;
+                    const t = at + dir;
+                    // falling water is not a wall: a drop on a ledge beside its own
+                    // stream would otherwise be walled in by it, and the ledge would
+                    // fill into a pocket. it passes through and lands beyond
+                    if (cells[t] === WATER && !rest[t]) {
+                        at = t;
+                        atX = tx;
+                        continue;
+                    }
                     if (cells[t] !== EMPTY) break;
+                    at = t;
+                    atX = tx;
                     n = t;
                     nx = tx;
                     if (cells[t + cols] !== EMPTY) continue;
