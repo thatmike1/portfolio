@@ -65,8 +65,8 @@ const CREST_DROP = 3;
 const LIP_U = 0.1;
 const BANK_U = 0.06;
 /** how far a landed drop can travel along its row in one pass */
-const REACH = 8;
-const FLOW_PASSES = 3;
+const REACH = 6;
+const FLOW_PASSES = 2;
 /** scales the per-column rain rate: the falls can only carry so much */
 const RAIN = 0.4;
 const FONT_STACK = "'Sora Variable', system-ui, sans-serif";
@@ -777,10 +777,12 @@ function Page() {
                     const tx = atX + dir;
                     if (tx < 0 || tx >= cols) break;
                     const t = at + dir;
-                    // falling water is not a wall: a drop on a ledge beside its own
-                    // stream would otherwise be walled in by it, and the ledge would
-                    // fill into a pocket. it passes through and lands beyond
-                    if (cells[t] === WATER && !rest[t]) {
+                    // other water is not a wall. a drop on a ledge beside its own
+                    // stream would otherwise be walled in by it and the ledge would
+                    // fill into a pocket; two drops on the lake heading opposite ways
+                    // would meet and sit there forever, flickering as others piled on.
+                    // it passes over and lands on the first empty cell beyond
+                    if (cells[t] === WATER) {
                         at = t;
                         atX = tx;
                         continue;
