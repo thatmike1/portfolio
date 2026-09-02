@@ -64,9 +64,13 @@ const CREST_DROP = 3;
 /** the crest zone and the bank inside it, as fractions of the island's half width */
 const LIP_U = 0.1;
 const BANK_U = 0.06;
-/** how far a landed drop can travel along its row in one pass */
-const REACH = 6;
-const FLOW_PASSES = 2;
+/**
+ * how far a landed drop travels along its row per tick. one pass, so every drop
+ * on the sheet moves at the same speed: two passes gave some drops twice the
+ * distance of others and the surface read as pixels shooting about
+ */
+const REACH = 4;
+const FLOW_PASSES = 1;
 /** scales the per-column rain rate: the falls can only carry so much */
 const RAIN = 0.4;
 const FONT_STACK = "'Sora Variable', system-ui, sans-serif";
