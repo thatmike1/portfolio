@@ -3,6 +3,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 
 import appCss from "../styles.css?url";
+import { Analytics } from "../lib/analytics";
 
 const TITLE = "mike pšenčík · i make stuff";
 // leads with the commercial work now that the page carries it — this is the text
@@ -48,6 +49,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             </head>
             <body>
                 {children}
+                <Analytics />
                 <TanStackDevtools
                     config={{ position: "bottom-right" }}
                     plugins={[

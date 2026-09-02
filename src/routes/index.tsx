@@ -436,7 +436,7 @@ function Home() {
                         </p>
                         <p className="colophon">
                             built with tanstack start, because i lowkey hate next.js. set in sora,
-                            which is also my dog's name. no cookies, no analytics, just sand.
+                            which is also my dog's name. no cookies, anonymous pageviews, just sand.
                             <br />© 2026 michal pšenčík · czechia
                         </p>
                     </div>

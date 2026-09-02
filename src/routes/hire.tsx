@@ -228,7 +228,7 @@ function Hire() {
                         </li>
                     </ul>
                     <p className="colophon">
-                        set in sora, which is also my dog's name. no cookies, no analytics, no
+                        set in sora, which is also my dog's name. no cookies, anonymous pageviews, no
                         contact form.
                         <br />© 2026 michal pšenčík · czechia
                     </p>
