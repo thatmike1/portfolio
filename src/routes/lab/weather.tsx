@@ -72,7 +72,7 @@ const BANK_U = 0.06;
 const REACH = 4;
 const FLOW_PASSES = 1;
 /** scales the per-column rain rate: the falls can only carry so much */
-const RAIN = 0.4;
+const RAIN = 0.3;
 const FONT_STACK = "'Sora Variable', system-ui, sans-serif";
 
 type RGB = [number, number, number];
@@ -653,9 +653,12 @@ function Page() {
          * gravity for water. the shared engine's water takes one sideways step at
          * random whenever it cannot fall, which is fine for a splash on the front
          * page and is exactly the jiggle a standing lake must not have. so water here
-         * only ever moves down: one cell a tick, straight or diagonally into a gap
-         * beside its footing. every move ends lower than it started, so a settled
-         * surface has nothing to do.
+         * only ever moves down: straight or diagonally into a gap beside its footing.
+         * every move ends lower than it started, so a settled surface has nothing to
+         * do. rain falls one cell a tick, which is what makes it read as rain; below
+         * the crest a drop falls two, so the falls run sparse enough that water
+         * leaving the crest can always find a cell to leave into. a dense column
+         * beside the crest is a wall, and the lake stacks up behind it as a slab.
          */
         const fall = () => {
             const { cells, tint } = engine;
@@ -669,6 +672,7 @@ function Page() {
                     const b = i + cols;
                     if (cells[b] === EMPTY) {
                         let to = b;
+                        if (y > crestRow && y + 2 < rows && cells[b + cols] === EMPTY) to = b + cols;
                         // a little scatter in free fall, so a stream is a spray rather
                         // than a line: this is where the falls get their width
                         if (Math.random() < 0.08) {
