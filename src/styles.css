@@ -276,6 +276,11 @@ a:focus-visible {
   border: 1.5px solid var(--muted);
 }
 
+.sand-swatch-cloud {
+  background: color-mix(in oklch, var(--ink) 22%, var(--bg));
+  border: 1px solid color-mix(in oklch, var(--ink) 40%, transparent);
+}
+
 .sand-reset {
   color: var(--muted);
 }

@@ -214,13 +214,22 @@ const DUST: Record<Theme, number> = { light: AMBER, dusk: RASP, dark: WATER };
  */
 type Page = { abyss: RGB; ground: [RGB, RGB] };
 
+/** not a material: the brush writes into the cloud deck instead of the sand */
+const CLOUD = 16;
+
 const TOOLS: Array<{ id: number; label: string }> = [
     { id: RASP, label: "raspberry" },
     { id: AMBER, label: "amber" },
     { id: WATER, label: "water" },
     { id: WALL, label: "rock" },
+    { id: CLOUD, label: "cloud" },
     { id: EMPTY, label: "erase" },
 ];
+/** how much deck a cloud stroke adds at its centre, and the most it can pile up */
+const CLOUD_STROKE = 0.16;
+const CLOUD_CAP = 0.6;
+/** the deck's noise scrolls at this many deck units per screen cell, see stepClouds */
+const DECK_SCALE = 0.045;
 
 /* ------------------------------------------------------------------ noise */
 
@@ -373,6 +382,11 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         let cloud = new Float32Array(1);
         /** how much the sun or moon is burning through, per sky cell */
         let glow = new Float32Array(1);
+        /**
+         * cloud the brush painted, stored in deck coordinates so it rides along
+         * with the noise as the deck drifts. it rains itself away, see rain()
+         */
+        let stain = new Float32Array(1);
         /** lowest raining row per column, -1 for clear sky */
         let base = new Int16Array(1);
         /** per cell: is this water resting on ground, or still on its way down */
@@ -641,6 +655,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             engine = new SandEngine(cols, rows);
             cloud = new Float32Array(cols * skyRows);
             glow = new Float32Array(cols * skyRows);
+            stain = new Float32Array(cols * skyRows);
             base = new Int16Array(cols);
             rest = new Uint8Array(cols * rows);
             holeL = new Int16Array(cols);
@@ -681,6 +696,31 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
          * stopping at a boundary. what survives in that zone is drawn backlit (see
          * render), which is what keeps the clearing from reading as a hole.
          */
+        /** the deck column under screen column x, wrapped: where a stain lives */
+        const deckX = (x: number) => {
+            const shift = Math.round(drift / DECK_SCALE);
+            return (((x + shift) % cols) + cols) % cols;
+        };
+
+        /**
+         * paint cloud: a soft disc of deck density around (cx, cy), only in the
+         * sky rows. stored in deck coordinates so it drifts with the weather
+         */
+        const seed = (cx: number, cy: number, radius: number) => {
+            for (let dy = -radius; dy <= radius; dy++) {
+                const y = cy + dy;
+                if (y < 1 || y >= skyRows - 1) continue;
+                for (let dx = -radius; dx <= radius; dx++) {
+                    const x = cx + dx;
+                    const dd = dx * dx + dy * dy;
+                    if (x < 0 || x >= cols || dd > radius * radius) continue;
+                    const i = y * cols + deckX(x);
+                    const add = CLOUD_STROKE * (1 - Math.sqrt(dd) / (radius + 1));
+                    stain[i] = Math.min(CLOUD_CAP, stain[i] + add);
+                }
+            }
+        };
+
         const stepClouds = () => {
             const bias = -0.54 + air * 0.36;
             const { bx, by, clear } = body();
@@ -709,8 +749,15 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                         g = u * u;
                     }
                     glow[row + x] = g;
-                    const n = fbm(x * 0.045 + drift, y * 0.1 + 3.3, 3);
-                    const d = n * band + bias - g * 0.22;
+                    const n = fbm(x * DECK_SCALE + drift, y * 0.1 + 3.3, 3);
+                    let d = n * band + bias - g * 0.22;
+                    const si = row + deckX(x);
+                    if (stain[si] > 0) {
+                        // a painted patch thins on its own, slowly; the rain it makes
+                        // takes the rest
+                        stain[si] *= 0.9992;
+                        d += stain[si];
+                    }
                     cloud[row + x] = d;
                     if (d > 0.055) base[x] = y;
                 }
@@ -730,12 +777,18 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 if (y < 0) continue;
                 const d = cloud[y * cols + x];
                 if (d < 0.075) continue;
+                const si = y * cols + deckX(x);
+                const painted = stain[si];
                 const gate = vnoise(x * 0.022 + drift * 2.4, frame * 0.0007);
-                if (gate < 0.54) continue;
+                // a painted cloud is its own shower: it ignores the gate, and every
+                // drop it lets go is deck it no longer has
+                if (gate < 0.54 && painted <= 0) continue;
                 // squared, not linear: a damp sky barely drizzles while a saturated one
                 // dumps. a linear throttle finds its equilibrium with the ground holding
                 // nearly all the water, which leaves nothing in the sky to look at
-                if (Math.random() > (0.7 + d * 1.9) * air * air * RAIN) continue;
+                const odds = painted > 0 ? (0.7 + d * 1.9) * Math.max(air, 0.45) * RAIN : (0.7 + d * 1.9) * air * air * RAIN;
+                if (Math.random() > odds) continue;
+                if (painted > 0) stain[si] = Math.max(0, painted - 0.004);
                 const ty = y + 1;
                 if (ty >= rows) continue;
                 if (engine.cells[ty * cols + x] !== EMPTY) continue;
@@ -1656,9 +1709,15 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 }
             }
         };
+        let strokes = 0;
         const paint = (e: PointerEvent) => {
+            strokes++;
             const { x, y } = cellFrom(e.clientX, e.clientY);
             const m = toolRef.current;
+            if (m === CLOUD) {
+                seed(x, y, 4);
+                return;
+            }
             const r = m === EMPTY ? 5 : 3;
             touchedAt = { x, y, frame };
             dig(x, y, r + 1);
@@ -1732,6 +1791,11 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             (window as Window & { __wx?: unknown }).__wx = {
                 birds: () => flock.birds.map((b) => ({ x: b.x | 0, y: b.y | 0, state: b.state })),
                 perch: () => ({ site: perchSite(), box: wordBox, skyRows }),
+                /** painted deck left, summed */
+                stain: () => stain.reduce((a, v) => a + v, 0),
+                seed: (x: number, y: number) => seed(x, y, 4),
+                tool: () => toolRef.current,
+                strokes: () => strokes,
                 /** how much of the word still stands: packed grains left */
                 packed: () => {
                     let n = 0;
@@ -1905,6 +1969,8 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                         >
                             {t.id === EMPTY ? (
                                 <span className="sand-swatch sand-swatch-erase" />
+                            ) : t.id === CLOUD ? (
+                                <span className="sand-swatch sand-swatch-cloud" />
                             ) : (
                                 <span className="sand-swatch" style={{ background: shades[t.id][0] }} />
                             )}
