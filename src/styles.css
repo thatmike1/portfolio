@@ -40,6 +40,24 @@
   --footer-ink: oklch(0.93 0.006 357);
 }
 
+/* dusk: the ground after the sun has gone but before the sky has. a warm dark
+   plum rather than black, cream ink rather than white, and the raspberry lifted
+   toward peach so links hold 6.7:1 on it. it only exists because the visitor
+   asked for it; no system setting lands here */
+:root[data-theme='dusk'] {
+  color-scheme: dark;
+
+  --bg: oklch(0.31 0.04 25);
+  --surface: oklch(0.36 0.04 25);
+  --ink: oklch(0.95 0.018 70);
+  --muted: oklch(0.78 0.03 55);
+  --rasp: oklch(0.64 0.21 357);
+  --rasp-deep: oklch(0.8 0.15 5);
+  --hairline: oklch(0.95 0.018 70 / 0.16);
+  --footer-bg: oklch(0.22 0.03 25);
+  --footer-ink: oklch(0.95 0.018 70);
+}
+
 /* ------------------------------------------------------------------ */
 /* base                                                                */
 /* ------------------------------------------------------------------ */
@@ -124,84 +142,59 @@ a:focus-visible {
 }
 
 /* ------------------------------------------------------------------ */
-/* hero + sand toy                                                     */
+/* hero: the weather                                                   */
 /* ------------------------------------------------------------------ */
 
-.sand-hero {
+/* one canvas behind both the sky band and the copy block, so the falls off the
+   island can run past the words and off the bottom of the picture. the band is
+   the old hero's height; the copy keeps its own padding and the canvas simply
+   reaches down to cover it. the pointer paints anywhere on the stage that is
+   not text or a button */
+.weather-hero {
   position: relative;
-  height: clamp(380px, 62vh, 640px);
-  border-bottom: 1px solid var(--hairline);
-}
-
-.sand-canvas {
-  position: relative;
-  z-index: 1;
-  display: block;
-  width: 100%;
-  height: 100%;
+  isolation: isolate;
   touch-action: pan-y;
   cursor: crosshair;
 }
 
-/* blurred copy of the grains; the lighting in dark mode. blur, saturation and
-   opacity are all baked into the canvas pixels at grid resolution, so css only
-   stretches it. no filter or opacity here: with hardware acceleration off,
-   firefox repaints a filtered element in software every frame, and the
-   saturate() this used to carry cost half the frame rate on a 2560px hero */
-.sand-glow {
+.weather-canvas {
   position: absolute;
   inset: 0;
+  z-index: 0;
+  display: block;
   width: 100%;
   height: 100%;
+  image-rendering: pixelated;
   pointer-events: none;
-  display: none;
 }
 
-:root[data-theme='dark'] .sand-glow {
-  display: block;
+.weather-band {
+  position: relative;
+  z-index: 1;
+  height: clamp(380px, 62vh, 640px);
 }
 
-.theme-toggle {
-  position: absolute;
-  z-index: 2;
-  top: 1.25rem;
-  right: 1.25rem;
-  border: 1px solid var(--ink);
-  background: var(--bg);
-  color: var(--ink);
-  border-radius: 999px;
-  padding: 0.35rem 0.85rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  cursor: pointer;
-  transition: background 160ms var(--ease-out);
-}
-
-.theme-toggle:hover {
-  background: var(--surface);
-}
-
-.sand-hint {
-  position: absolute;
-  z-index: 2;
-  right: 1.25rem;
-  bottom: 1.25rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--muted);
+/* the copy sits on the canvas. the container's gutters let the pointer through to
+   the falls beside it, and the words themselves stay real text: selectable, and
+   the heading still catches the hover for its hop */
+.weather-hero .hero-copy {
+  position: relative;
+  z-index: 1;
   pointer-events: none;
-  transition: opacity 400ms var(--ease-out);
 }
 
-.sand-hint[data-awake='true'] {
-  opacity: 0;
+.weather-hero .hero-copy :is(h1, p) {
+  width: fit-content;
+  max-width: 100%;
+  pointer-events: auto;
+  cursor: auto;
 }
 
-.sand-tools {
+/* the chrome shares one pill style: page background, ink border, mono labels */
+.sand-tools,
+.sky-looks {
   position: absolute;
   z-index: 2;
-  left: 1.25rem;
-  bottom: 1.25rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.375rem;
@@ -209,6 +202,17 @@ a:focus-visible {
   background: var(--bg);
   border: 1px solid var(--ink);
   border-radius: 999px;
+  cursor: auto;
+}
+
+.sand-tools {
+  left: 1.25rem;
+  bottom: 1.25rem;
+}
+
+.sky-looks {
+  top: 1.25rem;
+  right: 1.25rem;
 }
 
 .sand-tool {
@@ -248,15 +252,29 @@ a:focus-visible {
   color: var(--muted);
 }
 
+/* the readout: a hint until the sand is touched, then the weather's own numbers.
+   it sits on the island's seam, which is dithered, so it carries its own ground */
+.sand-hint {
+  position: absolute;
+  z-index: 2;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--hairline);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
 .hero-copy {
   padding-block: clamp(3rem, 7vw, 5.5rem) clamp(1.5rem, 4vw, 3rem);
 }
 
-/* the heading is the hop's hover target, so its box has to stop where the words do —
-   a block-level h1 would hand the whole container width to the pointer */
 .hero-copy h1 {
-  width: fit-content;
-  max-width: 100%;
   font-size: clamp(2.6rem, 6.5vw, 5rem);
 }
 
@@ -381,7 +399,7 @@ a:focus-visible {
 }
 
 /* dark swallows shadows, so the glow has to push harder to read as light */
-:root[data-theme='dark'] .project-preview {
+:root:is([data-theme='dark'], [data-theme='dusk']) .project-preview {
   --glow-contact: color-mix(in oklch, var(--preview-glow) 72%, transparent);
   --glow-ambient: color-mix(in oklch, var(--preview-glow) 58%, transparent);
 }
@@ -483,11 +501,11 @@ a:focus-visible {
   display: none;
 }
 
-:root[data-theme='dark'] .preview-frame--light {
+:root:is([data-theme='dark'], [data-theme='dusk']) .preview-frame--light {
   display: none;
 }
 
-:root[data-theme='dark'] .preview-frame--dark {
+:root:is([data-theme='dark'], [data-theme='dusk']) .preview-frame--dark {
   display: block;
 }
 
@@ -697,7 +715,7 @@ a:focus-visible {
 }
 
 /* on the dark wash the page background is near-black too, so the chip lifts a step */
-:root[data-theme='dark'] .lightbox-close {
+:root:is([data-theme='dark'], [data-theme='dusk']) .lightbox-close {
   background: var(--surface);
 }
 
@@ -790,9 +808,29 @@ a:focus-visible {
     bottom: auto;
   }
 
-  .theme-toggle {
+  /* the readout and the looks share the top edge here, so the looks fold down to
+     their swatches. the pressed ring and the dot's colour still say which is which */
+  .sky-looks {
     top: 0.75rem;
     right: 0.75rem;
+  }
+
+  .sky-look {
+    padding-inline: 0.55rem;
+  }
+
+  .sky-look-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .sky-look .sand-swatch {
+    width: 0.85em;
+    height: 0.85em;
   }
 }
 
@@ -873,14 +911,14 @@ a:focus-visible {
   }
 }
 
-/* the toggle tips like a bucket while it spills its sand */
-.theme-toggle {
+/* a look button tips like a bucket while it spills its dust */
+.sky-look {
   transition:
     background 160ms var(--ease-out),
     transform 160ms var(--ease-out);
 }
 
-.theme-toggle:active {
+.sky-look:active {
   transform: rotate(-5deg) translateY(1px);
 }
 
@@ -891,7 +929,7 @@ a:focus-visible {
     animation: none;
   }
 
-  .theme-toggle:active {
+  .sky-look:active {
     transform: none;
   }
 }
@@ -1344,7 +1382,7 @@ figcaption {
    raspberry measures 4.43:1 — under AA by a hair — so the block lights up to
    the brighter raspberry instead and takes the page's own near-black ink,
    which is 8:1 and looks like the luminous grains the dark theme is built on */
-:root[data-theme='dark'] ::selection {
+:root:is([data-theme='dark'], [data-theme='dusk']) ::selection {
   background: var(--rasp-deep);
   color: var(--bg);
 }

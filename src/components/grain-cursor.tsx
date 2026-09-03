@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { PALETTES, RASP } from "../lib/sand-engine";
-import type { ThemeName } from "../lib/sand-engine";
+import { paletteFor, readTheme } from "../lib/theme";
 
 /** css pixels the pointer must travel before another grain is shed */
 const SPACING = 20;
@@ -46,11 +46,7 @@ export function GrainCursor() {
         let carried = 0;
         let raf = 0;
 
-        const shades = () => {
-            const mode: ThemeName =
-                document.documentElement.dataset.theme === "dark" ? "dark" : "light";
-            return PALETTES[mode][RASP];
-        };
+        const shades = () => PALETTES[paletteFor(readTheme())][RASP];
         let palette = shades();
 
         const frame = () => {

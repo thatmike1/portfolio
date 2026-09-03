@@ -2,7 +2,7 @@
 
 ## Theme
 
-Raspberry on white, with a night mode. Light: a toy on a clean desk, pure white surface, candy-colored sand grains as the only imagery, a pixel sun in the canvas sky. Dark ("lights off"): near-black, the same grains turned luminous with a blurred glow pass, stars and a pixel moon. The theme toggle is part of the toy: it swaps sun for moon inside the hero canvas.
+Raspberry on white, with three times of day. The hero is a pixel weather sim (cloud deck, rain, lake, falls) and the theme picker is its sky: **noon** (`light`) is a toy on a clean desk, pure white page, blue sky, pixel sun. **dusk** is the in-between: peach-to-plum sky, warm ambient light on the grains, and a dark warm page (plum-brown, not black) so it reads as dim, not night. **night** (`dark`) is near-black, navy sky, crescent moon, stars, the grains moonlit rather than luminous. Picking a look pours a puff of that look's dust from under the button and wakes the sand, so the theme switch is a move in the toy, not a settings change. The lab's `/lab/weather` is the same component with the soak tool and drop counter left on.
 
 Raspberry is the accent, not a flood: links, grains, selection, small fills. The footer is an ink block, NOT a raspberry drench (tried it, Mike vetoed the wall of raspberry; the color works grainy, not flat).
 
@@ -19,7 +19,7 @@ Raspberry is the accent, not a flood: links, grains, selection, small fills. The
 | `--accent` | `oklch(0.42 0.15 265)` | indigo, rare: water chip, small details |
 | `--footer-bg` / `--footer-ink` | ink block / near-white | footer is dark in both themes |
 
-Dark theme overrides live under `:root[data-theme='dark']`: bg `oklch(0.13 0.01 357)`, ink flips near-white, `--rasp-deep` lightens to `oklch(0.74 0.17 357)` for contrast on dark. Theme is set pre-paint by an inline head script (localStorage `theme`, falls back to `prefers-color-scheme`); `<html>` needs `suppressHydrationWarning`.
+Dark theme overrides live under `:root[data-theme='dark']`: bg `oklch(0.13 0.01 357)`, ink flips near-white, `--rasp-deep` lightens to `oklch(0.74 0.17 357)` for contrast on dark. Dusk lives under `:root[data-theme='dusk']` and is a dark theme with the hue pulled warm: bg `oklch(0.31 0.04 25)`, surface `oklch(0.36 0.04 25)`, ink `oklch(0.95 0.018 70)` (11.5:1), muted `oklch(0.78 0.03 55)` (6.6:1), `--rasp-deep` `oklch(0.8 0.15 5)` (6.7:1); `--rasp` stays a fill colour, never text. Selectors that mean "not the white page" match both: `:root:is([data-theme='dark'], [data-theme='dusk'])`. `src/lib/theme.ts` owns the `Theme` union, read/apply, and `paletteFor()` which maps dusk onto the dark sand palette. Theme is set pre-paint by an inline head script (localStorage `theme`, falls back to `prefers-color-scheme`); `<html>` needs `suppressHydrationWarning`.
 
 Strategy: **Committed via the sand.** Raspberry carries identity through the hero word/dunes and links. No gradients anywhere. No flat raspberry surfaces.
 
@@ -39,7 +39,7 @@ Canvas sand palettes (grain shades, oklch strings fed to canvas):
 
 ## Components
 
-- **sand-hero**: full-bleed canvas band (`clamp(380px, 62vh, 640px)`), falling-sand engine, "mike" stamped in raspberry+amber sand, frozen until first pointer move, then crumbles. Material chips (raspberry / amber / water / wall / erase) + reset, solid white chip bar with 1px ink border, bottom-left. Mono hint "touch the sand" until woken.
+- **weather-hero**: full-bleed canvas band (`clamp(380px, 62vh, 640px)`), falling-sand engine under a pixel weather sim. "mike" stamped in raspberry+amber sand on a rock island in a lake, frozen until first pointer move, then crumbles. Clouds are fbm noise quantised to three tones with a Bayer dither; dense cells rain, rain fills the lake, the lake spills off both ends of the island and falls past the intro copy (water is a conserved budget, so it cycles). Material chips (raspberry / amber / water / rock / erase) + reset in a pill bottom-left; the three looks in a pill top-right (swatches only under 720px); a mono readout pill bottom-right: "touch the sand" until woken, then humidity and cloud cover. The island dissolves into the page over its last 12 rows with a two-tone dither whose tones sink toward the page together, so the seam is a texture and never a checkerboard on white. No glow pass: night grains are moonlit by an ambient multiply, not bloomed.
 - **project rows**: NOT cards. Full-width rows separated by 1px hairlines, asymmetric 2fr/3fr grid: big lowercase name link + mono stack left, specific prose right. Stacks to one column under 720px.
 - **interlude band**: surface-tinted full-width strip, one centered sentence about the day job.
 - **footer**: ink block, near-white text, big "say hi", direct links, colophon in mono. Dark in both themes.

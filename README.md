@@ -19,7 +19,8 @@ npm run build    # production build into dist/
 ## structure
 
 - `src/lib/sand-engine.ts` — the cellular automaton (pure ts, no react)
-- `src/components/sand-hero.tsx` — canvas, pointer input, material toolbar
+- `src/components/weather-hero.tsx` — canvas, weather sim, pointer input, material toolbar, theme looks
+- `src/lib/theme.ts` — the three themes (light / dusk / dark), read + apply
 - `src/routes/index.tsx` — the whole page
 - `src/styles.css` — design tokens + all styling
 - `PRODUCT.md` / `DESIGN.md` — design system context
