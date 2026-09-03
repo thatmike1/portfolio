@@ -447,21 +447,13 @@ function Page() {
         };
 
         /**
-         * the width of open sky at one row. flat along the crest so the sheet leaves
-         * a clean edge, then the face below erodes: it recedes, and fbm hangs a few
-         * ledges off it that the falls break over on the way down.
+         * the width of open sky at one row: a plain vertical face. the face used to
+         * recede under the lip and hang fbm ledges into the shaft, and a ledge under
+         * an overhang is a cave: the sheet fills it and the falls run around it.
+         * the crest's own step down is the only relief the edge has. beside the
+         * copy the shaft is one cell wider so the falls run clear of the page.
          */
-        const shaftAt = (y: number): number => {
-            const drop = crestRow + CREST_DROP;
-            if (y <= drop + 1) return shaft0;
-            const t = y - drop;
-            const recede = shaft0 + Math.min(3, t * 0.5);
-            // ledges only in the hero band. beside the copy the face is plain, because
-            // every ledge is a place for water to be caught behind its own stream
-            if (y >= heroRows) return recede + 1;
-            const wob = (fbm(y * 0.07, 77.3, 3) - 0.5) * cols * 0.07;
-            return Math.max(shaft0 - 2, recede + wob);
-        };
+        const shaftAt = (y: number): number => (y < heroRows ? shaft0 : shaft0 + 1);
 
         const terrain = () => {
             const cells = engine.cells;
