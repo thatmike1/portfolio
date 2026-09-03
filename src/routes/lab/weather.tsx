@@ -10,6 +10,7 @@ import {
     WALL,
     WATER,
 } from "../../lib/sand-engine";
+import { createFixedStep } from "../../lib/fixed-step";
 import "./weather.css";
 
 /**
@@ -1205,10 +1206,8 @@ function Page() {
 
         /* ----------------------------------------------------------- loop */
 
-        /** the simulation ticks at this rate whatever the display refreshes at */
-        const STEP = 1000 / 60;
-        let acc = 0;
-        let last = 0;
+        /** the simulation ticks at 60hz whatever the display refreshes at */
+        const clock = createFixedStep(60, 2);
         let hudAt = 0;
         const tick = () => {
             frame++;
@@ -1259,15 +1258,9 @@ function Page() {
             if (!running) return;
             // a 120hz display gets two frames per tick, not double-speed weather. a
             // tab coming back from the background gets at most two ticks, not a
-            // catch-up storm
-            if (last) acc += Math.min(now - last, STEP * 2);
-            last = now;
-            let steps = 0;
-            while (acc >= STEP && steps < 2) {
-                tick();
-                acc -= STEP;
-                steps++;
-            }
+            // catch-up storm. same clock as the front-page hero
+            const steps = clock.advance(now);
+            for (let i = 0; i < steps; i++) tick();
             if (steps) render();
             raf = requestAnimationFrame(loop);
         };

@@ -11,10 +11,18 @@ import {
     stampWord,
 } from "../lib/sand-engine";
 import type { ThemeName } from "../lib/sand-engine";
+import { createFixedStep } from "../lib/fixed-step";
+import { createGlowBlur } from "../lib/glow-blur";
+import type { GlowBlur } from "../lib/glow-blur";
 
 const CELL = 5; // css pixels per grain
 /** blur radius in GRAIN units — the old css `blur(10px)` was two grains wide */
 const GLOW_RADIUS = 2;
+/** the glow used to get these from css `filter: saturate()` and `opacity`; now baked into its pixels */
+const GLOW_SATURATE = 1.3;
+const GLOW_ALPHA = 0.9;
+/** the sim ticks at this rate whatever the display refreshes at */
+const SIM_HZ = 60;
 const FONT_STACK = "'Sora Variable', system-ui, sans-serif";
 
 const TOOL_DEFS: Array<{ id: number; label: string }> = [
@@ -132,6 +140,9 @@ export function SandHero() {
 
         let buf = new Uint32Array(0);
         let image = new ImageData(1, 1);
+        let glowImage = new ImageData(1, 1);
+        let blurGlow: GlowBlur = () => undefined;
+        let glowDrawn = false;
         /** packed grain colors: packed[material][tint] */
         let packed: Record<number, Array<number>> = {};
         let packedSky: Record<string, number> = {};
@@ -210,26 +221,34 @@ export function SandHero() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(src, 0, 0, canvas.width, canvas.height);
 
-            // glow pass: blur in SOURCE space, then let the upscale spread it. a
-            // css blur on the full-size glow canvas costs radius work per device
-            // pixel; blurring cols×rows first is ~grain² fewer pixels for the
-            // same look, and firefox runs canvas blur on the cpu, so the
-            // reduction is the difference between smooth and not.
-            glowCtx.clearRect(0, 0, glow.width, glow.height);
+            // glow pass: blur in SOURCE space on the cpu, then let the css upscale
+            // spread it. the glow canvas carries no css filter and no opacity, and
+            // the 2d context never sets `filter`: with hardware acceleration off,
+            // firefox paid a full-surface software pass per frame for the css
+            // saturate() alone, which halved the frame rate in dark mode.
             if (mode === "dark") {
-                glowCtx.filter = `blur(${GLOW_RADIUS}px)`;
-                glowCtx.drawImage(src, 0, 0);
-                glowCtx.filter = "none";
+                blurGlow(image.data, glowImage.data);
+                glowCtx.putImageData(glowImage, 0, 0);
+                glowDrawn = true;
+            } else if (glowDrawn) {
+                glowCtx.clearRect(0, 0, glow.width, glow.height);
+                glowDrawn = false;
             }
         };
         renderRef.current = render;
 
-        const loop = () => {
+        // one engine.step() per frame would run the sand twice as fast on a
+        // 120hz display; the clock owes a fixed number of ticks per wall-clock ms
+        const clock = createFixedStep(SIM_HZ, 2);
+        const loop = (now: number) => {
             const engine = engineRef.current;
             if (!engine || !awakeRef.current || !visibleRef.current) return;
-            frameRef.current++;
-            engine.step();
-            render();
+            const ticks = clock.advance(now);
+            for (let i = 0; i < ticks; i++) {
+                frameRef.current++;
+                engine.step();
+            }
+            if (ticks) render();
             rafRef.current = requestAnimationFrame(loop);
         };
 
@@ -237,6 +256,7 @@ export function SandHero() {
             if (awakeRef.current || reducedRef.current) return;
             awakeRef.current = true;
             setAwake(true);
+            clock.reset();
             rafRef.current = requestAnimationFrame(loop);
         };
 
@@ -254,6 +274,13 @@ export function SandHero() {
             src.height = rows;
             image = new ImageData(cols, rows);
             buf = new Uint32Array(image.data.buffer);
+            glowImage = new ImageData(cols, rows);
+            blurGlow = createGlowBlur(cols, rows, {
+                radius: GLOW_RADIUS,
+                saturate: GLOW_SATURATE,
+                alpha: GLOW_ALPHA,
+            });
+            glowDrawn = false;
             buildPalette(themeRef.current);
             const engine = new SandEngine(cols, rows);
             engineRef.current = engine;
@@ -325,6 +352,7 @@ export function SandHero() {
             visibleRef.current = entry.isIntersecting;
             if (entry.isIntersecting && awakeRef.current) {
                 cancelAnimationFrame(rafRef.current);
+                clock.reset();
                 rafRef.current = requestAnimationFrame(loop);
             }
         });
