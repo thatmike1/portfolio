@@ -68,10 +68,22 @@ const BANK_U = 0.06;
 /**
  * how far a landed drop travels along its row per tick. one pass, so every drop
  * on the sheet moves at the same speed: two passes gave some drops twice the
- * distance of others and the surface read as pixels shooting about
+ * distance of others and the surface read as pixels shooting about. two cells,
+ * not four: the walk only has to feed the lip when the lake is flush, the weir
+ * takes anything standing above the crest, so far water no longer has to race
  */
-const REACH = 4;
+const REACH = 2;
 const FLOW_PASSES = 1;
+/**
+ * the weir's rate. a column standing `head` rows above the crest spills its top
+ * cell with chance (SPILL_BASE + head) / SPILL_TICKS per tick. the base term is
+ * what a long lip does: anything standing above the crest at all runs off at a
+ * steady rate, so a shower that lifts the lake by a row does not leave it
+ * standing at three. the head term is the surge: a whole crumbled word (fifteen
+ * rows) is back within two rows of the crest in about 2 s
+ */
+const SPILL_TICKS = 120;
+const SPILL_BASE = 6;
 /** scales the per-column rain rate: the falls can only carry so much */
 const RAIN = 0.3;
 const FONT_STACK = "'Sora Variable', system-ui, sans-serif";
@@ -874,6 +886,58 @@ function Page() {
         };
 
         /**
+         * the weir. everything standing above the crest over the island is head over
+         * a spillway, and a spillway passes water in proportion to its head. the row
+         * walk cannot: a drop leaving the lake has to land in an empty cell beside
+         * the face, the fall column beside the face packs solid and advances one
+         * cell a tick, so only the top row of a stacked lake ever finds an exit and
+         * a crumbled word takes half a minute to drain as a slab with vertical
+         * sides. so each tick every column standing above the crest spills its
+         * surface cell with a chance that grows with its head, and the cell
+         * reappears just under the crest in the nearer shaft as falling water. a
+         * slab drops evenly, a well between two letters drains like the lake
+         * beside it, and the sheet is as thick as the surplus, which is what a
+         * surge over a lip looks like. water at the crest itself still leaves by
+         * walking over the lip.
+         */
+        const spill = () => {
+            const { cells, tint } = engine;
+            const half = cols / 2 - shaft0;
+            // where the spilled water lands: the rows just under the crest, from the
+            // island's face outward. the lip's own sheet already runs in the columns
+            // nearest the face, so a cell walks out from the face until it finds air;
+            // the sheet is as wide as the surplus needs it to be
+            const top = crestRow + 1;
+            const depth = CREST_DROP + 2;
+            const span = Math.max(2, shaft0 - 2);
+            for (let x = 0; x < cols; x++) {
+                if ((Math.min(x, cols - 1 - x) - shaft0) / half < LIP_U) continue;
+                let y = crestRow - 1;
+                if (cells[y * cols + x] !== WATER) continue;
+                while (y > 0 && cells[(y - 1) * cols + x] === WATER) y--;
+                const i = y * cols + x;
+                if (!rest[i]) continue;
+                if (Math.random() * SPILL_TICKS >= SPILL_BASE + crestRow - y) continue;
+                const left = x < cols / 2;
+                let to = -1;
+                const ty = top + Math.floor(Math.random() * depth);
+                for (let dx = 0; dx < span && to < 0; dx++) {
+                    const tx = left ? shaft0 - 1 - dx : cols - shaft0 + dx;
+                    const t = ty * cols + tx;
+                    if (cells[t] === EMPTY) to = t;
+                }
+                // the row is full this tick; the cell keeps its place and its head
+                if (to < 0) continue;
+                cells[to] = WATER;
+                tint[to] = tint[i] & 3;
+                rest[to] = 0;
+                cells[i] = EMPTY;
+                rest[i] = 0;
+                sealed[i] = 0;
+            }
+        };
+
+        /**
          * communicating vessels. the letters stand in the lake, and the gaps between
          * them are wells: rain that lands in a gap has solid sand either side, so no
          * row it could walk along ever reaches a hole, and the gap fills to the top
@@ -1230,6 +1294,7 @@ function Page() {
             if (sandAwake) engine.step({ water: false });
             markResting();
             flow(FLOW_PASSES);
+            spill();
             pressure(10);
             evaporate();
             // the falls leave the frame, and what leaves rejoins the air. this is the
@@ -1343,6 +1408,25 @@ function Page() {
                         while (y > 0 && cells[(y - 1) * cols + x] === WATER) y--;
                         if (y < surface) surface = y;
                     }
+                    // the lake apart from the wells: a column is a well when sand or
+                    // wall sits within six cells of it along the row under the crest
+                    let lake = 0;
+                    let wells = 0;
+                    for (let x = 0; x < cols; x++) {
+                        if ((Math.min(x, cols - 1 - x) - shaft0) / half() < LIP_U + BANK_U) continue;
+                        let y = floorRow - 1;
+                        if (cells[y * cols + x] !== WATER) continue;
+                        while (y > 0 && cells[(y - 1) * cols + x] === WATER) y--;
+                        const head = crestRow - y;
+                        if (head <= 0) continue;
+                        let walled = false;
+                        for (let d = -6; d <= 6 && !walled; d++) {
+                            const m = cells[(crestRow - 1) * cols + x + d];
+                            walled = m !== EMPTY && m !== WATER;
+                        }
+                        if (walled) wells = Math.max(wells, head);
+                        else lake = Math.max(lake, head);
+                    }
                     let left = 0;
                     let right = 0;
                     for (let y = crestRow + CREST_DROP + 2; y < rows - 1; y++) {
@@ -1351,9 +1435,40 @@ function Page() {
                             if (cells[y * cols + cols - 1 - x] === WATER) right++;
                         }
                     }
-                    return { crestRow, surface, above: crestRow - surface, left, right, air, waterCount, frame };
+                    return { crestRow, surface, above: crestRow - surface, lake, wells, left, right, air, waterCount, frame };
                 },
                 look: (i: number) => setLookIdx(i),
+                /** head per interior column, negative while the top cell is still falling */
+                heads: () => {
+                    const half = cols / 2 - shaft0;
+                    const cells = engine.cells;
+                    const hist: number[] = [];
+                    for (let x = 0; x < cols; x++) {
+                        if ((Math.min(x, cols - 1 - x) - shaft0) / half < LIP_U) continue;
+                        let y = crestRow - 1;
+                        let head = 0;
+                        if (cells[y * cols + x] === WATER) {
+                            while (y > 0 && cells[(y - 1) * cols + x] === WATER) y--;
+                            head = rest[y * cols + x] ? crestRow - y : -(crestRow - y);
+                        }
+                        hist.push(head);
+                    }
+                    return hist;
+                },
+                /** stack n rows of water on the lake, the crumble's surge without the crumble */
+                surge: (n: number) => {
+                    const half = cols / 2 - shaft0;
+                    const cells = engine.cells;
+                    for (let x = 0; x < cols; x++) {
+                        if ((Math.min(x, cols - 1 - x) - shaft0) / half < LIP_U + BANK_U) continue;
+                        for (let y = crestRow - 1; y >= Math.max(1, crestRow - n); y--) {
+                            const i = y * cols + x;
+                            if (cells[i] !== EMPTY) continue;
+                            cells[i] = WATER;
+                            waterCount++;
+                        }
+                    }
+                },
             };
         }
 
