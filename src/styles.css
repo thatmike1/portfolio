@@ -190,18 +190,45 @@ a:focus-visible {
   cursor: auto;
 }
 
-/* the chrome shares one pill style: page background, ink border, mono labels */
+/* the chrome shares one pill style: frosted glass over the sky, so each look
+   tints it and the clouds smear through, with a hairline edge and a thin
+   highlight along the top. mono labels in ink */
 .sand-tools,
-.sky-looks {
+.sky-looks,
+.sand-hint {
+  --glass-edge: color-mix(in oklch, var(--ink) 16%, transparent);
+  --glass-shine: oklch(1 0 0 / 0.55);
   position: absolute;
   z-index: 2;
+  background: color-mix(in oklch, var(--bg) 48%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+  border: 1px solid var(--glass-edge);
+  border-radius: 999px;
+  box-shadow:
+    inset 0 1px 0 var(--glass-shine),
+    0 10px 30px -14px color-mix(in oklch, var(--ink) 55%, transparent);
+}
+
+:root:is([data-theme='dark'], [data-theme='dusk']) :is(.sand-tools, .sky-looks, .sand-hint) {
+  --glass-edge: color-mix(in oklch, var(--ink) 22%, transparent);
+  --glass-shine: oklch(1 0 0 / 0.12);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .sand-tools,
+  .sky-looks,
+  .sand-hint {
+    background: var(--bg);
+  }
+}
+
+.sand-tools,
+.sky-looks {
   display: flex;
   flex-wrap: wrap;
   gap: 0.375rem;
   padding: 0.375rem;
-  background: var(--bg);
-  border: 1px solid var(--ink);
-  border-radius: 999px;
   cursor: auto;
 }
 
@@ -231,11 +258,12 @@ a:focus-visible {
 }
 
 .sand-tool:hover {
-  background: var(--surface);
+  background: color-mix(in oklch, var(--ink) 8%, transparent);
 }
 
 .sand-tool[aria-pressed='true'] {
-  border-color: var(--ink);
+  background: color-mix(in oklch, var(--ink) 10%, transparent);
+  border-color: color-mix(in oklch, var(--ink) 55%, transparent);
 }
 
 .sand-swatch {
@@ -255,14 +283,9 @@ a:focus-visible {
 /* the readout: a hint until the sand is touched, then the weather's own numbers.
    it sits on the island's seam, which is dithered, so it carries its own ground */
 .sand-hint {
-  position: absolute;
-  z-index: 2;
   right: 1.25rem;
   bottom: 1.25rem;
   padding: 0.3rem 0.7rem;
-  border-radius: 999px;
-  background: var(--bg);
-  border: 1px solid var(--hairline);
   font-family: var(--font-mono);
   font-size: 0.72rem;
   color: var(--muted);
@@ -806,6 +829,12 @@ a:focus-visible {
     left: 1rem;
     right: auto;
     bottom: auto;
+  }
+
+  /* no room for the nudge and the numbers beside the looks: the nudge alone
+     until the first touch, the numbers alone after */
+  .sand-hint[data-awake="false"] .sand-hint-stats {
+    display: none;
   }
 
   /* the readout and the looks share the top edge here, so the looks fold down to
