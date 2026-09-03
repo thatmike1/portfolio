@@ -9,6 +9,15 @@ export const RASP = 2;
 export const AMBER = 3;
 export const INK = 4;
 export const WATER = 5;
+/**
+ * flag bit, or'd onto a powder: the grain keeps its shade and its place until
+ * something loosens it. the automaton never moves a packed grain, so packed
+ * sand is solid to everything that does move; clear the bit and it is powder
+ * again, same tint, same spot. kinetic sand, in one bit
+ */
+export const PACKED = 8;
+/** strips the packed bit: what a cell is made of, moving or not */
+export const MATERIAL = 7;
 
 export type Material =
     | typeof EMPTY
@@ -230,7 +239,9 @@ export function stampWord(
     word: string,
     fontFamily: string,
     place?: WordPlacement,
+    opts: { packed?: boolean } = {},
 ): void {
+    const flag = opts.packed ? PACKED : 0;
     const { cols, rows } = engine;
     const c = document.createElement("canvas");
     c.width = cols;
@@ -258,7 +269,7 @@ export function stampWord(
         for (let x = 0; x < cols; x++) {
             const alpha = data[(y * cols + x) * 4 + 3];
             if (alpha > 120) {
-                engine.set(x, y, Math.random() < 0.12 ? AMBER : RASP);
+                engine.set(x, y, (Math.random() < 0.12 ? AMBER : RASP) | flag);
             }
         }
     }

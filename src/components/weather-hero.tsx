@@ -4,6 +4,8 @@ import {
     AMBER,
     EMPTY,
     INK,
+    MATERIAL,
+    PACKED,
     PALETTES,
     RASP,
     SandEngine,
@@ -12,6 +14,7 @@ import {
     WATER,
 } from "../lib/sand-engine";
 import { createFixedStep } from "../lib/fixed-step";
+import { birdCells, Flock, PERCH } from "../lib/flock";
 import { applyTheme, readTheme, THEMES } from "../lib/theme";
 import type { Theme } from "../lib/theme";
 
@@ -49,6 +52,16 @@ import type { Theme } from "../lib/theme";
 
 /** how long a strike lights the deck, in frames */
 const FLASH_FRAMES = 12;
+/** chance a drop that has just landed on the word washes the grain under it off */
+const HIT = 0.08;
+/** chance per tick that a drop pooled on the word does the same. slow: it is weather */
+const SOAK = 0.0004;
+/**
+ * per tick, the chance a cell of water pooled over sand sinks into it, see
+ * drink(). packed sand is watertight to the automaton, so without this a
+ * shower fills the crook of the k and never leaves
+ */
+const SEEP = 0.006;
 /** css pixels per cell. bigger than the hero's 5 so the cloud tones read as pixels */
 const CELL = 6;
 /** the cloud deck lives in this fraction of the hero band */
@@ -441,11 +454,29 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         let raf = 0;
         let running = true;
         /**
-         * the sand keeps the front page's contract: it holds its shape until the
-         * first touch, then it is powder. the weather runs regardless, because rain
-         * that waits for a pointer is not weather.
+         * the word is kinetic sand: stamped packed, so it holds its shape and the
+         * automaton treats it as solid. it only goes to powder where something
+         * loosens it, the brush or the rain, and a packed grain that loses the
+         * grain it was standing on lets go too. `sandAwake` is only whether the
+         * powder step runs at all: there is nothing to step until something is loose
          */
         let sandAwake = false;
+        /** 1 where a packed grain had something under it when stamped, see settle() */
+        let bed = new Uint8Array(0);
+        /** the stamped word's box, so settle() does not walk the whole grid */
+        let wordBox = { x0: 0, y0: 0, x1: 0, y1: 0 };
+        /**
+         * erosion scale, 1 at desktop size. rain per column is the same at any
+         * width but a phone's word is a quarter the height, so the same odds
+         * would wash it away four times as fast
+         */
+        let wear = 1;
+
+        /** cloud cover as of the last hud refresh, 0..1; the birds read the sky by it */
+        let cover = 0;
+        /** where and when the brush last touched, so a nearby perched bird takes off */
+        let touchedAt = { x: -100, y: -100, frame: -1000 };
+        let flock = new Flock(1, 1);
 
         let cur: Look = { ...LOOK_BY[initial] };
         let page: Page = { abyss: [...pageTarget.abyss], ground: [[...pageTarget.ground[0]], [...pageTarget.ground[1]]] };
@@ -544,12 +575,38 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             }
             // the letters stand two rows off the floor, in the water: that is what
             // connects the gaps between them to the lake, see pressure()
-            stampWord(engine, "mike", FONT_STACK, {
-                cx: cols / 2,
-                baseline: floorRow - 2,
-                size: heroRows * 0.46,
-                maxWidth: (half - (LIP_U + BANK_U) * half) * 2 * 0.72,
-            });
+            stampWord(
+                engine,
+                "mike",
+                FONT_STACK,
+                {
+                    cx: cols / 2,
+                    baseline: floorRow - 2,
+                    size: heroRows * 0.46,
+                    maxWidth: (half - (LIP_U + BANK_U) * half) * 2 * 0.72,
+                },
+                { packed: true },
+            );
+            // remember what stood on something: an arch of the m has air under it
+            // by design and holds by cohesion; a grain that had support and lost it
+            // is the one that falls
+            bed = new Uint8Array(cols * rows);
+            wordBox = { x0: cols, y0: rows, x1: 0, y1: 0 };
+            for (let y = 0; y < rows - 1; y++) {
+                for (let x = 0; x < cols; x++) {
+                    const i = y * cols + x;
+                    if (!(cells[i] & PACKED)) continue;
+                    // solid support only: the feet stand in the lake, and water that
+                    // wanders off from under them must not bring the letter down
+                    const under = cells[i + cols];
+                    if (under === WALL || under & PACKED) bed[i] = 1;
+                    if (x < wordBox.x0) wordBox.x0 = x;
+                    if (x > wordBox.x1) wordBox.x1 = x;
+                    if (y < wordBox.y0) wordBox.y0 = y;
+                    if (y > wordBox.y1) wordBox.y1 = y;
+                }
+            }
+            wear = Math.max(0.15, Math.min(1, (wordBox.y1 - wordBox.y0 + 1) / 28));
             sandAwake = false;
             setAwake(false);
             recount();
@@ -571,6 +628,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             rows = Math.max(50, Math.floor((rect.height * dpr) / grain));
             heroRows = Math.max(40, Math.min(rows, Math.floor((bandRect.height * dpr) / grain)));
             skyRows = Math.floor(heroRows * SKY_FRACTION);
+            flock = new Flock(cols, Math.max(6, skyRows - 2));
             crestRow = Math.floor(heroRows * CREST);
             floorRow = crestRow + Math.max(3, Math.round(heroRows * 0.045));
             shaft0 = Math.max(7, Math.round(cols * SHAFT));
@@ -731,6 +789,56 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
          * leaving the crest can always find a cell to leave into. a dense column
          * beside the crest is a wall, and the lake stacks up behind it as a slab.
          */
+        /** packed grain to powder, tint and place kept; the powder step now has work */
+        const loosen = (i: number) => {
+            engine.cells[i] &= MATERIAL;
+            sandAwake = true;
+        };
+
+        /**
+         * water carries what it loosens. the grain goes to the nearest air beside
+         * or under the cell, so rain takes the word from its edges inward and a pool
+         * with packed sand on every side digs nothing: a puddle on the m is a puddle,
+         * the corner of the m is where the m gets rounder
+         */
+        const erode = (i: number) => {
+            const { cells, tint } = engine;
+            const y = (i / cols) | 0;
+            const x = i - y * cols;
+            const d = Math.random() < 0.5 ? -1 : 1;
+            const outs = [i + d, i - d, i + cols + d, i + cols - d];
+            for (let k = 0; k < outs.length; k++) {
+                const to = outs[k];
+                const tx = x + (k === 0 || k === 2 ? d : -d);
+                if (tx < 0 || tx >= cols || to >= cells.length) continue;
+                if (cells[to] !== EMPTY) continue;
+                cells[to] = cells[i] & MATERIAL;
+                tint[to] = tint[i];
+                cells[i] = EMPTY;
+                bed[i] = 0;
+                sandAwake = true;
+                return;
+            }
+            loosen(i);
+        };
+
+        /**
+         * a packed grain that was standing on something and now has air under it
+         * lets go. it runs a row per tick, so a hole dug under a letter collapses
+         * upward the way sand does instead of leaving a floating slab
+         */
+        const settle = () => {
+            const { cells } = engine;
+            for (let y = wordBox.y1; y >= wordBox.y0; y--) {
+                const row = y * cols;
+                for (let x = wordBox.x0; x <= wordBox.x1; x++) {
+                    const i = row + x;
+                    if (!bed[i] || !(cells[i] & PACKED)) continue;
+                    if (cells[i + cols] === EMPTY) loosen(i);
+                }
+            }
+        };
+
         const fall = () => {
             const { cells, tint } = engine;
             for (let y = rows - 2; y >= 0; y--) {
@@ -756,6 +864,10 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                         cells[i] = EMPTY;
                         continue;
                     }
+                    // rain on the word. a drop that was falling last tick has just hit;
+                    // one that was resting is a pool soaking in. either can wash the
+                    // grain under it off the edge, see erode()
+                    if (cells[b] & PACKED && Math.random() < (rest[i] ? SOAK : HIT) * wear) erode(b);
                     const dir = Math.random() < 0.5 ? -1 : 1;
                     for (const d of [dir, -dir]) {
                         const nx = x + d;
@@ -779,6 +891,29 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
          * column from the bottom instead carries support up through a resting stack and
          * loses it at the first gap, which is what actually separates a lake from a fall.
          */
+        /**
+         * sand drinks. standing water whose column bottoms out on sand, packed or
+         * the loose grains the rain washed into a crook, soaks away through the
+         * whole depth of the pool, so a downpour leaves a wet crook and not a lake
+         * in the k. water over the rock floor is the lake and keeps
+         */
+        const drink = () => {
+            const cells = engine.cells;
+            for (let x = 0; x < cols; x++) {
+                let onSand = false;
+                for (let y = rows - 1; y >= 0; y--) {
+                    const i = y * cols + x;
+                    const m = cells[i] & MATERIAL;
+                    if (m === WATER) {
+                        if (onSand && rest[i] && Math.random() < SEEP) {
+                            cells[i] = EMPTY;
+                            waterCount--;
+                        }
+                    } else onSand = m === RASP || m === AMBER;
+                }
+            }
+        };
+
         const markResting = () => {
             const cells = engine.cells;
             for (let x = 0; x < cols; x++) {
@@ -1092,6 +1227,63 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             }
         };
 
+        /** sand, packed or loose: something a bird can stand on. water is not */
+        const standable = (m: number) => m !== EMPTY && m !== WATER && m !== WALL;
+        /**
+         * a free cell on top of the word with sand under it, or -1. tries a few
+         * columns; the word is mostly top surface, so it rarely comes up empty
+         */
+        const perchSite = (): number => {
+            const { cells } = engine;
+            if (wordBox.x1 <= wordBox.x0) return -1;
+            // two on the word is company, the whole flock is a roost
+            let sitting = 0;
+            for (const b of flock.birds) if (b.state === PERCH) sitting++;
+            if (sitting >= 2) return -1;
+            for (let tries = 0; tries < 6; tries++) {
+                const x = wordBox.x0 + ((Math.random() * (wordBox.x1 - wordBox.x0 + 1)) | 0);
+                for (let y = Math.max(2, wordBox.y0 - 2); y <= wordBox.y1; y++) {
+                    const i = y * cols + x;
+                    if (cells[i] === EMPTY) continue;
+                    if (standable(cells[i]) && cells[i - cols] === EMPTY && cells[i - 2 * cols] === EMPTY) return i - cols;
+                    break;
+                }
+            }
+            return -1;
+        };
+        /** a drop passing through the cell is not a reason to abort a landing */
+        const perchHolds = (i: number): boolean =>
+            i >= cols &&
+            i + cols < engine.cells.length &&
+            (engine.cells[i] === EMPTY || engine.cells[i] === WATER) &&
+            standable(engine.cells[i + cols]);
+        /** a drop about to land on it, a bolt, or the brush close by: reasons to leave */
+        const scaredAt = (x: number, y: number): boolean => {
+            if (flash > 0) return true;
+            const xi = Math.round(x);
+            const yi = Math.round(y);
+            if (xi >= 0 && xi < cols) {
+                for (let k = 1; k <= 3; k++) {
+                    const yy = yi - k;
+                    if (yy < 0) break;
+                    if (engine.cells[yy * cols + xi] === WATER) return true;
+                }
+            }
+            const dx = touchedAt.x - x;
+            const dy = touchedAt.y - y;
+            return frame - touchedAt.frame < 30 && dx * dx + dy * dy < 12 * 12;
+        };
+        /**
+         * how many birds the sky holds: none at night, a few at dusk heading home,
+         * a small flock at noon, fewer as the deck closes in. they come and go by
+         * flying, so the count can change as often as it likes
+         */
+        const birds = () => {
+            const look = themeRef.current;
+            const want = look === "dark" ? 0 : Math.round((look === "dusk" ? 3 : 6) * (1 - cover * 0.8));
+            flock.tick({ wind, want, perch: perchSite, holds: perchHolds, scared: scaredAt });
+        };
+
         /** a bolt from a raining cloud base down to whatever it hits first */
         const strike = () => {
             const starts: Array<number> = [];
@@ -1321,7 +1513,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                         if (y >= heroRows) buf[i] = abyssP;
                         continue;
                     }
-                    const shades = sandPacked[m];
+                    const shades = sandPacked[m & MATERIAL];
                     if (!shades) continue;
                     if (m === WATER && (y === 0 || cells[i - cols] === EMPTY)) {
                         // the waterline, and every drop still in the air, catch the light
@@ -1342,6 +1534,20 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                     } else {
                         buf[i] = shades[tint[i] & 3];
                     }
+                }
+            }
+
+            // birds last: silhouettes over sky, cloud and word alike. they are the
+            // nearest thing in the frame, and a bird on a letter has to be on it
+            const birdP = packRGB([44 * amb[0], 34 * amb[1], 40 * amb[2]], lift * 0.5);
+            for (const b of flock.birds) {
+                const bx = Math.round(b.x);
+                const by = Math.round(b.y);
+                for (const [dx, dy] of birdCells(b)) {
+                    const x = bx + dx;
+                    const y = by + dy;
+                    if (x < 0 || x >= cols || y < 0 || y >= heroRows) continue;
+                    buf[y * cols + x] = birdP;
                 }
             }
 
@@ -1374,12 +1580,15 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             rain();
             blow();
             fall();
+            settle();
             if (sandAwake) engine.step({ water: false });
             markResting();
+            drink();
             flow(FLOW_PASSES);
             spill();
             pressure(10);
             evaporate();
+            birds();
             // the falls leave the frame, and what leaves rejoins the air. this is the
             // half of the loop the island made possible: the drop is not a dead end.
             // sand that gets this far is gone too, there is no floor under the page
@@ -1398,7 +1607,8 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 hudAt = frame;
                 let covered = 0;
                 for (let i = 0; i < cloud.length; i++) if (cloud[i] > 0.012) covered++;
-                setHud({ humidity: air, cover: covered / cloud.length, drops: waterCount });
+                cover = covered / cloud.length;
+                setHud({ humidity: air, cover, drops: waterCount });
             }
         };
 
@@ -1424,21 +1634,35 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 y: Math.floor(((clientY - rect.top) / rect.height) * rows),
             };
         };
-        /**
-         * the sand keeps the old hero's contract: the word holds until the pointer
-         * moves over the sky, then it is powder. the weather never waited
-         */
+        /** the readout stops asking once the sand has been touched */
         const wake = () => {
-            if (sandAwake || reduced) return;
+            if (reduced) return;
             sandAwake = true;
             setAwake(true);
         };
         let painting = false;
         const chrome = (e: PointerEvent) => !!(e.target as HTMLElement).closest("button, a");
+        /** the brush loosens what it touches a little wider than it pours */
+        const dig = (cx: number, cy: number, radius: number) => {
+            const { cells } = engine;
+            for (let dy = -radius; dy <= radius; dy++) {
+                const y = cy + dy;
+                if (y < 0 || y >= rows) continue;
+                for (let dx = -radius; dx <= radius; dx++) {
+                    const x = cx + dx;
+                    if (x < 0 || x >= cols || dx * dx + dy * dy > radius * radius) continue;
+                    const i = y * cols + x;
+                    if (cells[i] & PACKED) loosen(i);
+                }
+            }
+        };
         const paint = (e: PointerEvent) => {
             const { x, y } = cellFrom(e.clientX, e.clientY);
             const m = toolRef.current;
-            engine.pour(x, y, m === EMPTY ? 5 : 3, m);
+            const r = m === EMPTY ? 5 : 3;
+            touchedAt = { x, y, frame };
+            dig(x, y, r + 1);
+            engine.pour(x, y, r, m);
             if (reduced) render();
         };
         const down = (e: PointerEvent) => {
@@ -1451,9 +1675,6 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         const move = (e: PointerEvent) => {
             if (painting) paint(e);
         };
-        const hover = (e: PointerEvent) => {
-            if (!chrome(e)) wake();
-        };
         const up = () => {
             painting = false;
         };
@@ -1465,7 +1686,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         const pourAt = (clientX: number, clientY: number, material: number) => {
             const { x, y } = cellFrom(clientX, clientY);
             engine.pour(x, y, 5, material);
-            wake();
+            sandAwake = true;
             if (reduced) render();
         };
         pourRef.current = pourAt;
@@ -1503,6 +1724,14 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             // the lab's acceptance checks read the lake through this, nothing else does
             const half = () => cols / 2 - shaft0;
             (window as Window & { __wx?: unknown }).__wx = {
+                birds: () => flock.birds.map((b) => ({ x: b.x | 0, y: b.y | 0, state: b.state })),
+                perch: () => ({ site: perchSite(), box: wordBox, skyRows }),
+                /** how much of the word still stands: packed grains left */
+                packed: () => {
+                    let n = 0;
+                    for (let i = 0; i < engine.cells.length; i++) if (engine.cells[i] & PACKED) n++;
+                    return n;
+                },
                 probe: () => {
                     // the lake proper: water stacked on the basin floor, not what sits
                     // on the letters or in the counter of the e
@@ -1582,7 +1811,6 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
 
         stage.addEventListener("pointerdown", down);
         stage.addEventListener("pointermove", move);
-        band.addEventListener("pointermove", hover);
         window.addEventListener("pointerup", up);
         window.addEventListener("pointercancel", up);
         ro.observe(stage);
@@ -1615,7 +1843,6 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             io.disconnect();
             stage.removeEventListener("pointerdown", down);
             stage.removeEventListener("pointermove", move);
-            band.removeEventListener("pointermove", hover);
             window.removeEventListener("pointerup", up);
             window.removeEventListener("pointercancel", up);
         };
@@ -1688,10 +1915,13 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                     </button>
                 </div>
 
-                <p className="sand-hint" aria-hidden="true">
-                    {awake ? "" : "touch the sand · "}
-                    humidity {(hud.humidity * 100).toFixed(0)}% · cover {(hud.cover * 100).toFixed(0)}%
-                    {lab ? ` · ${hud.drops} drops` : ""}
+                <p className="sand-hint" data-awake={awake} aria-hidden="true">
+                    {awake ? null : <span className="sand-hint-nudge">touch the sand</span>}
+                    <span className="sand-hint-stats">
+                        {awake ? "" : " · "}
+                        humidity {(hud.humidity * 100).toFixed(0)}% · cover {(hud.cover * 100).toFixed(0)}%
+                        {lab ? ` · ${hud.drops} drops` : ""}
+                    </span>
                 </p>
             </div>
 
