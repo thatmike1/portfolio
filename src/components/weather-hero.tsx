@@ -1667,6 +1667,12 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         };
         const down = (e: PointerEvent) => {
             if (e.button !== 0 || chrome(e)) return;
+            // a press on the copy is for the text: select it, do not paint over it.
+            // anywhere else the press is a brush stroke, and the default it cancels
+            // is the browser starting a text selection that the drag would then
+            // sweep across the heading
+            if ((e.target as HTMLElement).closest(".hero-copy")) return;
+            e.preventDefault();
             painting = true;
             stage.setPointerCapture(e.pointerId);
             wake();
