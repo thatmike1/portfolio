@@ -276,6 +276,13 @@ a:focus-visible {
   border: 1.5px solid var(--muted);
 }
 
+.sand-swatch-bolt {
+  border-radius: 0;
+  background: oklch(0.85 0.17 95);
+  clip-path: polygon(45% 0, 100% 0, 60% 45%, 85% 45%, 30% 100%, 45% 55%, 15% 55%);
+  transform: scale(1.35);
+}
+
 .sand-swatch-cloud {
   background: color-mix(in oklch, var(--ink) 22%, var(--bg));
   border: 1px solid color-mix(in oklch, var(--ink) 40%, transparent);

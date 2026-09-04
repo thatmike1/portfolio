@@ -9,15 +9,17 @@ export const RASP = 2;
 export const AMBER = 3;
 export const INK = 4;
 export const WATER = 5;
+/** sand that lightning fused: static, and rain has nothing to wash */
+export const GLASS = 6;
 /**
  * flag bit, or'd onto a powder: the grain keeps its shade and its place until
  * something loosens it. the automaton never moves a packed grain, so packed
  * sand is solid to everything that does move; clear the bit and it is powder
  * again, same tint, same spot. kinetic sand, in one bit
  */
-export const PACKED = 8;
+export const PACKED = 16;
 /** strips the packed bit: what a cell is made of, moving or not */
-export const MATERIAL = 7;
+export const MATERIAL = 15;
 
 export type Material =
     | typeof EMPTY
@@ -25,7 +27,8 @@ export type Material =
     | typeof RASP
     | typeof AMBER
     | typeof INK
-    | typeof WATER;
+    | typeof WATER
+    | typeof GLASS;
 
 export type ThemeName = "light" | "dark";
 
@@ -66,6 +69,12 @@ export const PALETTES: Record<ThemeName, Record<number, string[]>> = {
             "oklch(0.6 0.14 248)",
             "oklch(0.68 0.11 254)",
         ],
+        [GLASS]: [
+            "oklch(0.9 0.08 190)",
+            "oklch(0.96 0.04 185)",
+            "oklch(0.82 0.1 195)",
+            "oklch(0.99 0.02 180)",
+        ],
     },
     dark: {
         [WALL]: [
@@ -97,6 +106,12 @@ export const PALETTES: Record<ThemeName, Record<number, string[]>> = {
             "oklch(0.75 0.13 248)",
             "oklch(0.68 0.15 242)",
             "oklch(0.78 0.12 250)",
+        ],
+        [GLASS]: [
+            "oklch(0.92 0.09 190)",
+            "oklch(0.97 0.05 185)",
+            "oklch(0.86 0.11 195)",
+            "oklch(0.99 0.02 180)",
         ],
     },
 };

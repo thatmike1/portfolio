@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import {
     AMBER,
     EMPTY,
+    GLASS,
     INK,
     MATERIAL,
     PACKED,
@@ -215,7 +216,9 @@ const DUST: Record<Theme, number> = { light: AMBER, dusk: RASP, dark: WATER };
 type Page = { abyss: RGB; ground: [RGB, RGB] };
 
 /** not a material: the brush writes into the cloud deck instead of the sand */
-const CLOUD = 16;
+const CLOUD = 32;
+/** not a material either: a press calls a bolt down on that column */
+const LIGHTNING = 33;
 
 const TOOLS: Array<{ id: number; label: string }> = [
     { id: RASP, label: "raspberry" },
@@ -223,6 +226,7 @@ const TOOLS: Array<{ id: number; label: string }> = [
     { id: WATER, label: "water" },
     { id: WALL, label: "rock" },
     { id: CLOUD, label: "cloud" },
+    { id: LIGHTNING, label: "lightning" },
     { id: EMPTY, label: "erase" },
 ];
 /** how much deck a cloud stroke adds at its centre, and the most it can pile up */
@@ -403,7 +407,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         let stars: Array<{ x: number; y: number; base: number; phase: number }> = [];
 
         const sandRGB: Record<number, Array<RGB>> = {};
-        for (const m of [WALL, RASP, AMBER, INK, WATER]) {
+        for (const m of [WALL, RASP, AMBER, INK, WATER, GLASS]) {
             sandRGB[m] = PALETTES.light[m].map((css) => resolve(swatchCtx, css));
         }
         sandRGB[WATER] = [
@@ -429,6 +433,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             [AMBER]: [0, 0, 0, 0],
             [INK]: [0, 0, 0, 0],
             [WATER]: [0, 0, 0, 0],
+            [GLASS]: [0, 0, 0, 0],
         };
 
         // the inline head script set this before first paint
@@ -1337,14 +1342,79 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             flock.tick({ wind, want, perch: perchSite, holds: perchHolds, scared: scaredAt });
         };
 
-        /** a bolt from a raining cloud base down to whatever it hits first */
-        const strike = () => {
-            const starts: Array<number> = [];
-            for (let x = 2; x < cols - 2; x++) if (base[x] >= 0) starts.push(x);
-            if (!starts.length) return;
-            let x = starts[(Math.random() * starts.length) | 0];
-            let y = base[x];
+        /** loose sand, packed sand: what a bolt can fuse or throw */
+        const isSand = (m: number) => {
+            const k = m & MATERIAL;
+            return k === RASP || k === AMBER;
+        };
+
+        /**
+         * what the bolt does to the sand it hits. fulgurite first: real lightning
+         * fuses sand to glass along its path, so the grains under the hit turn to
+         * glass down through the letter, a vein that rain cannot wash and a way
+         * to weld the name back together. then the blast: sand around the hit is
+         * loosened and thrown up and out, and falls back as a spray
+         */
+        const fuse = (hx: number, hy: number, depth: number, blast: number) => {
+            const { cells, tint } = engine;
+            const fuseCell = (i: number) => {
+                cells[i] = GLASS;
+                tint[i] = (Math.random() * 4) | 0;
+                bed[i] = 0;
+            };
+            let x = hx;
+            for (let y = hy; y < Math.min(rows - 1, hy + depth); y++) {
+                const i = y * cols + x;
+                const m = cells[i];
+                // the vein crosses a gap (the dot of the i to its stem) but a
+                // wall, water or ink ends it
+                if (m !== EMPTY && m !== GLASS && !isSand(m)) break;
+                if (isSand(m)) fuseCell(i);
+                // a tube, not a thread: it wanders and thickens like the bolt did
+                const nx = x + (Math.random() < 0.5 ? -1 : 1);
+                if (nx >= 0 && nx < cols && Math.random() < 0.6) {
+                    if (isSand(cells[y * cols + nx])) fuseCell(y * cols + nx);
+                    if (Math.random() < 0.4) x = nx;
+                }
+            }
+            if (blast <= 0) return;
+            for (let dy = -blast; dy <= blast; dy++) {
+                const y = hy + dy;
+                if (y < 0 || y >= rows) continue;
+                for (let dx = -blast; dx <= blast; dx++) {
+                    const x = hx + dx;
+                    if (x < 0 || x >= cols || dx * dx + dy * dy > blast * blast) continue;
+                    const i = y * cols + x;
+                    if (!isSand(cells[i])) continue;
+                    // everything in the blast comes loose; most of it is thrown up
+                    // and away from the hit, the rest caves in after it
+                    cells[i] &= MATERIAL;
+                    bed[i] = 0;
+                    if (Math.random() < 0.3) continue;
+                    const tx = x + Math.round((Math.random() * 2 - 1) * blast * 2.5);
+                    const ty = y - 2 - ((Math.random() * blast * 2.5) | 0);
+                    if (tx < 0 || tx >= cols || ty < 0) continue;
+                    const t = ty * cols + tx;
+                    if (cells[t] !== EMPTY) continue;
+                    cells[t] = cells[i];
+                    tint[t] = tint[i];
+                    cells[i] = EMPTY;
+                }
+            }
+            sandAwake = true;
+        };
+
+        /**
+         * a bolt down column x from the cloud base, or from the top of the sky
+         * when the sky is clear, to whatever it hits first; sand it hits it works
+         * over, see fuse(). power is the tool's press; the weather's own bolts
+         * are weaker and only nick the word
+         */
+        const bolt_ = (x0: number, power: number) => {
+            let x = x0;
+            let y = Math.max(0, base[x]);
             bolt = [];
+            let hit = -1;
             while (y < rows - 1) {
                 bolt.push(y * cols + x);
                 if (Math.random() < 0.4) {
@@ -1356,9 +1426,23 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                     }
                 }
                 y++;
-                if (engine.cells[y * cols + x] !== EMPTY) break;
+                if (engine.cells[y * cols + x] !== EMPTY) {
+                    hit = y;
+                    break;
+                }
             }
             flash = FLASH_FRAMES;
+            if (hit >= 0 && isSand(engine.cells[hit * cols + x])) {
+                fuse(x, hit, power > 1 ? 12 : 3, power > 1 ? 4 : 1);
+            }
+        };
+
+        /** a bolt from a raining cloud base down to whatever it hits first */
+        const strike = () => {
+            const starts: Array<number> = [];
+            for (let x = 2; x < cols - 2; x++) if (base[x] >= 0) starts.push(x);
+            if (!starts.length) return;
+            bolt_(starts[(Math.random() * starts.length) | 0], 1);
         };
 
         const render = () => {
@@ -1373,7 +1457,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 clamp255(waterTop[1] * amb[1] + 255 * lift),
                 clamp255(waterTop[2] * amb[2] + 255 * lift),
             );
-            for (const m of [WALL, RASP, AMBER, INK, WATER]) {
+            for (const m of [WALL, RASP, AMBER, INK, WATER, GLASS]) {
                 const shades = sandRGB[m];
                 for (let i = 0; i < shades.length; i++) {
                     const c = m === WALL ? mix3(shades[i], page.abyss, cur.rockLift) : shades[i];
@@ -1732,6 +1816,14 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             // sweep across the heading
             if ((e.target as HTMLElement).closest(".hero-copy")) return;
             e.preventDefault();
+            if (toolRef.current === LIGHTNING) {
+                // a press, not a stroke: one bolt per click
+                const { x, y } = cellFrom(e.clientX, e.clientY);
+                touchedAt = { x, y, frame };
+                wake();
+                bolt_(Math.max(1, Math.min(cols - 2, x)), 2);
+                return;
+            }
             painting = true;
             stage.setPointerCapture(e.pointerId);
             wake();
@@ -1796,6 +1888,14 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 seed: (x: number, y: number) => seed(x, y, 4),
                 tool: () => toolRef.current,
                 strokes: () => strokes,
+                /** glass cells, what the lightning has fused so far */
+                glass: () => {
+                    let n = 0;
+                    for (let i = 0; i < engine.cells.length; i++) if (engine.cells[i] === GLASS) n++;
+                    return n;
+                },
+                /** a tool bolt on column x */
+                bolt: (x: number) => bolt_(x, 2),
                 /** how much of the word still stands: packed grains left */
                 packed: () => {
                     let n = 0;
@@ -1971,6 +2071,8 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                                 <span className="sand-swatch sand-swatch-erase" />
                             ) : t.id === CLOUD ? (
                                 <span className="sand-swatch sand-swatch-cloud" />
+                            ) : t.id === LIGHTNING ? (
+                                <span className="sand-swatch sand-swatch-bolt" />
                             ) : (
                                 <span className="sand-swatch" style={{ background: shades[t.id][0] }} />
                             )}

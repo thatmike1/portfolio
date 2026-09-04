@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AMBER, EMPTY, MATERIAL, PACKED, RASP, SandEngine, WATER } from "./sand-engine";
+import { AMBER, EMPTY, GLASS, MATERIAL, PACKED, RASP, SandEngine, WATER } from "./sand-engine";
 
 describe("packed sand", () => {
     it("holds its place while loose grains fall past it", () => {
@@ -31,5 +31,15 @@ describe("packed sand", () => {
         for (let i = 0; i < 5; i++) e.step();
         expect(e.cells[3 * 3 + 1]).toBe(RASP);
         expect(e.tint[3 * 3 + 1]).toBe(tint);
+    });
+
+    it("glass stays put and carries what lands on it", () => {
+        const e = new SandEngine(1, 4);
+        e.set(0, 2, GLASS);
+        e.set(0, 0, RASP);
+        for (let i = 0; i < 6; i++) e.step();
+        expect(e.cells[2]).toBe(GLASS);
+        // the grain fell one cell and stopped on the glass
+        expect(e.cells[1]).toBe(RASP);
     });
 });
