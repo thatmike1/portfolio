@@ -2412,28 +2412,28 @@ type IconCell = [number, number, number, number];
 
 /**
  * reset as a pixel tile on the sky tiles' scale: a 10x10 grid at 20px, so a
- * cell is the same two device pixels as the sun's. the ring is broken at the
- * top left and its left arm ends in a fat arrowhead aimed up into the gap;
- * a thin head and a one-cell gap read as a closed ring at this size. it wears
- * currentColor, not a ground: it is a glyph, not a picture of anything
+ * cell is the same two device pixels as the sun's. the ring runs round from
+ * the left arm, under, up the right and back along the top, and its top arc
+ * ends in an arrowhead pointing down into the gap: the head sits where the
+ * travel ends, the way a rotate-back glyph reads. it wears currentColor, not
+ * a ground: it is a glyph, not a picture of anything
  */
 function ResetIcon() {
     const cells: Array<IconCell> = [
-        // the ring, clockwise from the top, minus the top-left arc
-        [5, 0, 2, 1],
-        [7, 1, 1, 1],
-        [8, 2, 1, 1],
-        [9, 3, 1, 4],
-        [8, 7, 1, 1],
-        [7, 8, 1, 1],
-        [3, 9, 4, 1],
-        [2, 8, 1, 1],
+        // the left arm, then round under and up the right side to the top arc
+        [0, 4, 1, 3],
         [1, 7, 1, 1],
-        [0, 5, 1, 2],
-        // the arrowhead: four wide at the base, narrowing to a point
-        [0, 4, 4, 1],
-        [1, 3, 2, 1],
-        [1, 2, 1, 1],
+        [2, 8, 1, 1],
+        [3, 9, 4, 1],
+        [7, 8, 1, 1],
+        [8, 7, 1, 1],
+        [9, 3, 1, 4],
+        [8, 2, 1, 1],
+        [7, 1, 1, 1],
+        [3, 0, 4, 1],
+        // the arrowhead under the top arc's end, three wide narrowing to a point
+        [2, 1, 3, 1],
+        [3, 2, 1, 1],
     ];
     return (
         <svg

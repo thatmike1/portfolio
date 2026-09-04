@@ -1018,9 +1018,14 @@ a:focus-visible {
 
   /* the corners pull in, and the bar out of the handle keeps every chip's word:
      it simply scrolls sideways in the room it is given */
+  /* the pill hangs off the band's bottom edge here rather than sitting inside
+     it: the band is short on a phone and the chips wrap to three rows, so
+     the open drawer wants room, and the room is the page margin under the
+     band. this far and no further, or the drawer would reach the heading
+     (the copy's top padding is 3rem; the pill's bottom lands 2.25rem in) */
   .sand-dock {
     left: 0.75rem;
-    bottom: 0.75rem;
+    bottom: -2.25rem;
     max-width: calc(100% - 1.5rem);
   }
 
