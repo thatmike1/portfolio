@@ -27,6 +27,8 @@ import { dampen, decay, germinate, grow, isSand } from "../lib/moss";
 import type { MossWorld } from "../lib/moss";
 import { crawl, snailCells, spawn as spawnSnail } from "../lib/snail";
 import type { Snail } from "../lib/snail";
+import { fishCells, spawn as spawnFish, swim } from "../lib/fish";
+import type { Fish } from "../lib/fish";
 import { applyTheme, readTheme, THEMES } from "../lib/theme";
 import type { Theme } from "../lib/theme";
 
@@ -265,6 +267,10 @@ const FLIES_MAX = 9;
 const SNAIL_MOSS = 15;
 const SNAIL_ODDS = 0.003;
 const SNAIL_PATIENCE = 1800;
+/** lake cells with water above and below per fish, the most fish, and how likely one arrives per frame */
+const FISH_LAKE = 60;
+const FISH_MAX = 3;
+const FISH_ODDS = 0.004;
 const CLOUD_CAP = 0.6;
 /** the deck's noise scrolls at this many deck units per screen cell, see stepClouds */
 const DECK_SCALE = 0.045;
@@ -534,6 +540,9 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         let snail: Snail | null = null;
         /** frames since the snail's last mouthful */
         let snailHunger = 0;
+        let fishes: Fish[] = [];
+        /** how many fish the lake will hold right now, refreshed now and then */
+        let fishWant = 0;
         /** the stamped word's box, so settle() does not walk the whole grid */
         let wordBox = { x0: 0, y0: 0, x1: 0, y1: 0 };
         /**
@@ -665,6 +674,8 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             moss = { cols, rows, cells, tint: engine.tint, damp: new Uint8Array(cols * rows) };
             mossCount = 0;
             snail = null;
+            fishes = [];
+            fishWant = 0;
             wordBox = { x0: cols, y0: rows, x1: 0, y1: 0 };
             for (let y = 0; y < rows - 1; y++) {
                 for (let x = 0; x < cols; x++) {
@@ -1518,12 +1529,65 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         };
 
         /**
+         * the lake proper, cells with water over and under them so a fish is hidden:
+         * how many there are, and one of them picked at random
+         */
+        const lakeRoom = (): { deep: number; spot: [number, number] | null } => {
+            const cells = engine.cells;
+            let deep = 0;
+            let spot: [number, number] | null = null;
+            const half = cols / 2 - shaft0;
+            for (let x = 2; x < cols - 2; x++) {
+                if ((Math.min(x, cols - 1 - x) - shaft0) / half < LIP_U + BANK_U) continue;
+                for (let y = crestRow - 2; y < floorRow - 1; y++) {
+                    if (y < 1) continue;
+                    const i = y * cols + x;
+                    if (cells[i] !== WATER || cells[i - cols] !== WATER || cells[i + cols] !== WATER) continue;
+                    deep++;
+                    if (Math.random() * deep < 1) spot = [x, y];
+                }
+            }
+            return { deep, spot };
+        };
+
+        const fishEnv = {
+            water: (x: number, y: number) =>
+                x >= 0 && x < cols && y >= 0 && y < rows && engine.cells[y * cols + x] === WATER,
+            open: (x: number, y: number) =>
+                x >= 0 && x < cols && y >= 0 && y < rows && engine.cells[y * cols + x] === EMPTY,
+        };
+
+        /**
+         * fish for the lake: one per sixty hidden cells up to three, arriving one at
+         * a time as the water comes, fading out as it goes. they cruise the basin
+         * and now and then one leaps; a frozen-over lake keeps them under the ice
+         */
+        const school = () => {
+            if (frame % 30 === 0) {
+                const room = lakeRoom();
+                fishWant = Math.min(FISH_MAX, Math.floor(room.deep / FISH_LAKE));
+                if (fishes.length < fishWant && room.spot && Math.random() < FISH_ODDS * 30) {
+                    fishes.push(spawnFish(room.spot[0], room.spot[1], Math.random() < 0.5 ? -1 : 1));
+                } else if (fishes.length > Math.floor(room.deep / (FISH_LAKE * 0.6))) {
+                    // a lake at the edge of holding one more should not flicker it in and
+                    // out, so a fish only goes once the water has really gone down
+                    const f = fishes.find((f) => !f.leaving);
+                    if (f) f.leaving = true;
+                }
+            }
+            for (let k = fishes.length - 1; k >= 0; k--) {
+                if (!swim(fishes[k], fishEnv, cols, rows)) fishes.splice(k, 1);
+            }
+        };
+
+        /**
          * the moss brings company. fireflies come out over it at night, once the
          * birds have gone, a handful per patch. a snail turns up when there is
          * enough to eat, crawls the letters grazing it back to sand, and wanders
          * off an edge when it has gone half a minute without a mouthful
          */
         const critters = () => {
+            school();
             const night = cur.starAlpha > 0.35;
             const want = night ? Math.min(FLIES_MAX, Math.ceil(mossCount / MOSS_PER_FLY)) : 0;
             fireflies.tick({ want, home: mossHome });
@@ -1580,6 +1644,11 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                         cells[i] = EMPTY;
                         continue;
                     }
+                    if (cells[i] === SNOW || cells[i] === ICE) {
+                        // snow and ice melt
+                        engine.set(x, y, WATER);
+                        continue;
+                    }
                     if (!isSand(cells[i])) continue;
                     // everything in the blast comes loose; most of it is thrown up
                     // and away from the hit, the rest caves in after it
@@ -1627,8 +1696,24 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 }
             }
             flash = FLASH_FRAMES;
-            if (hit >= 0 && isSand(engine.cells[hit * cols + x])) {
-                fuse(x, hit, power > 1 ? 12 : 3, power > 1 ? 4 : 1);
+            if (hit < 0) return;
+            const hm = engine.cells[hit * cols + x];
+            if (isSand(hm)) fuse(x, hit, power > 1 ? 12 : 3, power > 1 ? 4 : 1);
+            else if (hm === SNOW || hm === ICE) melt(x, hit, power > 1 ? 5 : 2);
+        };
+
+        /** the heat of a bolt on snow or ice: everything frozen within reach is water again */
+        const melt = (hx: number, hy: number, radius: number) => {
+            const cells = engine.cells;
+            for (let dy = -radius; dy <= radius; dy++) {
+                const y = hy + dy;
+                if (y < 0 || y >= rows) continue;
+                for (let dx = -radius; dx <= radius; dx++) {
+                    const x = hx + dx;
+                    if (x < 0 || x >= cols || dx * dx + dy * dy > radius * radius) continue;
+                    const m = cells[y * cols + x];
+                    if (m === SNOW || m === ICE) engine.set(x, y, WATER);
+                }
             }
         };
 
@@ -1891,6 +1976,30 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                     const y = by + dy;
                     if (x < 0 || x >= cols || y < 0 || y >= heroRows) continue;
                     buf[y * cols + x] = birdP;
+                }
+            }
+
+            // fish: orange body and a darker fin, seen through the water so they are
+            // a shade under it and full colour only in the air of a leap
+            for (const f of fishes) {
+                const a = f.fade * (f.jumping ? 1 : 0.8);
+                if (a < 0.03) continue;
+                const fx = Math.round(f.x);
+                const fy = Math.round(f.y);
+                for (const [dx, dy, part] of fishCells(f)) {
+                    const x = fx + dx;
+                    const y = fy + dy;
+                    if (x < 0 || x >= cols || y < 0 || y >= heroRows) continue;
+                    const i = y * cols + x;
+                    // under a letter's overhang it is behind the letter
+                    const cell = engine.cells[i];
+                    if (cell !== WATER && cell !== EMPTY) continue;
+                    const under = buf[i];
+                    const c: RGB = part === "body" ? [235 * amb[0], 140 * amb[1], 55 * amb[2]] : [190 * amb[0], 95 * amb[1], 45 * amb[2]];
+                    const r = (under >>> 0) & 255;
+                    const g = (under >>> 8) & 255;
+                    const b = (under >>> 16) & 255;
+                    buf[i] = packRGB([r + (c[0] - r) * a, g + (c[1] - g) * a, b + (c[2] - b) * a]);
                 }
             }
 
@@ -2168,7 +2277,22 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                     flies: fireflies.bugs.length,
                     lit: fireflies.bugs.filter((b) => flyGlow(b) > 0.3).length,
                     snail: snail ? { x: snail.x, y: snail.y, chew: snail.chew, leaving: snail.leaving } : null,
+                    fish: fishes.map((f) => ({ x: Math.round(f.x), y: Math.round(f.y), jumping: f.jumping, fade: f.fade, leaving: f.leaving })),
+                    fishWant,
+                    lake: lakeRoom().deep,
                 }),
+                /** call a fish now, and make one leap */
+                fish: () => {
+                    const room = lakeRoom();
+                    if (room.spot) fishes.push(spawnFish(room.spot[0], room.spot[1], 1));
+                    return fishes.length;
+                },
+                leap: () => {
+                    for (const f of fishes) {
+                        f.jumping = true;
+                        f.vy = -0.5;
+                    }
+                },
                 /** call the snail now */
                 snail: () => {
                     for (let k = 0; k < 20 && !snail; k++) snail = callSnail();
