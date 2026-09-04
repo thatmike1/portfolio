@@ -4,6 +4,7 @@ import {
     AMBER,
     EMPTY,
     GLASS,
+    ICE,
     INK,
     MATERIAL,
     MOSS,
@@ -12,6 +13,7 @@ import {
     RASP,
     SandEngine,
     SEED,
+    SNOW,
     stampWord,
     WALL,
     WATER,
@@ -19,6 +21,8 @@ import {
 import { createFixedStep } from "../lib/fixed-step";
 import { birdCells, Flock, PERCH } from "../lib/flock";
 import { Fireflies, glow as flyGlow } from "../lib/fireflies";
+import { drift as driftFlakes, freeze, thaw } from "../lib/frost";
+import type { Flake } from "../lib/frost";
 import { dampen, decay, germinate, grow, isSand } from "../lib/moss";
 import type { MossWorld } from "../lib/moss";
 import { crawl, snailCells, spawn as spawnSnail } from "../lib/snail";
@@ -226,6 +230,8 @@ type Page = { abyss: RGB; ground: [RGB, RGB] };
 const CLOUD = 32;
 /** not a material either: a press calls a bolt down on that column */
 const LIGHTNING = 33;
+/** the cloud brush's cold twin: the deck it paints snows instead of raining */
+const SNOWCLOUD = 34;
 
 const TOOLS: Array<{ id: number; label: string }> = [
     { id: RASP, label: "raspberry" },
@@ -234,6 +240,7 @@ const TOOLS: Array<{ id: number; label: string }> = [
     { id: WALL, label: "rock" },
     { id: SEED, label: "moss" },
     { id: CLOUD, label: "cloud" },
+    { id: SNOWCLOUD, label: "snow" },
     { id: LIGHTNING, label: "lightning" },
     { id: EMPTY, label: "erase" },
 ];
@@ -246,6 +253,9 @@ const CLOUD_STROKE = 0.16;
 const MOSS_SHARE = 0.3;
 const MOSS_EVERY = 6;
 const MOSS_RATE = 0.08;
+/** ice creeps at this chance per ice cell per frame while it snows; the sun melts at this per open cell */
+const FREEZE = 0.02;
+const MELT = 0.006;
 /** a perched bird now and then leaves a seed behind, per frame */
 const BIRD_SEED = 0.0015;
 /** moss cells per firefly at night, and the most of them */
@@ -415,8 +425,13 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
          * with the noise as the deck drifts. it rains itself away, see rain()
          */
         let stain = new Float32Array(1);
+        /** the painted deck's cold, same layout as stain; where it is set the deck snows */
+        let chill = new Float32Array(1);
+        const flakes: Flake[] = [];
         /** lowest raining row per column, -1 for clear sky */
         let base = new Int16Array(1);
+        /** per screen column, the deck cell holding the most cold this frame, or -1 */
+        let coldAt = new Int32Array(1);
         /** per cell: is this water resting on ground, or still on its way down */
         let rest = new Uint8Array(1);
         /** per row scratch for the flow pass: nearest hole either side, and who moved */
@@ -431,7 +446,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         let stars: Array<{ x: number; y: number; base: number; phase: number }> = [];
 
         const sandRGB: Record<number, Array<RGB>> = {};
-        for (const m of [WALL, RASP, AMBER, INK, WATER, GLASS, SEED, MOSS]) {
+        for (const m of [WALL, RASP, AMBER, INK, WATER, GLASS, SEED, MOSS, SNOW, ICE]) {
             sandRGB[m] = PALETTES.light[m].map((css) => resolve(swatchCtx, css));
         }
         sandRGB[WATER] = [
@@ -460,6 +475,8 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             [GLASS]: [0, 0, 0, 0],
             [SEED]: [0, 0, 0, 0],
             [MOSS]: [0, 0, 0, 0],
+            [SNOW]: [0, 0, 0, 0],
+            [ICE]: [0, 0, 0, 0],
         };
 
         // the inline head script set this before first paint
@@ -676,8 +693,11 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         const recount = () => {
             let n = 0;
             const cells = engine.cells;
-            for (let i = 0; i < cells.length; i++) if (cells[i] === WATER) n++;
-            waterCount = n;
+            for (let i = 0; i < cells.length; i++) {
+                const m = cells[i];
+                if (m === WATER || m === SNOW || m === ICE) n++;
+            }
+            waterCount = n + flakes.length;
             airRaw = Math.max(0, Math.min(1, (capacity - waterCount) / capacity));
         };
 
@@ -702,6 +722,9 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             cloud = new Float32Array(cols * skyRows);
             glow = new Float32Array(cols * skyRows);
             stain = new Float32Array(cols * skyRows);
+            chill = new Float32Array(cols * skyRows);
+            coldAt = new Int32Array(cols);
+            flakes.length = 0;
             base = new Int16Array(cols);
             rest = new Uint8Array(cols * rows);
             holeL = new Int16Array(cols);
@@ -752,7 +775,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
          * paint cloud: a soft disc of deck density around (cx, cy), only in the
          * sky rows. stored in deck coordinates so it drifts with the weather
          */
-        const seed = (cx: number, cy: number, radius: number) => {
+        const seed = (cx: number, cy: number, radius: number, cold = false) => {
             for (let dy = -radius; dy <= radius; dy++) {
                 const y = cy + dy;
                 if (y < 1 || y >= skyRows - 1) continue;
@@ -763,6 +786,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                     const i = y * cols + deckX(x);
                     const add = CLOUD_STROKE * (1 - Math.sqrt(dd) / (radius + 1));
                     stain[i] = Math.min(CLOUD_CAP, stain[i] + add);
+                    if (cold) chill[i] = Math.min(CLOUD_CAP, chill[i] + add);
                 }
             }
         };
@@ -771,7 +795,10 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             const bias = -0.54 + air * 0.36;
             const { bx, by, clear } = body();
             const clear2 = clear * clear;
-            for (let x = 0; x < cols; x++) base[x] = -1;
+            for (let x = 0; x < cols; x++) {
+                base[x] = -1;
+                coldAt[x] = -1;
+            }
             for (let y = 0; y < skyRows; y++) {
                 // clouds live in a band: thin at the very top, gone near the horizon
                 const t = y / skyRows;
@@ -803,6 +830,11 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                         // takes the rest
                         stain[si] *= 0.9992;
                         d += stain[si];
+                    }
+                    if (chill[si] > 0) {
+                        chill[si] *= 0.9992;
+                        // the cold sits wherever it was painted; the column under it snows
+                        if (coldAt[x] < 0 || chill[si] > chill[coldAt[x]]) coldAt[x] = si;
                     }
                     cloud[row + x] = d;
                     if (d > 0.055) base[x] = y;
@@ -838,6 +870,16 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 const ty = y + 1;
                 if (ty >= rows) continue;
                 if (engine.cells[ty * cols + x] !== EMPTY) continue;
+                const ci = coldAt[x];
+                if (ci >= 0 && chill[ci] > 0) {
+                    // a cold deck lets go a flake, and fewer of them: each one is
+                    // slower and larger on the eye than a drop
+                    if (Math.random() < 0.5) continue;
+                    chill[ci] = Math.max(0, chill[ci] - 0.004);
+                    flakes.push({ x: x + Math.random(), y: ty, phase: Math.random() * Math.PI * 2 });
+                    waterCount++;
+                    continue;
+                }
                 engine.set(x, ty, WATER);
                 waterCount++;
             }
@@ -1406,6 +1448,22 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             mossCount = grow(moss, mossBudget, MOSS_RATE);
         };
 
+        /**
+         * winter, when the snow chip has painted some: flakes drift down and cap
+         * what they land on, ice creeps over the lake while they fall, and the
+         * sun (noon, not the moon) takes it all back to water from the open
+         * face in, which wets the word for the moss
+         */
+        const frost = () => {
+            const world = { cols, rows, cells: engine.cells, tint: engine.tint, resting: (i: number) => rest[i] === 1 };
+            if (flakes.length) {
+                waterCount -= driftFlakes(flakes, world, wind);
+                if ((frame & 3) === 0) freeze(world, FREEZE * 4);
+            }
+            const sun = Math.max(0, cur.sun - 0.35) * (1 - cover);
+            if (sun > 0 && (frame & 3) === 0) thaw(world, MELT * 4 * sun);
+        };
+
         /** a moss cell picked at random, for a firefly to hang around */
         const mossHome = (): readonly [number, number] | null => {
             if (mossCount === 0) return null;
@@ -1594,7 +1652,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 clamp255(waterTop[1] * amb[1] + 255 * lift),
                 clamp255(waterTop[2] * amb[2] + 255 * lift),
             );
-            for (const m of [WALL, RASP, AMBER, INK, WATER, GLASS, SEED, MOSS]) {
+            for (const m of [WALL, RASP, AMBER, INK, WATER, GLASS, SEED, MOSS, SNOW, ICE]) {
                 const shades = sandRGB[m];
                 for (let i = 0; i < shades.length; i++) {
                     const c = m === WALL ? mix3(shades[i], page.abyss, cur.rockLift) : shades[i];
@@ -1811,6 +1869,17 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 }
             }
 
+            // falling flakes, a cell each, over the grid and under the birds
+            if (flakes.length) {
+                const flakeP = sandPacked[SNOW][1];
+                for (const f of flakes) {
+                    const x = f.x | 0;
+                    const y = f.y | 0;
+                    if (x < 0 || x >= cols || y < 0 || y >= heroRows) continue;
+                    buf[y * cols + x] = flakeP;
+                }
+            }
+
             // birds last: silhouettes over sky, cloud and word alike. they are the
             // nearest thing in the frame, and a bird on a letter has to be on it
             const birdP = packRGB([44 * amb[0], 34 * amb[1], 40 * amb[2]], lift * 0.5);
@@ -1897,6 +1966,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             markResting();
             drink();
             live();
+            frost();
             critters();
             flow(FLOW_PASSES);
             spill();
@@ -1975,8 +2045,8 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             strokes++;
             const { x, y } = cellFrom(e.clientX, e.clientY);
             const m = toolRef.current;
-            if (m === CLOUD) {
-                seed(x, y, 4);
+            if (m === CLOUD || m === SNOWCLOUD) {
+                seed(x, y, 4, m === SNOWCLOUD);
                 return;
             }
             if (m === SEED) {
@@ -2104,6 +2174,17 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                     for (let k = 0; k < 20 && !snail; k++) snail = callSnail();
                     return snail;
                 },
+                frost: () => {
+                    let snow = 0;
+                    let ice = 0;
+                    for (let i = 0; i < engine.cells.length; i++) {
+                        if (engine.cells[i] === SNOW) snow++;
+                        if (engine.cells[i] === ICE) ice++;
+                    }
+                    return { flakes: flakes.length, snow, ice, chill: chill.reduce((a, v) => a + v, 0), waterCount };
+                },
+                /** a cold cloud at a cell */
+                chill: (x: number, y: number) => seed(x, y, 4, true),
                 /** a pinch of seed at a cell */
                 sow: (x: number, y: number) => {
                     for (let k = 0; k < 3; k++) engine.set(x + k - 1, y, SEED);
@@ -2284,6 +2365,8 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                                 <span className="sand-swatch sand-swatch-erase" />
                             ) : t.id === CLOUD ? (
                                 <span className="sand-swatch sand-swatch-cloud" />
+                            ) : t.id === SNOWCLOUD ? (
+                                <span className="sand-swatch sand-swatch-snow" />
                             ) : t.id === LIGHTNING ? (
                                 <span className="sand-swatch sand-swatch-bolt" />
                             ) : t.id === SEED ? (

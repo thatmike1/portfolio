@@ -15,6 +15,10 @@ export const GLASS = 6;
 export const SEED = 7;
 /** static and alive: binds the grain it grew on, spreads over damp sand */
 export const MOSS = 8;
+/** a landed flake: static, caps what it fell on, melts in the sun; see frost.ts */
+export const SNOW = 9;
+/** frozen water: static until the sun takes it back */
+export const ICE = 10;
 /**
  * flag bit, or'd onto a powder: the grain keeps its shade and its place until
  * something loosens it. the automaton never moves a packed grain, so packed
@@ -34,7 +38,9 @@ export type Material =
     | typeof WATER
     | typeof GLASS
     | typeof SEED
-    | typeof MOSS;
+    | typeof MOSS
+    | typeof SNOW
+    | typeof ICE;
 
 export type ThemeName = "light" | "dark";
 
@@ -93,6 +99,18 @@ export const PALETTES: Record<ThemeName, Record<number, string[]>> = {
             "oklch(0.52 0.13 145)",
             "oklch(0.68 0.14 130)",
         ],
+        [SNOW]: [
+            "oklch(0.97 0.01 240)",
+            "oklch(0.99 0.005 240)",
+            "oklch(0.95 0.015 235)",
+            "oklch(0.98 0.008 245)",
+        ],
+        [ICE]: [
+            "oklch(0.84 0.07 225)",
+            "oklch(0.88 0.06 220)",
+            "oklch(0.8 0.08 230)",
+            "oklch(0.9 0.05 222)",
+        ],
     },
     dark: {
         [WALL]: [
@@ -142,6 +160,18 @@ export const PALETTES: Record<ThemeName, Record<number, string[]>> = {
             "oklch(0.75 0.17 135)",
             "oklch(0.64 0.15 145)",
             "oklch(0.8 0.15 130)",
+        ],
+        [SNOW]: [
+            "oklch(0.98 0.01 240)",
+            "oklch(0.99 0.005 240)",
+            "oklch(0.96 0.015 235)",
+            "oklch(0.99 0.008 245)",
+        ],
+        [ICE]: [
+            "oklch(0.88 0.08 225)",
+            "oklch(0.91 0.07 220)",
+            "oklch(0.85 0.09 230)",
+            "oklch(0.93 0.06 222)",
         ],
     },
 };

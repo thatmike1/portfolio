@@ -283,6 +283,11 @@ a:focus-visible {
   transform: scale(1.35);
 }
 
+.sand-swatch-snow {
+  background: oklch(0.97 0.01 240);
+  border: 1px solid color-mix(in oklch, var(--ink) 40%, transparent);
+}
+
 .sand-swatch-cloud {
   background: color-mix(in oklch, var(--ink) 22%, var(--bg));
   border: 1px solid color-mix(in oklch, var(--ink) 40%, transparent);
