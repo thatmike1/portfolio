@@ -23,7 +23,7 @@ import { birdCells, Flock, PERCH } from "../lib/flock";
 import { Fireflies, glow as flyGlow, nearest as nearestFly } from "../lib/fireflies";
 import { drift as driftFlakes, freeze, thaw } from "../lib/frost";
 import type { Flake } from "../lib/frost";
-import { dampen, decay, germinate, grow, isSand } from "../lib/moss";
+import { dampen, decay, germinate, grow, isSand, preGrow } from "../lib/moss";
 import type { MossWorld } from "../lib/moss";
 import { crawl, snailCells, spawn as spawnSnail } from "../lib/snail";
 import type { Snail } from "../lib/snail";
@@ -84,13 +84,37 @@ const CELL = 6;
 const SKY_FRACTION = 0.64;
 /** the island's crest, as a fraction of the hero band's height */
 const CREST = 0.76;
+/**
+ * the island's proportions ease as the grid narrows. the fractions below are
+ * read off a desktop grid of a couple of hundred columns; a phone's grid is
+ * sixty-odd, and there the same shares cost the same third of the canvas, so
+ * the shafts and the banks eat what is left and the word is boxed into the
+ * middle. build() reads 0 at WIDE_COLS and 1 at NARROW_COLS and eases every
+ * pair below from the wide value to the narrow one, so a desktop grid is
+ * pinned to exactly the numbers it had before.
+ */
+const WIDE_COLS = 140;
+const NARROW_COLS = 70;
 /** width of open sky on each side of the island, as a fraction of the grid's width */
 const SHAFT = 0.11;
+const SHAFT_NARROW = 0.075;
+/** the fewest columns of shaft the falls will ever have to run down */
+const SHAFT_MIN = 7;
+const SHAFT_MIN_NARROW = 5;
 /** the crest steps down this many rows from the lake's edge to the drop */
 const CREST_DROP = 3;
 /** the crest zone and the bank inside it, as fractions of the island's half width */
 const LIP_U = 0.1;
+const LIP_U_NARROW = 0.075;
 const BANK_U = 0.06;
+const BANK_U_NARROW = 0.045;
+/**
+ * the share of the island's flat crest the word may span. on a wide grid the
+ * cap never binds - the word is sized off the band's height and comes out well
+ * inside it - so the narrow value is what a phone actually reads
+ */
+const WORD_SPAN = 0.72;
+const WORD_SPAN_NARROW = 0.99;
 /**
  * how far a landed drop travels along its row per tick. one pass, so every drop
  * on the sheet moves at the same speed: two passes gave some drops twice the
@@ -257,6 +281,14 @@ const CLOUD_STROKE = 0.16;
 const MOSS_SHARE = 0.3;
 const MOSS_EVERY = 6;
 const MOSS_RATE = 0.08;
+/**
+ * the share of that budget the word already carries on the first frame. seven
+ * minutes of rain and birds is what it takes to grow this much, and nobody
+ * stays that long, so the page opens on the weathered look instead of the
+ * bare one - and the snail and the fireflies, which are gated behind moss,
+ * have something to come for
+ */
+const MOSS_HEAD_START = 0.25;
 /** ice creeps at this chance per ice cell per frame while it snows; the sun melts at this per open cell */
 const FREEZE = 0.02;
 const MELT = 0.006;
@@ -427,6 +459,10 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         let crestRow = 0;
         let floorRow = 0;
         let shaft0 = 0;
+        /** the wide-grid fractions above, eased for this grid's width; see build() */
+        let lipU = LIP_U;
+        let bankU = BANK_U;
+        let wordSpan = WORD_SPAN;
         let image = new ImageData(1, 1);
         let buf = new Uint32Array(image.data.buffer);
         let engine = new SandEngine(1, 1);
@@ -630,9 +666,9 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             const half = Math.max(1, cols / 2 - shaft0);
             const u = (dEdge - shaft0) / half;
             if (u < 0) return crestRow + CREST_DROP;
-            if (u < LIP_U) return crestRow + Math.round((1 - u / LIP_U) * CREST_DROP);
-            if (u < LIP_U + BANK_U) {
-                return Math.round(crestRow + (floorRow - crestRow) * smooth((u - LIP_U) / BANK_U));
+            if (u < lipU) return crestRow + Math.round((1 - u / lipU) * CREST_DROP);
+            if (u < lipU + bankU) {
+                return Math.round(crestRow + (floorRow - crestRow) * smooth((u - lipU) / bankU));
             }
             return floorRow;
         };
@@ -661,7 +697,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             const half = cols / 2 - shaft0;
             for (let x = 0; x < cols; x++) {
                 // not over the crest zone: that would be a sheet already on its way out
-                if ((Math.min(x, cols - 1 - x) - shaft0) / half < LIP_U) continue;
+                if ((Math.min(x, cols - 1 - x) - shaft0) / half < lipU) continue;
                 const top = topAt(x);
                 for (let y = crestRow; y < top; y++) {
                     if (cells[y * cols + x] === EMPTY) engine.set(x, y, WATER);
@@ -677,7 +713,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                     cx: cols / 2,
                     baseline: floorRow - 2,
                     size: heroRows * 0.46,
-                    maxWidth: (half - (LIP_U + BANK_U) * half) * 2 * 0.72,
+                    maxWidth: (half - (lipU + bankU) * half) * 2 * wordSpan,
                 },
                 { packed: true },
             );
@@ -686,7 +722,6 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             // is the one that falls
             bed = new Uint8Array(cols * rows);
             moss = { cols, rows, cells, tint: engine.tint, damp: new Uint8Array(cols * rows) };
-            mossCount = 0;
             fireflies = new Fireflies(cols, rows);
             snail = null;
             fishes = [];
@@ -711,6 +746,9 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             let stamped = 0;
             for (let i = 0; i < cells.length; i++) if (cells[i] & PACKED) stamped++;
             mossBudget = Math.round(stamped * MOSS_SHARE);
+            // the word arrives already weathered. this runs after the bed and the
+            // budget are taken, because the cells it greens stop being packed sand
+            mossCount = preGrow(moss, Math.round(mossBudget * MOSS_HEAD_START));
             sandAwake = false;
             setAwake(false);
             recount();
@@ -738,7 +776,13 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             flock = new Flock(cols, Math.max(6, skyRows - 2));
             crestRow = Math.floor(heroRows * CREST);
             floorRow = crestRow + Math.max(3, Math.round(heroRows * 0.045));
-            shaft0 = Math.max(7, Math.round(cols * SHAFT));
+            // how far this grid is toward a phone's, and the island eased over with it
+            const narrow = Math.max(0, Math.min(1, (WIDE_COLS - cols) / (WIDE_COLS - NARROW_COLS)));
+            const ease = (wide: number, tight: number) => wide + (tight - wide) * narrow;
+            lipU = ease(LIP_U, LIP_U_NARROW);
+            bankU = ease(BANK_U, BANK_U_NARROW);
+            wordSpan = ease(WORD_SPAN, WORD_SPAN_NARROW);
+            shaft0 = Math.max(Math.round(ease(SHAFT_MIN, SHAFT_MIN_NARROW)), Math.round(cols * ease(SHAFT, SHAFT_NARROW)));
             canvas.width = cols * grain;
             canvas.height = rows * grain;
             src.width = cols;
@@ -1272,7 +1316,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             const depth = CREST_DROP + 2;
             const span = Math.max(2, shaft0 - 2);
             for (let x = 0; x < cols; x++) {
-                if ((Math.min(x, cols - 1 - x) - shaft0) / half < LIP_U) continue;
+                if ((Math.min(x, cols - 1 - x) - shaft0) / half < lipU) continue;
                 let y = crestRow - 1;
                 if (cells[y * cols + x] !== WATER) continue;
                 while (y > 0 && cells[(y - 1) * cols + x] === WATER) y--;
@@ -1554,7 +1598,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             let spot: [number, number] | null = null;
             const half = cols / 2 - shaft0;
             for (let x = 2; x < cols - 2; x++) {
-                if ((Math.min(x, cols - 1 - x) - shaft0) / half < LIP_U + BANK_U) continue;
+                if ((Math.min(x, cols - 1 - x) - shaft0) / half < lipU + bankU) continue;
                 for (let y = crestRow - 2; y < floorRow - 1; y++) {
                     if (y < 1) continue;
                     const i = y * cols + x;
@@ -2453,7 +2497,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                     let surface = rows;
                     const cells = engine.cells;
                     for (let x = 0; x < cols; x++) {
-                        if ((Math.min(x, cols - 1 - x) - shaft0) / half() < LIP_U + BANK_U) continue;
+                        if ((Math.min(x, cols - 1 - x) - shaft0) / half() < lipU + bankU) continue;
                         let y = floorRow - 1;
                         if (cells[y * cols + x] !== WATER) continue;
                         while (y > 0 && cells[(y - 1) * cols + x] === WATER) y--;
@@ -2464,7 +2508,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                     let lake = 0;
                     let wells = 0;
                     for (let x = 0; x < cols; x++) {
-                        if ((Math.min(x, cols - 1 - x) - shaft0) / half() < LIP_U + BANK_U) continue;
+                        if ((Math.min(x, cols - 1 - x) - shaft0) / half() < lipU + bankU) continue;
                         let y = floorRow - 1;
                         if (cells[y * cols + x] !== WATER) continue;
                         while (y > 0 && cells[(y - 1) * cols + x] === WATER) y--;
@@ -2495,7 +2539,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                     const cells = engine.cells;
                     const hist: number[] = [];
                     for (let x = 0; x < cols; x++) {
-                        if ((Math.min(x, cols - 1 - x) - shaft0) / half < LIP_U) continue;
+                        if ((Math.min(x, cols - 1 - x) - shaft0) / half < lipU) continue;
                         let y = crestRow - 1;
                         let head = 0;
                         if (cells[y * cols + x] === WATER) {
@@ -2511,7 +2555,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                     const half = cols / 2 - shaft0;
                     const cells = engine.cells;
                     for (let x = 0; x < cols; x++) {
-                        if ((Math.min(x, cols - 1 - x) - shaft0) / half < LIP_U + BANK_U) continue;
+                        if ((Math.min(x, cols - 1 - x) - shaft0) / half < lipU + bankU) continue;
                         for (let y = crestRow - 1; y >= Math.max(1, crestRow - n); y--) {
                             const i = y * cols + x;
                             if (cells[i] !== EMPTY) continue;

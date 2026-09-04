@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dampen, decay, germinate, grow } from "./moss";
+import { dampen, decay, germinate, grow, preGrow } from "./moss";
 import type { MossWorld } from "./moss";
 import { EMPTY, MOSS, PACKED, RASP, SandEngine, SEED, WALL, WATER } from "./sand-engine";
 
@@ -80,6 +80,27 @@ describe("moss", () => {
         w.cells[4] = MOSS;
         expect(grow(w, 10, 1)).toBe(0);
         expect(w.cells[4]).toBe(EMPTY);
+    });
+
+    it("pre-grows a word from its skyward face and leaves the ground dry", () => {
+        // a five-wide block of sand with open sky over the top row
+        const w = world(5, 4);
+        for (let i = 5; i < 20; i++) w.cells[i] = RASP | PACKED;
+        const n = preGrow(w, 8);
+        expect(n).toBe(8);
+        expect(count(w, MOSS)).toBe(8);
+        // the top row is where it started, so it greened first
+        for (let x = 0; x < 5; x++) expect(w.cells[5 + x]).toBe(MOSS);
+        // nothing reached the bottom row, and the shortcut's dampness is gone
+        for (let x = 0; x < 5; x++) expect(w.cells[15 + x]).toBe(RASP | PACKED);
+        expect(w.damp.every((d) => d === 0)).toBe(true);
+    });
+
+    it("pre-grows nothing without a target or a word", () => {
+        const w = world(3, 3);
+        w.cells[4] = RASP | PACKED;
+        expect(preGrow(w, 0)).toBe(0);
+        expect(preGrow(world(3, 3), 5)).toBe(0);
     });
 
     it("the engine never moves moss and drops a seed", () => {

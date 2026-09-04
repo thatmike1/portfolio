@@ -125,3 +125,58 @@ export function grow(w: MossWorld, budget: number, rate: number, rng: () => numb
     }
     return count;
 }
+
+/** the most spread passes preGrow() runs, and the run of empty ones it stops on */
+const PRE_PASSES = 60;
+const PRE_STALLS = 8;
+
+/**
+ * green the word before anyone is watching. left alone a page needs about seven
+ * minutes of rain and birds to reach the mossed look, and the snail and the
+ * fireflies are gated behind moss existing, so a first load starts there
+ * instead. the grain that faces the sky is what rain wets and what a bird's
+ * seed lands on, so that is what gets seeded, and the ordinary spread runs from
+ * there until the target is met. same rules as a running page, fast-forwarded.
+ * the dampness the shortcut needs is handed back the way it was found, so the
+ * moss does not keep racing once the clock starts.
+ *
+ * @param w the world to green, written in place
+ * @param target moss cells to end with, and the budget the spread runs under
+ * @returns how many moss cells the word carries
+ */
+export function preGrow(w: MossWorld, target: number, rng: () => number = Math.random): number {
+    if (target <= 0) return 0;
+    const { cols, rows, cells, tint, damp } = w;
+    // sand with open sky over it: where the rain lands and a seed comes to rest
+    const crown: number[] = [];
+    for (let y = 1; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            const i = y * cols + x;
+            if (isSand(cells[i]) && cells[i - cols] === EMPTY) crown.push(i);
+        }
+    }
+    if (crown.length === 0) return 0;
+    const dry = damp.slice();
+    // the shower that grew this has been and gone. grow() reads damp for its odds
+    for (const i of crown) damp[i] = 255;
+    dampen(w);
+    // seeds spaced along the crown rather than clustered, so every letter greens
+    const seeds = Math.max(1, Math.ceil(target / 6));
+    const step = Math.max(1, Math.floor(crown.length / seeds));
+    let count = 0;
+    for (let k = 0; k < crown.length && count < target; k += step) {
+        cells[crown[k]] = MOSS;
+        tint[crown[k]] = (rng() * 4) | 0;
+        count++;
+    }
+    // a pass can come up empty on the roll alone, so it takes a run of them to
+    // mean the moss has nowhere left to go
+    let stalled = 0;
+    for (let pass = 0; pass < PRE_PASSES && count < target && stalled < PRE_STALLS; pass++) {
+        const next = grow(w, target, 1, rng);
+        stalled = next > count ? 0 : stalled + 1;
+        count = next;
+    }
+    damp.set(dry);
+    return count;
+}
