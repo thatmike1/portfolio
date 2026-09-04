@@ -376,16 +376,18 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
     }, [tool]);
 
     // narrow enough and the bar scrolls, so bring the live material into sight
-    // rather than opening on a row whose pressed chip is off the end
-    useEffect(() => {
+    // rather than opening on a row whose pressed chip is off the end. runs once
+    // the drawer has finished coming out: while it is still growing the bar has
+    // no width to centre anything in
+    const centreLiveChip = () => {
         const bar = toolsRef.current;
-        if (!drawer || !bar) return;
+        if (!bar) return;
         const chip = bar.querySelector<HTMLElement>('[aria-pressed="true"]');
         if (!chip) return;
         const barBox = bar.getBoundingClientRect();
         const chipBox = chip.getBoundingClientRect();
         bar.scrollLeft += chipBox.left - barBox.left - (barBox.width - chipBox.width) / 2;
-    }, [drawer]);
+    };
 
     useEffect(() => {
         const stage = stageRef.current;
@@ -2312,8 +2314,11 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                     ))}
                 </div>
 
-                {/* the tools live behind one handle at every width. shut, the handle is
-                    the only chrome over the sand, and it is also the invitation: it
+                {/* the tools live behind one handle at every width, and the handle and
+                    the bar are one pill: pulling the handle makes the same piece of
+                    glass grow rightward and the chips come out of it, the way a drawer
+                    comes out of a chest, so nothing appears beside anything. shut, the
+                    pill is the only chrome over the sand and also the invitation: it
                     spells out "touch the sand" until the sand has been touched, then
                     the words fold away and the swatch of the live material stays */}
                 <div
@@ -2334,38 +2339,58 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                         aria-label={nudging ? undefined : "sand materials"}
                         onClick={() => setDrawer((open) => !open)}
                     >
-                        <ToolSwatch id={tool} shades={shades} />
-                        <span className="sand-handle-label" data-shown={nudging}>
-                            <span>touch the sand</span>
+                        {/* out, the pressed chip already shows the live material, so
+                            the swatch folds away with the words and the caret is the
+                            whole handle, pointing back the way the drawer shuts */}
+                        <span className="sand-fold sand-handle-fold" data-shown={!drawer}>
+                            <span className="sand-handle-face">
+                                <ToolSwatch id={tool} shades={shades} />
+                                <span className="sand-fold sand-handle-label" data-shown={nudging}>
+                                    <span>touch the sand</span>
+                                </span>
+                            </span>
                         </span>
                         <span className="sand-handle-caret" aria-hidden="true" />
                     </button>
 
                     <div
-                        className="sand-tools"
-                        ref={toolsRef}
-                        id="sand-materials"
-                        role="toolbar"
-                        aria-label="sand materials"
-                        inert={!drawer}
+                        className="sand-fold sand-tools-fold"
+                        data-shown={drawer}
+                        onTransitionEnd={(e) => {
+                            if (e.target !== e.currentTarget || !drawer) return;
+                            centreLiveChip();
+                        }}
                     >
-                        {TOOLS.map((t) => (
-                            <button
-                                key={t.id}
-                                type="button"
-                                className="sand-tool"
-                                aria-pressed={tool === t.id}
-                                onClick={() => setTool(t.id)}
-                            >
-                                <ToolSwatch id={t.id} shades={shades} />
-                                <span className="sand-tool-label">{t.label}</span>
-                            </button>
-                        ))}
-                        {lab ? (
-                            <button type="button" className="sand-tool sand-soak" onClick={() => soakRef.current()}>
-                                soak
-                            </button>
-                        ) : null}
+                        <div
+                            className="sand-tools"
+                            ref={toolsRef}
+                            id="sand-materials"
+                            role="toolbar"
+                            aria-label="sand materials"
+                            inert={!drawer}
+                        >
+                            {TOOLS.map((t) => (
+                                <button
+                                    key={t.id}
+                                    type="button"
+                                    className="sand-tool"
+                                    aria-pressed={tool === t.id}
+                                    onClick={() => setTool(t.id)}
+                                >
+                                    <ToolSwatch id={t.id} shades={shades} />
+                                    <span className="sand-tool-label">{t.label}</span>
+                                </button>
+                            ))}
+                            {lab ? (
+                                <button
+                                    type="button"
+                                    className="sand-tool sand-soak"
+                                    onClick={() => soakRef.current()}
+                                >
+                                    soak
+                                </button>
+                            ) : null}
+                        </div>
                     </div>
                 </div>
 
@@ -2399,28 +2424,43 @@ function ToolSwatch({ id, shades }: { id: number; shades: Record<number, Array<s
     return <span className="sand-swatch" style={{ background: shades[id === SEED ? MOSS : id][0] }} />;
 }
 
-/** reset: a ring broken at the top left, with the arrow turning back into it */
+/** [x, y, width, height], in cells of the icon's own 8x8 grid */
+type IconCell = [number, number, number, number];
+
+/**
+ * reset as an 8x8 pixel tile, the same octagon the sky tiles are cut from: the
+ * ring is broken at the top left and the arrow turns back into the gap, drawn
+ * in whole cells so it sits with the three sky tiles rather than beside them.
+ * it wears currentColor, not a ground: it is a glyph, not a picture of anything
+ */
 function ResetIcon() {
+    const cells: Array<IconCell> = [
+        // the ring, clockwise from the top, minus the top-left arc
+        [3, 0, 3, 1],
+        [6, 1, 1, 1],
+        [7, 2, 1, 4],
+        [6, 6, 1, 1],
+        [2, 7, 4, 1],
+        [1, 6, 1, 1],
+        [0, 4, 1, 2],
+        // the arrowhead: the ring's left arm ends in a point aimed up into the gap
+        [0, 3, 3, 1],
+        [1, 2, 1, 1],
+    ];
     return (
         <svg
             className="sand-reset-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            viewBox="0 0 8 8"
+            shapeRendering="crispEdges"
             aria-hidden="true"
             focusable="false"
         >
-            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-            <path d="M3 3v5h5" />
+            {cells.map(([x, y, w, h]) => (
+                <rect key={`${x}-${y}`} x={x} y={y} width={w} height={h} fill="currentColor" />
+            ))}
         </svg>
     );
 }
-
-/** [x, y, width, height], in cells of the icon's own 8x8 grid */
-type IconCell = [number, number, number, number];
 
 /**
  * the three looks as 8x8 pixel tiles: the same disc, half-set disc and crescent
