@@ -352,12 +352,16 @@ type Props = {
 export function WeatherHero({ children, overlay, lab = false }: Props) {
     const stageRef = useRef<HTMLDivElement>(null);
     const bandRef = useRef<HTMLDivElement>(null);
+    const handleRef = useRef<HTMLButtonElement>(null);
+    const toolsRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const themeRef = useRef<Theme>("light");
     const toolRef = useRef<number>(RASP);
     const [theme, setTheme] = useState<Theme>("light");
     const [tool, setTool] = useState<number>(RASP);
     const [awake, setAwake] = useState(false);
+    /** the material bar is pulled out of the handle; shut is the resting state */
+    const [drawer, setDrawer] = useState(false);
     const [hud, setHud] = useState<Hud>({ humidity: 0.55, cover: 0, drops: 0 });
     const resetRef = useRef<() => void>(() => {});
     const soakRef = useRef<() => void>(() => {});
@@ -370,6 +374,18 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
     useEffect(() => {
         toolRef.current = tool;
     }, [tool]);
+
+    // narrow enough and the bar scrolls, so bring the live material into sight
+    // rather than opening on a row whose pressed chip is off the end
+    useEffect(() => {
+        const bar = toolsRef.current;
+        if (!drawer || !bar) return;
+        const chip = bar.querySelector<HTMLElement>('[aria-pressed="true"]');
+        if (!chip) return;
+        const barBox = bar.getBoundingClientRect();
+        const chipBox = chip.getBoundingClientRect();
+        bar.scrollLeft += chipBox.left - barBox.left - (barBox.width - chipBox.width) / 2;
+    }, [drawer]);
 
     useEffect(() => {
         const stage = stageRef.current;
@@ -2251,6 +2267,11 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
 
     const shades = PALETTES[theme === "light" ? "light" : "dark"];
 
+    /* the handle spells the invitation out only while it is the whole of the
+       chrome: once the sand has been touched, or the bar is out, the words fold
+       away and the swatch carries it */
+    const nudging = !awake && !drawer;
+
     return (
         <div className="weather-hero" ref={stageRef}>
             <canvas
@@ -2262,6 +2283,19 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
 
             <div className="weather-band" ref={bandRef}>
                 {overlay}
+
+                {/* reset is a glyph in the far corner: it is the one control you reach
+                    for having decided the picture is spoiled, so it stays out of the
+                    material bar and out of the way */}
+                <button
+                    type="button"
+                    className="sand-reset"
+                    aria-label="reset sand"
+                    title="reset sand"
+                    onClick={() => resetRef.current()}
+                >
+                    <ResetIcon />
+                </button>
 
                 <div className="sky-looks" role="group" aria-label="time of day">
                     {LOOKS.map((l) => (
@@ -2278,54 +2312,69 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                     ))}
                 </div>
 
-                <div className="sand-tools" role="toolbar" aria-label="sand materials">
-                    {TOOLS.map((t) => (
-                        <button
-                            key={t.id}
-                            type="button"
-                            className="sand-tool"
-                            aria-pressed={tool === t.id}
-                            onClick={() => setTool(t.id)}
-                        >
-                            {t.id === EMPTY ? (
-                                <span className="sand-swatch sand-swatch-erase" />
-                            ) : t.id === CLOUD ? (
-                                <span className="sand-swatch sand-swatch-cloud" />
-                            ) : t.id === SNOWCLOUD ? (
-                                <span className="sand-swatch sand-swatch-snow" />
-                            ) : t.id === LIGHTNING ? (
-                                <span className="sand-swatch sand-swatch-bolt" />
-                            ) : t.id === SEED ? (
-                                <span className="sand-swatch" style={{ background: shades[MOSS][0] }} />
-                            ) : (
-                                <span className="sand-swatch" style={{ background: shades[t.id][0] }} />
-                            )}
-                            <span className="sand-tool-label">{t.label}</span>
-                        </button>
-                    ))}
-                    {lab ? (
-                        <button type="button" className="sand-tool sand-reset" onClick={() => soakRef.current()}>
-                            soak
-                        </button>
-                    ) : null}
-                    <button type="button" className="sand-tool sand-reset" onClick={() => resetRef.current()}>
-                        reset<span className="sand-tool-label"> sand</span>
+                {/* the tools live behind one handle at every width. shut, the handle is
+                    the only chrome over the sand, and it is also the invitation: it
+                    spells out "touch the sand" until the sand has been touched, then
+                    the words fold away and the swatch of the live material stays */}
+                <div
+                    className="sand-dock"
+                    data-open={drawer}
+                    onKeyDown={(e) => {
+                        if (e.key !== "Escape" || !drawer) return;
+                        setDrawer(false);
+                        handleRef.current?.focus();
+                    }}
+                >
+                    <button
+                        type="button"
+                        className="sand-handle"
+                        ref={handleRef}
+                        aria-expanded={drawer}
+                        aria-controls="sand-materials"
+                        aria-label={nudging ? undefined : "sand materials"}
+                        onClick={() => setDrawer((open) => !open)}
+                    >
+                        <ToolSwatch id={tool} shades={shades} />
+                        <span className="sand-handle-label" data-shown={nudging}>
+                            <span>touch the sand</span>
+                        </span>
+                        <span className="sand-handle-caret" aria-hidden="true" />
                     </button>
+
+                    <div
+                        className="sand-tools"
+                        ref={toolsRef}
+                        id="sand-materials"
+                        role="toolbar"
+                        aria-label="sand materials"
+                        inert={!drawer}
+                    >
+                        {TOOLS.map((t) => (
+                            <button
+                                key={t.id}
+                                type="button"
+                                className="sand-tool"
+                                aria-pressed={tool === t.id}
+                                onClick={() => setTool(t.id)}
+                            >
+                                <ToolSwatch id={t.id} shades={shades} />
+                                <span className="sand-tool-label">{t.label}</span>
+                            </button>
+                        ))}
+                        {lab ? (
+                            <button type="button" className="sand-tool sand-soak" onClick={() => soakRef.current()}>
+                                soak
+                            </button>
+                        ) : null}
+                    </div>
                 </div>
 
-                {/* the nudge is for everyone and goes away on the first touch; the
-                    numbers behind it are the lab's instrumentation, so off the front
-                    page the pill leaves with the nudge */}
-                {lab || !awake ? (
-                    <p className="sand-hint" data-awake={awake} aria-hidden="true">
-                        {awake ? null : <span className="sand-hint-nudge">touch the sand</span>}
-                        {lab ? (
-                            <span className="sand-hint-stats">
-                                {awake ? "" : " · "}
-                                humidity {(hud.humidity * 100).toFixed(0)}% · cover{" "}
-                                {(hud.cover * 100).toFixed(0)}% · {hud.drops} drops
-                            </span>
-                        ) : null}
+                {/* the lab's instrumentation, and only the lab's: the front page's
+                    nudge now lives on the handle */}
+                {lab ? (
+                    <p className="sand-readout" aria-hidden="true">
+                        humidity {(hud.humidity * 100).toFixed(0)}% · cover {(hud.cover * 100).toFixed(0)}% ·{" "}
+                        {hud.drops} drops
                     </p>
                 ) : null}
             </div>
@@ -2335,6 +2384,40 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
     );
 }
 
+
+/**
+ * a material's mark on a chip: a dot in the sand's own colour, or the shape the
+ * four brushes that paint no grain have earned. one place, so the handle and the
+ * bar can never drift apart
+ */
+function ToolSwatch({ id, shades }: { id: number; shades: Record<number, Array<string>> }) {
+    if (id === EMPTY) return <span className="sand-swatch sand-swatch-erase" />;
+    if (id === CLOUD) return <span className="sand-swatch sand-swatch-cloud" />;
+    if (id === SNOWCLOUD) return <span className="sand-swatch sand-swatch-snow" />;
+    if (id === LIGHTNING) return <span className="sand-swatch sand-swatch-bolt" />;
+    // the seed paints moss, so it wears the moss it will grow into
+    return <span className="sand-swatch" style={{ background: shades[id === SEED ? MOSS : id][0] }} />;
+}
+
+/** reset: a ring broken at the top left, with the arrow turning back into it */
+function ResetIcon() {
+    return (
+        <svg
+            className="sand-reset-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            focusable="false"
+        >
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+        </svg>
+    );
+}
 
 /** [x, y, width, height], in cells of the icon's own 8x8 grid */
 type IconCell = [number, number, number, number];
