@@ -10,6 +10,12 @@ function world(cols: number, rows: number): MossWorld & { engine: SandEngine } {
 
 const count = (w: MossWorld, m: number) => w.cells.reduce((n, c) => n + (c === m ? 1 : 0), 0);
 
+/** a deterministic rng, so a test that leans on the growth rolls does not flake */
+const seeded = (n: number) => () => {
+    n = (n * 1664525 + 1013904223) >>> 0;
+    return n / 4294967296;
+};
+
 describe("moss", () => {
     it("wets the sand beside water and dries it off again", () => {
         const w = world(3, 3);
@@ -86,9 +92,12 @@ describe("moss", () => {
         // a five-wide block of sand with open sky over the top row
         const w = world(5, 4);
         for (let i = 5; i < 20; i++) w.cells[i] = RASP | PACKED;
-        const n = preGrow(w, 8);
-        expect(n).toBe(8);
-        expect(count(w, MOSS)).toBe(8);
+        // a growth pass applies all of its claims at once, so it can pass the target
+        // by the size of the last pass; the contract is that it reaches it, not that
+        // it lands on it exactly
+        const n = preGrow(w, 8, seeded(7));
+        expect(n).toBeGreaterThanOrEqual(8);
+        expect(count(w, MOSS)).toBe(n);
         // the top row is where it started, so it greened first
         for (let x = 0; x < 5; x++) expect(w.cells[5 + x]).toBe(MOSS);
         // nothing reached the bottom row, and the shortcut's dampness is gone
