@@ -11,6 +11,10 @@ export const INK = 4;
 export const WATER = 5;
 /** sand that lightning fused: static, and rain has nothing to wash */
 export const GLASS = 6;
+/** falls like sand, takes on damp sand; see moss.ts */
+export const SEED = 7;
+/** static and alive: binds the grain it grew on, spreads over damp sand */
+export const MOSS = 8;
 /**
  * flag bit, or'd onto a powder: the grain keeps its shade and its place until
  * something loosens it. the automaton never moves a packed grain, so packed
@@ -28,7 +32,9 @@ export type Material =
     | typeof AMBER
     | typeof INK
     | typeof WATER
-    | typeof GLASS;
+    | typeof GLASS
+    | typeof SEED
+    | typeof MOSS;
 
 export type ThemeName = "light" | "dark";
 
@@ -75,6 +81,18 @@ export const PALETTES: Record<ThemeName, Record<number, string[]>> = {
             "oklch(0.82 0.1 195)",
             "oklch(0.99 0.02 180)",
         ],
+        [SEED]: [
+            "oklch(0.42 0.07 60)",
+            "oklch(0.38 0.06 55)",
+            "oklch(0.46 0.08 65)",
+            "oklch(0.35 0.05 50)",
+        ],
+        [MOSS]: [
+            "oklch(0.58 0.14 140)",
+            "oklch(0.63 0.15 135)",
+            "oklch(0.52 0.13 145)",
+            "oklch(0.68 0.14 130)",
+        ],
     },
     dark: {
         [WALL]: [
@@ -113,10 +131,22 @@ export const PALETTES: Record<ThemeName, Record<number, string[]>> = {
             "oklch(0.86 0.11 195)",
             "oklch(0.99 0.02 180)",
         ],
+        [SEED]: [
+            "oklch(0.55 0.08 60)",
+            "oklch(0.5 0.07 55)",
+            "oklch(0.6 0.09 65)",
+            "oklch(0.47 0.06 50)",
+        ],
+        [MOSS]: [
+            "oklch(0.7 0.16 140)",
+            "oklch(0.75 0.17 135)",
+            "oklch(0.64 0.15 145)",
+            "oklch(0.8 0.15 130)",
+        ],
     },
 };
 
-const FALLERS = new Set<number>([RASP, AMBER, INK]);
+const FALLERS = new Set<number>([RASP, AMBER, INK, SEED]);
 
 export class SandEngine {
     readonly cols: number;

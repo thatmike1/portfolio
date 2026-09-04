@@ -6,16 +6,20 @@ import {
     GLASS,
     INK,
     MATERIAL,
+    MOSS,
     PACKED,
     PALETTES,
     RASP,
     SandEngine,
+    SEED,
     stampWord,
     WALL,
     WATER,
 } from "../lib/sand-engine";
 import { createFixedStep } from "../lib/fixed-step";
 import { birdCells, Flock, PERCH } from "../lib/flock";
+import { dampen, decay, germinate, grow, isSand } from "../lib/moss";
+import type { MossWorld } from "../lib/moss";
 import { applyTheme, readTheme, THEMES } from "../lib/theme";
 import type { Theme } from "../lib/theme";
 
@@ -225,12 +229,22 @@ const TOOLS: Array<{ id: number; label: string }> = [
     { id: AMBER, label: "amber" },
     { id: WATER, label: "water" },
     { id: WALL, label: "rock" },
+    { id: SEED, label: "moss" },
     { id: CLOUD, label: "cloud" },
     { id: LIGHTNING, label: "lightning" },
     { id: EMPTY, label: "erase" },
 ];
 /** how much deck a cloud stroke adds at its centre, and the most it can pile up */
 const CLOUD_STROKE = 0.16;
+/**
+ * moss: the share of the word it may cover, how often the living rules run
+ * (frames), and the odds per moss cell per run of claiming a soaked neighbour
+ */
+const MOSS_SHARE = 0.3;
+const MOSS_EVERY = 6;
+const MOSS_RATE = 0.08;
+/** a perched bird now and then leaves a seed behind, per frame */
+const BIRD_SEED = 0.0015;
 const CLOUD_CAP = 0.6;
 /** the deck's noise scrolls at this many deck units per screen cell, see stepClouds */
 const DECK_SCALE = 0.045;
@@ -407,7 +421,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         let stars: Array<{ x: number; y: number; base: number; phase: number }> = [];
 
         const sandRGB: Record<number, Array<RGB>> = {};
-        for (const m of [WALL, RASP, AMBER, INK, WATER, GLASS]) {
+        for (const m of [WALL, RASP, AMBER, INK, WATER, GLASS, SEED, MOSS]) {
             sandRGB[m] = PALETTES.light[m].map((css) => resolve(swatchCtx, css));
         }
         sandRGB[WATER] = [
@@ -434,6 +448,8 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             [INK]: [0, 0, 0, 0],
             [WATER]: [0, 0, 0, 0],
             [GLASS]: [0, 0, 0, 0],
+            [SEED]: [0, 0, 0, 0],
+            [MOSS]: [0, 0, 0, 0],
         };
 
         // the inline head script set this before first paint
@@ -482,6 +498,11 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         let sandAwake = false;
         /** 1 where a packed grain had something under it when stamped, see settle() */
         let bed = new Uint8Array(0);
+        /** the living layer's view of the grid, see moss.ts; damp is per cell */
+        let moss: MossWorld = { cols, rows, cells: engine.cells, tint: engine.tint, damp: new Uint8Array(0) };
+        /** the most moss cells the word may carry, set from its size at build */
+        let mossBudget = 0;
+        let mossCount = 0;
         /** the stamped word's box, so settle() does not walk the whole grid */
         let wordBox = { x0: 0, y0: 0, x1: 0, y1: 0 };
         /**
@@ -610,6 +631,8 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             // by design and holds by cohesion; a grain that had support and lost it
             // is the one that falls
             bed = new Uint8Array(cols * rows);
+            moss = { cols, rows, cells, tint: engine.tint, damp: new Uint8Array(cols * rows) };
+            mossCount = 0;
             wordBox = { x0: cols, y0: rows, x1: 0, y1: 0 };
             for (let y = 0; y < rows - 1; y++) {
                 for (let x = 0; x < cols; x++) {
@@ -626,6 +649,9 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 }
             }
             wear = Math.max(0.15, Math.min(1, (wordBox.y1 - wordBox.y0 + 1) / 28));
+            let stamped = 0;
+            for (let i = 0; i < cells.length; i++) if (cells[i] & PACKED) stamped++;
+            mossBudget = Math.round(stamped * MOSS_SHARE);
             sandAwake = false;
             setAwake(false);
             recount();
@@ -967,7 +993,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                             cells[i] = EMPTY;
                             waterCount--;
                         }
-                    } else onSand = m === RASP || m === AMBER;
+                    } else onSand = m === RASP || m === AMBER || m === MOSS;
                 }
             }
         };
@@ -1340,12 +1366,29 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             const look = themeRef.current;
             const want = look === "dark" ? 0 : Math.round((look === "dusk" ? 3 : 6) * (1 - cover * 0.8));
             flock.tick({ wind, want, perch: perchSite, holds: perchHolds, scared: scaredAt });
+            // a sitting bird leaves a seed where it sits; the letter under it is
+            // where it lands, and rain decides whether it takes
+            for (const b of flock.birds) {
+                if (b.state !== PERCH || Math.random() > BIRD_SEED) continue;
+                const i = (b.y | 0) * cols + (b.x | 0);
+                if (engine.cells[i] === EMPTY) {
+                    engine.set(b.x | 0, b.y | 0, SEED);
+                    sandAwake = true;
+                }
+            }
         };
 
-        /** loose sand, packed sand: what a bolt can fuse or throw */
-        const isSand = (m: number) => {
-            const k = m & MATERIAL;
-            return k === RASP || k === AMBER;
+        /**
+         * the living layer, a few times a second: rain soaks the sand it touches,
+         * the soak fades, seeds that have landed take on wet ground, moss spreads
+         * over it up to its share of the word
+         */
+        const live = () => {
+            if (frame % MOSS_EVERY !== 0) return;
+            dampen(moss);
+            decay(moss, 1);
+            germinate(moss);
+            mossCount = grow(moss, mossBudget, MOSS_RATE);
         };
 
         /**
@@ -1385,6 +1428,11 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                     const x = hx + dx;
                     if (x < 0 || x >= cols || dx * dx + dy * dy > blast * blast) continue;
                     const i = y * cols + x;
+                    if (cells[i] === MOSS) {
+                        // moss burns
+                        cells[i] = EMPTY;
+                        continue;
+                    }
                     if (!isSand(cells[i])) continue;
                     // everything in the blast comes loose; most of it is thrown up
                     // and away from the hit, the rest caves in after it
@@ -1457,7 +1505,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 clamp255(waterTop[1] * amb[1] + 255 * lift),
                 clamp255(waterTop[2] * amb[2] + 255 * lift),
             );
-            for (const m of [WALL, RASP, AMBER, INK, WATER, GLASS]) {
+            for (const m of [WALL, RASP, AMBER, INK, WATER, GLASS, SEED, MOSS]) {
                 const shades = sandRGB[m];
                 for (let i = 0; i < shades.length; i++) {
                     const c = m === WALL ? mix3(shades[i], page.abyss, cur.rockLift) : shades[i];
@@ -1721,6 +1769,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             if (sandAwake) engine.step({ water: false });
             markResting();
             drink();
+            live();
             flow(FLOW_PASSES);
             spill();
             pressure(10);
@@ -1800,6 +1849,18 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             const m = toolRef.current;
             if (m === CLOUD) {
                 seed(x, y, 4);
+                return;
+            }
+            if (m === SEED) {
+                // a pinch of seed into the air, not a pour: they fall and wait for rain
+                touchedAt = { x, y, frame };
+                for (let k = 0; k < 3; k++) {
+                    const sx = x + ((Math.random() * 5) | 0) - 2;
+                    const sy = y + ((Math.random() * 5) | 0) - 2;
+                    if (sx < 0 || sx >= cols || sy < 0 || sy >= rows) continue;
+                    if (engine.cells[sy * cols + sx] === EMPTY) engine.set(sx, sy, SEED);
+                }
+                sandAwake = true;
                 return;
             }
             const r = m === EMPTY ? 5 : 3;
@@ -1896,6 +1957,20 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 },
                 /** a tool bolt on column x */
                 bolt: (x: number) => bolt_(x, 2),
+                moss: () => {
+                    let seeds = 0;
+                    let wet = 0;
+                    for (let i = 0; i < engine.cells.length; i++) {
+                        if (engine.cells[i] === SEED) seeds++;
+                        if (moss.damp[i] > 0) wet++;
+                    }
+                    return { moss: mossCount, budget: mossBudget, seeds, wet };
+                },
+                /** a pinch of seed at a cell */
+                sow: (x: number, y: number) => {
+                    for (let k = 0; k < 3; k++) engine.set(x + k - 1, y, SEED);
+                    sandAwake = true;
+                },
                 /** how much of the word still stands: packed grains left */
                 packed: () => {
                     let n = 0;
@@ -2073,6 +2148,8 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                                 <span className="sand-swatch sand-swatch-cloud" />
                             ) : t.id === LIGHTNING ? (
                                 <span className="sand-swatch sand-swatch-bolt" />
+                            ) : t.id === SEED ? (
+                                <span className="sand-swatch" style={{ background: shades[MOSS][0] }} />
                             ) : (
                                 <span className="sand-swatch" style={{ background: shades[t.id][0] }} />
                             )}
