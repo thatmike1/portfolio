@@ -29,6 +29,8 @@ import { crawl, snailCells, spawn as spawnSnail } from "../lib/snail";
 import type { Snail } from "../lib/snail";
 import { fishCells, spawn as spawnFish, swim } from "../lib/fish";
 import type { Fish } from "../lib/fish";
+import { LICK, REACH as TONGUE, frogCells, hop, spawn as spawnFrog } from "../lib/frog";
+import type { Frog } from "../lib/frog";
 import { applyTheme, readTheme, THEMES } from "../lib/theme";
 import type { Theme } from "../lib/theme";
 
@@ -271,6 +273,10 @@ const SNAIL_PATIENCE = 1800;
 const FISH_LAKE = 60;
 const FISH_MAX = 3;
 const FISH_ODDS = 0.004;
+/** fireflies it takes to bring the frog, how likely per frame once they are out, and how long it stays after they go */
+const FROG_FLIES = 3;
+const FROG_ODDS = 0.002;
+const FROG_PATIENCE = 600;
 const CLOUD_CAP = 0.6;
 /** the deck's noise scrolls at this many deck units per screen cell, see stepClouds */
 const DECK_SCALE = 0.045;
@@ -536,11 +542,17 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         /** the most moss cells the word may carry, set from its size at build */
         let mossBudget = 0;
         let mossCount = 0;
-        const fireflies = new Fireflies(cols, rows);
+        // rebuilt with the grid in build(): a flock sized to a zero grid pins every bug to (0, 0)
+        let fireflies = new Fireflies(cols, rows);
         let snail: Snail | null = null;
         /** frames since the snail's last mouthful */
         let snailHunger = 0;
         let fishes: Fish[] = [];
+        let frog: Frog | null = null;
+        /** frames since the frog last saw a firefly */
+        let frogBored = 0;
+        /** frames the frog has spent afloat; the fireflies are up on the letters, so it swims off */
+        let frogWet = 0;
         /** how many fish the lake will hold right now, refreshed now and then */
         let fishWant = 0;
         /** the stamped word's box, so settle() does not walk the whole grid */
@@ -673,9 +685,11 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             bed = new Uint8Array(cols * rows);
             moss = { cols, rows, cells, tint: engine.tint, damp: new Uint8Array(cols * rows) };
             mossCount = 0;
+            fireflies = new Fireflies(cols, rows);
             snail = null;
             fishes = [];
             fishWant = 0;
+            frog = null;
             wordBox = { x0: cols, y0: rows, x1: 0, y1: 0 };
             for (let y = 0; y < rows - 1; y++) {
                 for (let x = 0; x < cols; x++) {
@@ -1580,6 +1594,50 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             }
         };
 
+        const frogEnv = {
+            stand: (x: number, y: number) =>
+                x >= 0 && x < cols && y >= 0 && y < rows && engine.cells[y * cols + x] !== EMPTY,
+            prey: (x: number, y: number): readonly [number, number] | null => {
+                // the nearest lit firefly within reach, in front or above, never below its feet
+                let best: readonly [number, number] | null = null;
+                let bd = TONGUE * TONGUE + 1;
+                for (const b of fireflies.bugs) {
+                    if (b.leaving || b.fade < 0.5) continue;
+                    const dx = b.x - x;
+                    const dy = b.y - (y - 1);
+                    if (dy > 1) continue;
+                    const d = dx * dx + dy * dy;
+                    if (d < bd) {
+                        bd = d;
+                        best = [Math.round(b.x), Math.round(b.y)];
+                    }
+                }
+                return best;
+            },
+            eat: (t: readonly [number, number]) => {
+                const k = fireflies.bugs.findIndex((b) => Math.round(b.x) === t[0] && Math.round(b.y) === t[1]);
+                if (k >= 0) fireflies.bugs.splice(k, 1);
+            },
+            lure: (x: number): number | null => {
+                // the nearest firefly's column, so it works its way over to them
+                let best: number | null = null;
+                for (const b of fireflies.bugs) {
+                    if (b.leaving) continue;
+                    if (best === null || Math.abs(b.x - x) < Math.abs(best - x)) best = b.x;
+                }
+                return best === null ? null : Math.round(best);
+            },
+        };
+
+        /** a frog on the surface near the moss the fireflies hang around, or null when there is nowhere to sit */
+        const callFrog = (): Frog | null => {
+            const home = mossHome();
+            if (!home) return null;
+            const x = Math.max(1, Math.min(cols - 2, home[0] + ((Math.random() * 9) | 0) - 4));
+            const y = surfaceAt(x);
+            return y > 1 ? spawnFrog(x, y - 1, x < cols / 2 ? 1 : -1) : null;
+        };
+
         /**
          * the moss brings company. fireflies come out over it at night, once the
          * birds have gone, a handful per patch. a snail turns up when there is
@@ -1591,6 +1649,22 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             const night = cur.starAlpha > 0.35;
             const want = night ? Math.min(FLIES_MAX, Math.ceil(mossCount / MOSS_PER_FLY)) : 0;
             fireflies.tick({ want, home: mossHome });
+
+            // the frog comes for the fireflies and hops off once they have been gone a while
+            const lit = fireflies.bugs.length;
+            if (!frog) {
+                if (lit >= FROG_FLIES && Math.random() < FROG_ODDS) {
+                    frog = callFrog();
+                    frogBored = 0;
+                    frogWet = 0;
+                }
+            } else {
+                frogBored = lit ? 0 : frogBored + 1;
+                const fi = Math.round(frog.y) * cols + Math.round(frog.x);
+                frogWet = fi >= 0 && fi < engine.cells.length && engine.cells[fi] === WATER ? frogWet + 1 : 0;
+                if (frogBored > FROG_PATIENCE || frogWet > FROG_PATIENCE) frog.leaving = true;
+                if (!hop(frog, frogEnv, cols, rows)) frog = null;
+            }
 
             if (!snail) {
                 if (mossCount < SNAIL_MOSS || Math.random() > SNAIL_ODDS) return;
@@ -2003,6 +2077,23 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 }
             }
 
+            // the frog: a toad really, rust body and a sandy head so it reads against
+            // the moss it sits on, pink tongue, lit like the grains
+            if (frog) {
+                const bodyP = packRGB([175 * amb[0], 105 * amb[1], 45 * amb[2]], lift);
+                const headP = packRGB([235 * amb[0], 185 * amb[1], 110 * amb[2]], lift);
+                const tongueP = packRGB([240 * amb[0], 120 * amb[1], 140 * amb[2]], lift);
+                const fx = Math.round(frog.x);
+                const fy = Math.round(frog.y);
+                for (const [dx, dy, part] of frogCells(frog)) {
+                    const x = fx + dx;
+                    const y = fy + dy;
+                    if (x < 0 || x >= cols || y < 0 || y >= heroRows) continue;
+                    if (part === "tongue" && engine.cells[y * cols + x] !== EMPTY) continue;
+                    buf[y * cols + x] = part === "body" ? bodyP : part === "head" ? headP : tongueP;
+                }
+            }
+
             // the snail: a shell of amber-brown and a pale body, lit like the grains
             if (snail) {
                 const shellP = packRGB([150 * amb[0], 95 * amb[1], 50 * amb[2]], lift);
@@ -2275,12 +2366,20 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 },
                 critters: () => ({
                     flies: fireflies.bugs.length,
+                    bugs: fireflies.bugs.map((b) => [Math.round(b.x), Math.round(b.y), +b.fade.toFixed(2)]),
                     lit: fireflies.bugs.filter((b) => flyGlow(b) > 0.3).length,
                     snail: snail ? { x: snail.x, y: snail.y, chew: snail.chew, leaving: snail.leaving } : null,
                     fish: fishes.map((f) => ({ x: Math.round(f.x), y: Math.round(f.y), jumping: f.jumping, fade: f.fade, leaving: f.leaving })),
                     fishWant,
                     lake: lakeRoom().deep,
+                    frog: frog ? { x: frog.x, y: frog.y, state: frog.state, licking: frog.state === LICK, leaving: frog.leaving } : null,
                 }),
+                /** call the frog now */
+                frog: () => {
+                    for (let k = 0; k < 20 && !frog; k++) frog = callFrog();
+                    frogBored = 0;
+                    return frog;
+                },
                 /** call a fish now, and make one leap */
                 fish: () => {
                     const room = lakeRoom();

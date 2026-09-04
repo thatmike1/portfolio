@@ -27,6 +27,7 @@ npm run build    # production build into dist/
 - `src/lib/snail.ts` — a snail that turns up for the moss, crawls the letters and grazes it back to sand
 - `src/lib/frost.ts` — snow and ice: flakes drift down and cap the word, freeze the lake, and the noon sun melts them
 - `src/lib/fish.ts` — fish for the lake: they arrive with the water, cruise the basin and now and then one leaps
+- `src/lib/frog.ts` — a frog that comes for the fireflies, sits on a letter and snaps them with its tongue
 - `src/routes/index.tsx` — the whole page
 - `src/styles.css` — design tokens + all styling
 - `PRODUCT.md` / `DESIGN.md` — design system context
