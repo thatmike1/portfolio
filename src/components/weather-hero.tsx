@@ -19,20 +19,24 @@ import {
     WATER,
 } from "../lib/sand-engine";
 import { createFixedStep } from "../lib/fixed-step";
-import { birdCells, Flock, PERCH } from "../lib/flock";
+import { Flock, PERCH } from "../lib/flock";
 import { Fireflies, glow as flyGlow, nearest as nearestFly } from "../lib/fireflies";
 import { drift as driftFlakes, freeze, thaw } from "../lib/frost";
 import type { Flake } from "../lib/frost";
 import { dampen, decay, germinate, grow, isSand, preGrow } from "../lib/moss";
 import type { MossWorld } from "../lib/moss";
-import { crawl, snailCells, spawn as spawnSnail } from "../lib/snail";
+import { crawl, spawn as spawnSnail } from "../lib/snail";
 import type { Snail } from "../lib/snail";
-import { fishCells, spawn as spawnFish, swim } from "../lib/fish";
+import { spawn as spawnFish, swim } from "../lib/fish";
 import type { Fish } from "../lib/fish";
-import { LICK, REACH as TONGUE, frogCells, hop, spawn as spawnFrog } from "../lib/frog";
+import { LICK, REACH as TONGUE, hop, spawn as spawnFrog } from "../lib/frog";
 import type { Frog } from "../lib/frog";
 import { applyTheme, readTheme, THEMES } from "../lib/theme";
 import type { Theme } from "../lib/theme";
+import { hash2, mix3, smooth } from "../lib/pixel";
+import type { Page, RGB } from "../lib/pixel";
+import { rasterize } from "../lib/rasterize";
+import type { LookColors } from "../lib/rasterize";
 
 /**
  * the hero: a closed water cycle drawn at grain resolution, with the page's
@@ -138,38 +142,19 @@ const SPILL_BASE = 6;
 const RAIN = 0.3;
 const FONT_STACK = "'Sora Variable', system-ui, sans-serif";
 
-type RGB = [number, number, number];
-
-type Look = {
+/**
+ * a time of day. the colours the rasterizer paints with, plus the few things
+ * only the chrome and the water cycle care about
+ */
+type Look = LookColors & {
     id: Theme;
     label: string;
     swatch: string;
-    /** sky colour at the top of the frame and down at the horizon */
-    skyTop: RGB;
-    skyLow: RGB;
-    /** the three cloud tones: lit crown, body, underside */
-    cloudLit: RGB;
-    cloudMid: RGB;
-    cloudLow: RGB;
-    /** the celestial body and its detail cells */
-    bodyLit: RGB;
-    bodyDim: RGB;
-    /** 0 = sun disc, 1 = crescent moon */
-    crescent: number;
     /** where the body sits, in fractions of the hero band */
     bodyX: number;
     bodyY: number;
-    starAlpha: number;
     /** drives evaporation, so noon runs the cycle hot and night lets it rain out */
     sun: number;
-    /** multiplied into every sand grain so the ground sits in the same light */
-    ambient: RGB;
-    /**
-     * how far the island's rock is pulled toward the page colour. slate on a
-     * white page is a hard edge and its dithered seam into the page a loud
-     * checkerboard, so noon bleaches the stone; the dark grounds leave it alone
-     */
-    rockLift: number;
 };
 
 /** in THEMES order, so an index into one is an index into the other */
@@ -245,15 +230,6 @@ const LOOK_BY: Record<Theme, Look> = {
  */
 const DUST: Record<Theme, number> = { light: AMBER, dusk: RASP, dark: WATER };
 
-/**
- * the page under the island does not come from the look, it comes from the
- * theme's own tokens: whatever `--bg` is, that is the ground the falls run into.
- * read from css once per theme change so the canvas and the page never disagree.
- * the ground gets two tones (bg and a half step toward the surface) so the keel
- * under the copy reads as bedded strata instead of a flat slab.
- */
-type Page = { abyss: RGB; ground: [RGB, RGB] };
-
 /** not a material: the brush writes into the cloud deck instead of the sand */
 const CLOUD = 32;
 /** not a material either: a press calls a bolt down on that column */
@@ -317,13 +293,6 @@ const DECK_SCALE = 0.045;
 
 /* ------------------------------------------------------------------ noise */
 
-/** integer hash, ~0..1. cheaper than the sin-fract trick and it tiles no worse */
-function hash2(x: number, y: number): number {
-    let h = (Math.imul(x, 374761393) + Math.imul(y, 668265263)) | 0;
-    h = Math.imul(h ^ (h >>> 13), 1274126177);
-    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
-}
-
 function vnoise(x: number, y: number): number {
     const xi = Math.floor(x);
     const yi = Math.floor(y);
@@ -356,32 +325,6 @@ function fbm(x: number, y: number, octaves: number): number {
     }
     return v;
 }
-
-/** 4x4 ordered dither. band edges in the sky get stippled instead of stepping hard */
-const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-/** rows over which the keel dissolves into the page at the bottom of the band */
-const SEAM = 12;
-
-/* ------------------------------------------------------------- colour util */
-
-const pack = (r: number, g: number, b: number): number =>
-    (((255 << 24) | (b << 16) | (g << 8) | r) >>> 0) as number;
-
-const clamp255 = (n: number): number => (n < 0 ? 0 : n > 255 ? 255 : n | 0);
-
-const packRGB = (c: RGB, lift = 0): number =>
-    pack(clamp255(c[0] + 255 * lift), clamp255(c[1] + 255 * lift), clamp255(c[2] + 255 * lift));
-
-const mix3 = (a: RGB, b: RGB, t: number): RGB => [
-    a[0] + (b[0] - a[0]) * t,
-    a[1] + (b[1] - a[1]) * t,
-    a[2] + (b[2] - a[2]) * t,
-];
-
-const smooth = (t: number): number => {
-    const c = t < 0 ? 0 : t > 1 ? 1 : t;
-    return c * c * (3 - 2 * c);
-};
 
 /** resolve an oklch string to rgb once, letting the browser do the conversion */
 function resolve(scratch: CanvasRenderingContext2D, css: string): RGB {
@@ -515,20 +458,6 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             "oklch(0.45 0.024 357)",
             "oklch(0.37 0.019 357)",
         ].map((css) => resolve(swatchCtx, css));
-        /** packed per frame once the ambient tint is known */
-        const sandPacked: Record<number, Array<number>> = {
-            [WALL]: [0, 0, 0, 0],
-            [RASP]: [0, 0, 0, 0],
-            [AMBER]: [0, 0, 0, 0],
-            [INK]: [0, 0, 0, 0],
-            [WATER]: [0, 0, 0, 0],
-            [GLASS]: [0, 0, 0, 0],
-            [SEED]: [0, 0, 0, 0],
-            [MOSS]: [0, 0, 0, 0],
-            [SNOW]: [0, 0, 0, 0],
-            [ICE]: [0, 0, 0, 0],
-        };
-
         // the inline head script set this before first paint
         const initial = readTheme();
         themeRef.current = initial;
@@ -1848,339 +1777,41 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             bolt_(starts[(Math.random() * starts.length) | 0], 1);
         };
 
+        /**
+         * one frame. the rasterizer owns the picture, this owns the state it is
+         * drawn from: hand it the engine's arrays, the eased look and the page's
+         * tokens, then blit its buffer up to the visible canvas with smoothing
+         * off so a cell stays a hard square
+         */
         const render = () => {
-            const amb = cur.ambient;
-            // the flash decays fast and never gets near white: a bolt should read as a
-            // pop of light on the deck, not a blown-out frame
-            const t = flash / FLASH_FRAMES;
-            const lift = flash > 0 ? 0.3 * t * t : 0;
-
-            const topP = pack(
-                clamp255(waterTop[0] * amb[0] + 255 * lift),
-                clamp255(waterTop[1] * amb[1] + 255 * lift),
-                clamp255(waterTop[2] * amb[2] + 255 * lift),
-            );
-            for (const m of [WALL, RASP, AMBER, INK, WATER, GLASS, SEED, MOSS, SNOW, ICE]) {
-                const shades = sandRGB[m];
-                for (let i = 0; i < shades.length; i++) {
-                    const c = m === WALL ? mix3(shades[i], page.abyss, cur.rockLift) : shades[i];
-                    sandPacked[m][i] = pack(
-                        clamp255(c[0] * amb[0] + 255 * lift),
-                        clamp255(c[1] * amb[1] + 255 * lift),
-                        clamp255(c[2] * amb[2] + 255 * lift),
-                    );
-                }
-            }
-            const groundP = [packRGB(page.ground[0], lift), packRGB(page.ground[1], lift)];
-            const abyssP = packRGB(page.abyss, lift);
-            // the seam dithers rock cells into the page, and a dither is only quiet
-            // when its two tones are close. so both tones sink toward the page row
-            // by row down the seam, the "page" cells running a step ahead of the
-            // rock: the checker never spans more than that step, and the last row
-            // hands over to the ground with nothing left to see
-            const seamRock: number[][] = [];
-            const seamPage: number[][] = [];
-            for (let r = 0; r < SEAM; r++) {
-                const sink = r / (SEAM - 1);
-                const rockRow: number[] = [];
-                const pageRow: number[] = [];
-                for (let b = 0; b < 2; b++) {
-                    const rock = mix3(sandRGB[WALL][b], page.abyss, cur.rockLift);
-                    const lit: RGB = [rock[0] * amb[0], rock[1] * amb[1], rock[2] * amb[2]];
-                    rockRow.push(packRGB(mix3(lit, page.ground[b], sink), lift));
-                    pageRow.push(packRGB(mix3(lit, page.ground[b], Math.min(1, sink + 0.4)), lift));
-                }
-                seamRock.push(rockRow);
-                seamPage.push(pageRow);
-            }
-
-            // sky, quantised into bands. a smooth vertical ramp would be a gradient;
-            // stepping it keeps the sky the same material as everything else here.
-            // it runs top to horizon over the sky, then fades to the abyss under the
-            // crest: below the island there is no sky, there is the page
-            const BANDS = 14;
-            const FADE = 7;
-            const skyPacked = new Array<number>(BANDS + FADE);
-            for (let b = 0; b < BANDS; b++) {
-                skyPacked[b] = packRGB(mix3(cur.skyTop, cur.skyLow, b / (BANDS - 1)), lift);
-            }
-            for (let b = 0; b < FADE; b++) {
-                skyPacked[BANDS + b] = packRGB(mix3(cur.skyLow, page.abyss, (b + 1) / FADE), lift);
-            }
-            const { bx, by, R, clear } = body();
-            const haloR = clear * 1.25;
-            const haloR2 = haloR * haloR;
-            const fadeRows = Math.max(1, heroRows - crestRow);
-            for (let y = 0; y < rows; y++) {
-                let f: number;
-                if (y < crestRow) f = (y / crestRow) * (BANDS - 1);
-                else if (y < heroRows) f = BANDS - 1 + ((y - crestRow) / fadeRows) * FADE;
-                else f = BANDS + FADE - 1;
-                const b0 = Math.floor(f);
-                const frac = f - b0;
-                const row = y * cols;
-                const lo = skyPacked[Math.min(BANDS + FADE - 1, b0)];
-                const hi = skyPacked[Math.min(BANDS + FADE - 1, b0 + 1)];
-                const bayerRow = (y & 3) * 4;
-                const dy = y - by;
-                // the halo is this row's own sky colour warmed toward the body, so it
-                // lightens a pale horizon and a dark zenith alike, and it is clipped
-                // by nothing but the crest
-                const haloRow = y < crestRow && dy * dy < haloR2;
-                const haloP = haloRow
-                    ? packRGB(mix3(mix3(cur.skyTop, cur.skyLow, Math.min(1, f / (BANDS - 1))), cur.bodyDim, 0.3), lift)
-                    : 0;
-                for (let x = 0; x < cols; x++) {
-                    // stipple the boundary between two bands instead of stepping it.
-                    // the ramp stays a ramp, but every cell is still one of ten colours
-                    const bay = (BAYER[bayerRow + (x & 3)] + 0.5) / 16;
-                    let c = frac > bay ? hi : lo;
-                    if (haloRow) {
-                        // a soft halo on the sky itself, dithered out with distance
-                        const dx = x - bx;
-                        const dd = dx * dx + dy * dy;
-                        if (dd < haloR2) {
-                            const u = 1 - Math.sqrt(dd) / haloR;
-                            if (u * u * 0.8 > bay) c = haloP;
-                        }
-                    }
-                    buf[row + x] = c;
-                }
-            }
-
-            // stars
-            if (cur.starAlpha > 0.02) {
-                for (const s of stars) {
-                    const tw = 0.55 + 0.45 * Math.sin(frame * 0.05 + s.phase);
-                    const a = s.base * tw * cur.starAlpha;
-                    if (a < 0.06) continue;
-                    const c = mix3(cur.skyTop, [255, 255, 255], Math.min(1, a));
-                    buf[s.y * cols + s.x] = pack(clamp255(c[0]), clamp255(c[1]), clamp255(c[2]));
-                }
-            }
-
-            // the celestial body: one disc, occluded by a second disc when the look
-            // is a moon. the same nine cells of crater detail either way
-            const lit = packRGB(cur.bodyLit);
-            const dim = packRGB(cur.bodyDim);
-            for (let dy = -R; dy <= R; dy++) {
-                for (let dx = -R; dx <= R; dx++) {
-                    if (dx * dx + dy * dy > R * R) continue;
-                    const x = bx + dx;
-                    const y = by + dy;
-                    if (x < 0 || y < 0 || x >= cols || y >= rows) continue;
-                    // the crescent's dark limb: a second disc offset up and right
-                    if (cur.crescent > 0.5) {
-                        const ox = dx - R * 0.52;
-                        const oy = dy + R * 0.2;
-                        if (ox * ox + oy * oy < R * R) continue;
-                    }
-                    const crater = hash2(dx * 7 + 31, dy * 13 + 5) < 0.12;
-                    buf[y * cols + x] = crater ? dim : lit;
-                }
-            }
-            if (cur.crescent < 0.5) {
-                // sun rays: eight ticks, two cells clear of the disc
-                for (let k = 0; k < 8; k++) {
-                    const a = (k / 8) * Math.PI * 2;
-                    for (let r = R + 2; r <= R + 3; r++) {
-                        const x = bx + Math.round(Math.cos(a) * r);
-                        const y = by + Math.round(Math.sin(a) * r);
-                        if (x < 0 || y < 0 || x >= cols || y >= rows) continue;
-                        buf[y * cols + x] = dim;
-                    }
-                }
-            }
-
-            // cloud deck, three tones. the thresholds are what turn a smooth noise
-            // field into pixel art: everything between two of them is one flat colour.
-            // near the body the surviving cloud takes the body's colour instead: lit
-            // from behind, burning off, not cut away
-            const litP = packRGB(cur.cloudLit, lift);
-            const midP = packRGB(cur.cloudMid, lift);
-            const lowP = packRGB(cur.cloudLow, lift);
-            const glowLitP = packRGB(mix3(cur.cloudLit, cur.bodyLit, 0.55), lift);
-            const glowMidP = packRGB(mix3(cur.cloudMid, cur.bodyLit, 0.45), lift);
-            const glowLowP = packRGB(mix3(cur.cloudLow, cur.bodyLit, 0.4), lift);
-            for (let y = 0; y < skyRows; y++) {
-                const row = y * cols;
-                const bayerRow = (y & 3) * 4;
-                for (let x = 0; x < cols; x++) {
-                    const d = cloud[row + x];
-                    if (d < 0.012) continue;
-                    // lit crown near the top of each mass, shadow under it
-                    const above = y > 0 ? cloud[row - cols + x] : -1;
-                    const tone = d > 0.1 ? (above < 0.012 ? 0 : 1) : 2;
-                    const g = glow[row + x];
-                    const backlit = g > 0 && g * 1.1 > (BAYER[bayerRow + (x & 3)] + 0.5) / 16;
-                    buf[row + x] = backlit
-                        ? tone === 0
-                            ? glowLitP
-                            : tone === 1
-                              ? glowMidP
-                              : glowLowP
-                        : tone === 0
-                          ? litP
-                          : tone === 1
-                            ? midP
-                            : lowP;
-                }
-            }
-
-            // lightning channel sits over the clouds
-            if (flash > 0) {
-                const white = pack(255, 255, 255);
-                for (const i of bolt) if (i >= 0 && i < buf.length) buf[i] = white;
-            }
-
-            // the simulation last, so grains occlude everything
-            const cells = engine.cells;
-            const tint = engine.tint;
-            for (let y = 0; y < rows; y++) {
-                const row = y * cols;
-                // rock takes its shade from the row rather than the grain, so the keel
-                // reads as bedded strata instead of a wall of static
-                const band = ((y / 7) | 0) & 1;
-                // the keel turns into the page over the last few rows of the hero band:
-                // dithered, so the seam is a texture change and not a line
-                const seamRow = y - (heroRows - SEAM);
-                const seam = y >= heroRows ? 1 : seamRow >= 0 ? (seamRow + 1) / (SEAM + 1) : 0;
-                const bayerRow = (y & 3) * 4;
-                for (let x = 0; x < cols; x++) {
-                    const i = row + x;
-                    const m = cells[i];
-                    if (m === EMPTY) {
-                        if (y >= heroRows) buf[i] = abyssP;
-                        continue;
-                    }
-                    const shades = sandPacked[m & MATERIAL];
-                    if (!shades) continue;
-                    if (m === WATER && (y === 0 || cells[i - cols] === EMPTY)) {
-                        // the waterline, and every drop still in the air, catch the light
-                        buf[i] = topP;
-                    } else if (m === WALL) {
-                        const page = seam > 0 && seam > (BAYER[bayerRow + (x & 3)] + 0.5) / 16;
-                        // a quarter of rock cells opt out of their band, which keeps the
-                        // bedding legible without turning the keel into a barcode
-                        const bedded = hash2(x, y) > 0.25;
-                        buf[i] =
-                            seam > 0 && seam < 1
-                                ? (page ? seamPage : seamRock)[seamRow][bedded ? band : tint[i] & 1]
-                                : page
-                                  ? groundP[bedded ? band : 1 - band]
-                                  : bedded
-                                    ? shades[band]
-                                    : shades[tint[i] & 3];
-                    } else {
-                        buf[i] = shades[tint[i] & 3];
-                    }
-                }
-            }
-
-            // falling flakes, a cell each, over the grid and under the birds
-            if (flakes.length) {
-                const flakeP = sandPacked[SNOW][1];
-                for (const f of flakes) {
-                    const x = f.x | 0;
-                    const y = f.y | 0;
-                    if (x < 0 || x >= cols || y < 0 || y >= heroRows) continue;
-                    buf[y * cols + x] = flakeP;
-                }
-            }
-
-            // birds last: silhouettes over sky, cloud and word alike. they are the
-            // nearest thing in the frame, and a bird on a letter has to be on it
-            const birdP = packRGB([44 * amb[0], 34 * amb[1], 40 * amb[2]], lift * 0.5);
-            for (const b of flock.birds) {
-                const bx = Math.round(b.x);
-                const by = Math.round(b.y);
-                for (const [dx, dy] of birdCells(b)) {
-                    const x = bx + dx;
-                    const y = by + dy;
-                    if (x < 0 || x >= cols || y < 0 || y >= heroRows) continue;
-                    buf[y * cols + x] = birdP;
-                }
-            }
-
-            // fish: orange body and a darker fin, seen through the water so they are
-            // a shade under it and full colour only in the air of a leap
-            for (const f of fishes) {
-                const a = f.fade * (f.jumping ? 1 : 0.8);
-                if (a < 0.03) continue;
-                const fx = Math.round(f.x);
-                const fy = Math.round(f.y);
-                for (const [dx, dy, part] of fishCells(f)) {
-                    const x = fx + dx;
-                    const y = fy + dy;
-                    if (x < 0 || x >= cols || y < 0 || y >= heroRows) continue;
-                    const i = y * cols + x;
-                    // under a letter's overhang it is behind the letter
-                    const cell = engine.cells[i];
-                    if (cell !== WATER && cell !== EMPTY) continue;
-                    const under = buf[i];
-                    const c: RGB = part === "body" ? [235 * amb[0], 140 * amb[1], 55 * amb[2]] : [190 * amb[0], 95 * amb[1], 45 * amb[2]];
-                    const r = (under >>> 0) & 255;
-                    const g = (under >>> 8) & 255;
-                    const b = (under >>> 16) & 255;
-                    buf[i] = packRGB([r + (c[0] - r) * a, g + (c[1] - g) * a, b + (c[2] - b) * a]);
-                }
-            }
-
-            // the frog: a toad really, rust body and a sandy head so it reads against
-            // the moss it sits on, pink tongue, lit like the grains
-            if (frog) {
-                const bodyP = packRGB([175 * amb[0], 105 * amb[1], 45 * amb[2]], lift);
-                const headP = packRGB([235 * amb[0], 185 * amb[1], 110 * amb[2]], lift);
-                const tongueP = packRGB([240 * amb[0], 120 * amb[1], 140 * amb[2]], lift);
-                const fx = Math.round(frog.x);
-                const fy = Math.round(frog.y);
-                for (const [dx, dy, part] of frogCells(frog)) {
-                    const x = fx + dx;
-                    const y = fy + dy;
-                    if (x < 0 || x >= cols || y < 0 || y >= heroRows) continue;
-                    if (part === "tongue" && engine.cells[y * cols + x] !== EMPTY) continue;
-                    buf[y * cols + x] = part === "body" ? bodyP : part === "head" ? headP : tongueP;
-                }
-            }
-
-            // the snail: a shell of amber-brown and a pale body, lit like the grains
-            if (snail) {
-                const shellP = packRGB([150 * amb[0], 95 * amb[1], 50 * amb[2]], lift);
-                const bodyP = packRGB([225 * amb[0], 205 * amb[1], 170 * amb[2]], lift);
-                for (const [dx, dy, part] of snailCells(snail)) {
-                    const x = snail.x + dx;
-                    const y = snail.y + dy;
-                    if (x < 0 || x >= cols || y < 0 || y >= heroRows) continue;
-                    buf[y * cols + x] = part === "shell" ? shellP : bodyP;
-                }
-            }
-
-            // fireflies: a lit cell with a faint cross of halo, mixed over whatever
-            // is there so a blink over the word is a glow on it, not a hole in it
-            for (const f of fireflies.bugs) {
-                const g = flyGlow(f);
-                if (g < 0.04) continue;
-                const fx = Math.round(f.x);
-                const fy = Math.round(f.y);
-                const spots: Array<[number, number, number]> = [
-                    [fx, fy, g],
-                    [fx - 1, fy, g * 0.45],
-                    [fx + 1, fy, g * 0.45],
-                    [fx, fy - 1, g * 0.45],
-                    [fx, fy + 1, g * 0.45],
-                ];
-                for (const [x, y, a] of spots) {
-                    if (x < 0 || x >= cols || y < 0 || y >= heroRows) continue;
-                    const i = y * cols + x;
-                    const v = buf[i];
-                    buf[i] = pack(
-                        clamp255((v & 255) + (255 - (v & 255)) * a),
-                        clamp255(((v >> 8) & 255) + (235 - ((v >> 8) & 255)) * a),
-                        clamp255(((v >> 16) & 255) + (70 - ((v >> 16) & 255)) * a),
-                    );
-                }
-            }
-
+            rasterize({
+                buf,
+                cols,
+                rows,
+                heroRows,
+                skyRows,
+                crestRow,
+                look: cur,
+                page,
+                sandRGB,
+                waterTop,
+                flash,
+                flashFrames: FLASH_FRAMES,
+                frame,
+                cells: engine.cells,
+                tint: engine.tint,
+                cloud,
+                glow,
+                stars,
+                body: body(),
+                bolt,
+                flakes,
+                birds: flock.birds,
+                fishes,
+                frog,
+                snail,
+                flies: fireflies.bugs,
+            });
             srcCtx.putImageData(image, 0, 0);
             view.imageSmoothingEnabled = false;
             view.clearRect(0, 0, canvas.width, canvas.height);
