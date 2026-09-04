@@ -20,7 +20,7 @@ import {
 } from "../lib/sand-engine";
 import { createFixedStep } from "../lib/fixed-step";
 import { birdCells, Flock, PERCH } from "../lib/flock";
-import { Fireflies, glow as flyGlow } from "../lib/fireflies";
+import { Fireflies, glow as flyGlow, nearest as nearestFly } from "../lib/fireflies";
 import { drift as driftFlakes, freeze, thaw } from "../lib/frost";
 import type { Flake } from "../lib/frost";
 import { dampen, decay, germinate, grow, isSand } from "../lib/moss";
@@ -277,6 +277,8 @@ const FISH_ODDS = 0.004;
 const FROG_FLIES = 3;
 const FROG_ODDS = 0.002;
 const FROG_PATIENCE = 600;
+/** how far from where the tongue was aimed a firefly can have drifted and still be caught */
+const FROG_SNAP = 1.5;
 const CLOUD_CAP = 0.6;
 /** the deck's noise scrolls at this many deck units per screen cell, see stepClouds */
 const DECK_SCALE = 0.045;
@@ -1615,7 +1617,10 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 return best;
             },
             eat: (t: readonly [number, number]) => {
-                const k = fireflies.bugs.findIndex((b) => Math.round(b.x) === t[0] && Math.round(b.y) === t[1]);
+                // the aim was taken half a lick ago and the bug has drifted since, about
+                // a fifth of a cell typically and most of one at the tail, so an exact
+                // cell match misses it roughly one lick in four
+                const k = nearestFly(fireflies.bugs, t[0], t[1], FROG_SNAP);
                 if (k >= 0) fireflies.bugs.splice(k, 1);
             },
             lure: (x: number): number | null => {
@@ -2241,7 +2246,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             }
         };
         let strokes = 0;
-        const paint = (e: PointerEvent) => {
+        const stroke = (e: PointerEvent) => {
             strokes++;
             const { x, y } = cellFrom(e.clientX, e.clientY);
             const m = toolRef.current;
@@ -2265,7 +2270,23 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             touchedAt = { x, y, frame };
             dig(x, y, r + 1);
             engine.pour(x, y, r, m);
-            if (reduced) render();
+        };
+        /**
+         * reduced motion has no loop to pick a change up, so the pointer paints its own
+         * frame. the cloud brush writes to `stain`, which only reaches the sky through
+         * stepClouds, so that runs too: render alone would draw a frame with no cloud in it
+         */
+        const repaint = () => {
+            stepClouds();
+            render();
+        };
+        /**
+         * wraps the whole brush rather than sitting inside it: the cloud and seed
+         * branches return early, and so will the next tool
+         */
+        const paint = (e: PointerEvent) => {
+            stroke(e);
+            if (reduced) repaint();
         };
         const down = (e: PointerEvent) => {
             if (e.button !== 0 || chrome(e)) return;
@@ -2281,6 +2302,13 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 touchedAt = { x, y, frame };
                 wake();
                 bolt_(Math.max(1, Math.min(cols - 2, x)), 2);
+                if (reduced) {
+                    // nothing runs to decay the flash, and a white frame that never
+                    // clears is the last thing reduced motion wants: keep the glass
+                    // the bolt fused, drop the flash and the channel
+                    flash = 0;
+                    repaint();
+                }
                 return;
             }
             painting = true;

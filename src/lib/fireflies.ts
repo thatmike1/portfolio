@@ -108,3 +108,24 @@ export function glow(b: Firefly): number {
     const s = Math.sin(b.phase);
     return (s > 0 ? s * s : 0) * b.fade;
 }
+
+/**
+ * the index of the firefly nearest (x, y) within `reach` cells, or -1. the frog
+ * aims its tongue at a cell and arrives ten ticks later, by which time the bug
+ * has drifted off that exact cell, so it takes the nearest one to where it
+ * pointed instead of an exact match
+ */
+export function nearest(bugs: readonly Firefly[], x: number, y: number, reach: number): number {
+    let best = -1;
+    let bd = reach * reach;
+    for (let k = 0; k < bugs.length; k++) {
+        const dx = bugs[k].x - x;
+        const dy = bugs[k].y - y;
+        const d = dx * dx + dy * dy;
+        if (d < bd) {
+            bd = d;
+            best = k;
+        }
+    }
+    return best;
+}
