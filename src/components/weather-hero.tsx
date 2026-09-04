@@ -2597,7 +2597,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                             aria-pressed={theme === l.id}
                             onClick={(e) => pick(l.id, e.currentTarget)}
                         >
-                            <span className="sand-swatch" style={{ background: l.swatch }} />
+                            <SkyIcon look={l} />
                             <span className="sky-look-label">{l.label}</span>
                         </button>
                     ))}
@@ -2638,17 +2638,133 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                     </button>
                 </div>
 
-                <p className="sand-hint" data-awake={awake} aria-hidden="true">
-                    {awake ? null : <span className="sand-hint-nudge">touch the sand</span>}
-                    <span className="sand-hint-stats">
-                        {awake ? "" : " · "}
-                        humidity {(hud.humidity * 100).toFixed(0)}% · cover {(hud.cover * 100).toFixed(0)}%
-                        {lab ? ` · ${hud.drops} drops` : ""}
-                    </span>
-                </p>
+                {/* the nudge is for everyone and goes away on the first touch; the
+                    numbers behind it are the lab's instrumentation, so off the front
+                    page the pill leaves with the nudge */}
+                {lab || !awake ? (
+                    <p className="sand-hint" data-awake={awake} aria-hidden="true">
+                        {awake ? null : <span className="sand-hint-nudge">touch the sand</span>}
+                        {lab ? (
+                            <span className="sand-hint-stats">
+                                {awake ? "" : " · "}
+                                humidity {(hud.humidity * 100).toFixed(0)}% · cover{" "}
+                                {(hud.cover * 100).toFixed(0)}% · {hud.drops} drops
+                            </span>
+                        ) : null}
+                    </p>
+                ) : null}
             </div>
 
             {children}
         </div>
+    );
+}
+
+
+/** [x, y, width, height], in cells of the icon's own 8x8 grid */
+type IconCell = [number, number, number, number];
+
+/**
+ * the three looks as 8x8 pixel tiles: the same disc, half-set disc and crescent
+ * the sky draws, in that look's own colours and on whole cells, so at 16px a
+ * cell is exactly two device pixels and nothing is anti-aliased. each tile
+ * brings its own sky as a ground, so it reads on all three page themes
+ */
+function SkyIcon({ look }: { look: Look }) {
+    const rgb = (c: RGB) => `rgb(${c[0]} ${c[1]} ${c[2]})`;
+    const mix = (a: RGB, b: RGB, t: number) =>
+        rgb([
+            Math.round(a[0] + (b[0] - a[0]) * t),
+            Math.round(a[1] + (b[1] - a[1]) * t),
+            Math.round(a[2] + (b[2] - a[2]) * t),
+        ]);
+
+    const black: RGB = [0, 0, 0];
+    const lit = rgb(look.bodyLit);
+    const dim = rgb(look.bodyDim);
+
+    // the same octagon three times, sliced differently: whole and high for noon,
+    // cut off at the horizon for dusk, bitten into a crescent for night
+    const disc: Array<IconCell> = [
+        [3, 1, 2, 1],
+        [2, 2, 4, 1],
+        [1, 3, 6, 1],
+        [1, 4, 6, 1],
+        [2, 5, 4, 1],
+        [3, 6, 2, 1],
+    ];
+
+    // painted in order, so the land band covers the half of the sun below it
+    const layers: Array<{ fill: string; cells: Array<IconCell> }> =
+        look.crescent > 0.5
+            ? [
+                  { fill: rgb(look.skyTop), cells: [[0, 0, 8, 8]] },
+                  {
+                      fill: dim,
+                      cells: [
+                          [6, 2, 1, 1],
+                          [1, 7, 1, 1],
+                      ],
+                  },
+                  {
+                      fill: lit,
+                      cells: [
+                          [3, 1, 3, 1],
+                          [2, 2, 3, 1],
+                          [1, 3, 3, 1],
+                          [1, 4, 3, 1],
+                          [2, 5, 3, 1],
+                          [3, 6, 3, 1],
+                      ],
+                  },
+              ]
+            : look.sun > 0.5
+              ? [
+                    { fill: rgb(look.skyTop), cells: [[0, 0, 8, 7]] },
+                    { fill: rgb(look.skyLow), cells: [[0, 7, 8, 1]] },
+                    // eight ticks a cell clear of the disc, the same count the sky
+                    // throws, so noon is a sun and not just a bright disc
+                    {
+                        fill: dim,
+                        cells: [
+                            [3, 0, 2, 1],
+                            [3, 7, 2, 1],
+                            [0, 3, 1, 2],
+                            [7, 3, 1, 2],
+                            [1, 1, 1, 1],
+                            [6, 1, 1, 1],
+                            [1, 6, 1, 1],
+                            [6, 6, 1, 1],
+                        ],
+                    },
+                    {
+                        fill: lit,
+                        cells: [
+                            [3, 2, 2, 1],
+                            [2, 3, 4, 1],
+                            [2, 4, 4, 1],
+                            [3, 5, 2, 1],
+                        ],
+                    },
+                ]
+              : [
+                    { fill: rgb(look.skyTop), cells: [[0, 0, 8, 3]] },
+                    // the burn at the horizon, pulled back toward the night sky so
+                    // the sun still stands out of it
+                    { fill: mix(look.skyLow, look.skyTop, 0.35), cells: [[0, 3, 8, 3]] },
+                    { fill: lit, cells: disc },
+                    // the land eats the bottom cap of the disc, so the sun is a
+                    // whole round thing resting on the horizon rather than a mound
+                    { fill: mix(look.skyTop, black, 0.5), cells: [[0, 6, 8, 2]] },
+                ];
+
+    return (
+        <svg className="sky-icon" viewBox="0 0 8 8" shapeRendering="crispEdges" aria-hidden="true" focusable="false">
+            {layers.map((layer, i) =>
+                layer.cells.map(([x, y, w, h]) => (
+                    <rect key={`${i}-${x}-${y}`} x={x} y={y} width={w} height={h} fill={layer.fill} />
+                )),
+            )}
+        </svg>
     );
 }
