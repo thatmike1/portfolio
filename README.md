@@ -23,6 +23,8 @@ npm run build    # production build into dist/
 - `src/lib/theme.ts` — the three themes (light / dusk / dark), read + apply
 - `src/lib/flock.ts` — the birds: a boids-lite flock that flies, perches on the word, and leaves at night
 - `src/lib/moss.ts` — the living layer: seeds fall, take on rain-soaked sand, and moss spreads over the letters
+- `src/lib/fireflies.ts` — fireflies that come out over the moss at night, each on its own blink
+- `src/lib/snail.ts` — a snail that turns up for the moss, crawls the letters and grazes it back to sand
 - `src/routes/index.tsx` — the whole page
 - `src/styles.css` — design tokens + all styling
 - `PRODUCT.md` / `DESIGN.md` — design system context

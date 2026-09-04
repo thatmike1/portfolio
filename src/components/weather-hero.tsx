@@ -18,8 +18,11 @@ import {
 } from "../lib/sand-engine";
 import { createFixedStep } from "../lib/fixed-step";
 import { birdCells, Flock, PERCH } from "../lib/flock";
+import { Fireflies, glow as flyGlow } from "../lib/fireflies";
 import { dampen, decay, germinate, grow, isSand } from "../lib/moss";
 import type { MossWorld } from "../lib/moss";
+import { crawl, snailCells, spawn as spawnSnail } from "../lib/snail";
+import type { Snail } from "../lib/snail";
 import { applyTheme, readTheme, THEMES } from "../lib/theme";
 import type { Theme } from "../lib/theme";
 
@@ -245,6 +248,13 @@ const MOSS_EVERY = 6;
 const MOSS_RATE = 0.08;
 /** a perched bird now and then leaves a seed behind, per frame */
 const BIRD_SEED = 0.0015;
+/** moss cells per firefly at night, and the most of them */
+const MOSS_PER_FLY = 10;
+const FLIES_MAX = 9;
+/** moss it takes to bring a snail, how likely per frame once it is there, and how long it stays after the last mouthful */
+const SNAIL_MOSS = 15;
+const SNAIL_ODDS = 0.003;
+const SNAIL_PATIENCE = 1800;
 const CLOUD_CAP = 0.6;
 /** the deck's noise scrolls at this many deck units per screen cell, see stepClouds */
 const DECK_SCALE = 0.045;
@@ -503,6 +513,10 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         /** the most moss cells the word may carry, set from its size at build */
         let mossBudget = 0;
         let mossCount = 0;
+        const fireflies = new Fireflies(cols, rows);
+        let snail: Snail | null = null;
+        /** frames since the snail's last mouthful */
+        let snailHunger = 0;
         /** the stamped word's box, so settle() does not walk the whole grid */
         let wordBox = { x0: 0, y0: 0, x1: 0, y1: 0 };
         /**
@@ -633,6 +647,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             bed = new Uint8Array(cols * rows);
             moss = { cols, rows, cells, tint: engine.tint, damp: new Uint8Array(cols * rows) };
             mossCount = 0;
+            snail = null;
             wordBox = { x0: cols, y0: rows, x1: 0, y1: 0 };
             for (let y = 0; y < rows - 1; y++) {
                 for (let x = 0; x < cols; x++) {
@@ -1391,6 +1406,80 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             mossCount = grow(moss, mossBudget, MOSS_RATE);
         };
 
+        /** a moss cell picked at random, for a firefly to hang around */
+        const mossHome = (): readonly [number, number] | null => {
+            if (mossCount === 0) return null;
+            const cells = engine.cells;
+            let pick = -1;
+            let seen = 0;
+            for (let i = 0; i < cells.length; i++) {
+                if (cells[i] !== MOSS) continue;
+                seen++;
+                if (Math.random() * seen < 1) pick = i;
+            }
+            if (pick < 0) return null;
+            return [pick % cols, (pick / cols) | 0];
+        };
+
+        /** the top of the sand in column x, or -1 when there is none over the water */
+        const surfaceAt = (x: number): number => {
+            const cells = engine.cells;
+            for (let y = 0; y < rows; y++) {
+                const m = cells[y * cols + x];
+                if (m === WATER || m === WALL) return -1;
+                if (m !== EMPTY) return y;
+            }
+            return -1;
+        };
+
+        /** a snail on the surface over a patch of moss, or null when there is no surface there */
+        const callSnail = (): Snail | null => {
+            const home = mossHome();
+            if (!home) return null;
+            const x = Math.max(0, Math.min(cols - 1, home[0] + ((Math.random() * 7) | 0) - 3));
+            const y = surfaceAt(x);
+            return y > 0 ? spawnSnail(x, y - 1, x < cols / 2 ? 1 : -1) : null;
+        };
+
+        const snailEnv = {
+            solid: (x: number, y: number) => {
+                if (x < 0 || x >= cols || y < 0 || y >= rows) return false;
+                const m = engine.cells[y * cols + x];
+                return m !== EMPTY && m !== WATER;
+            },
+            moss: (x: number, y: number) =>
+                x >= 0 && x < cols && y >= 0 && y < rows && engine.cells[y * cols + x] === MOSS,
+            water: (x: number, y: number) =>
+                x >= 0 && x < cols && y >= 0 && y < rows && engine.cells[y * cols + x] === WATER,
+            eat: (x: number, y: number) => {
+                // grazed back to the sand it grew on, and bound like the rest of the word
+                engine.set(x, y, RASP | PACKED);
+                mossCount--;
+                snailHunger = 0;
+            },
+        };
+
+        /**
+         * the moss brings company. fireflies come out over it at night, once the
+         * birds have gone, a handful per patch. a snail turns up when there is
+         * enough to eat, crawls the letters grazing it back to sand, and wanders
+         * off an edge when it has gone half a minute without a mouthful
+         */
+        const critters = () => {
+            const night = cur.starAlpha > 0.35;
+            const want = night ? Math.min(FLIES_MAX, Math.ceil(mossCount / MOSS_PER_FLY)) : 0;
+            fireflies.tick({ want, home: mossHome });
+
+            if (!snail) {
+                if (mossCount < SNAIL_MOSS || Math.random() > SNAIL_ODDS) return;
+                snail = callSnail();
+                snailHunger = 0;
+                return;
+            }
+            if (++snailHunger > SNAIL_PATIENCE) snail.leaving = true;
+            if (!crawl(snail, snailEnv, cols, rows)) snail = null;
+        };
+
         /**
          * what the bolt does to the sand it hits. fulgurite first: real lightning
          * fuses sand to glass along its path, so the grains under the hit turn to
@@ -1736,6 +1825,44 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 }
             }
 
+            // the snail: a shell of amber-brown and a pale body, lit like the grains
+            if (snail) {
+                const shellP = packRGB([150 * amb[0], 95 * amb[1], 50 * amb[2]], lift);
+                const bodyP = packRGB([225 * amb[0], 205 * amb[1], 170 * amb[2]], lift);
+                for (const [dx, dy, part] of snailCells(snail)) {
+                    const x = snail.x + dx;
+                    const y = snail.y + dy;
+                    if (x < 0 || x >= cols || y < 0 || y >= heroRows) continue;
+                    buf[y * cols + x] = part === "shell" ? shellP : bodyP;
+                }
+            }
+
+            // fireflies: a lit cell with a faint cross of halo, mixed over whatever
+            // is there so a blink over the word is a glow on it, not a hole in it
+            for (const f of fireflies.bugs) {
+                const g = flyGlow(f);
+                if (g < 0.04) continue;
+                const fx = Math.round(f.x);
+                const fy = Math.round(f.y);
+                const spots: Array<[number, number, number]> = [
+                    [fx, fy, g],
+                    [fx - 1, fy, g * 0.45],
+                    [fx + 1, fy, g * 0.45],
+                    [fx, fy - 1, g * 0.45],
+                    [fx, fy + 1, g * 0.45],
+                ];
+                for (const [x, y, a] of spots) {
+                    if (x < 0 || x >= cols || y < 0 || y >= heroRows) continue;
+                    const i = y * cols + x;
+                    const v = buf[i];
+                    buf[i] = pack(
+                        clamp255((v & 255) + (255 - (v & 255)) * a),
+                        clamp255(((v >> 8) & 255) + (235 - ((v >> 8) & 255)) * a),
+                        clamp255(((v >> 16) & 255) + (70 - ((v >> 16) & 255)) * a),
+                    );
+                }
+            }
+
             srcCtx.putImageData(image, 0, 0);
             view.imageSmoothingEnabled = false;
             view.clearRect(0, 0, canvas.width, canvas.height);
@@ -1770,6 +1897,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             markResting();
             drink();
             live();
+            critters();
             flow(FLOW_PASSES);
             spill();
             pressure(10);
@@ -1965,6 +2093,16 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                         if (moss.damp[i] > 0) wet++;
                     }
                     return { moss: mossCount, budget: mossBudget, seeds, wet };
+                },
+                critters: () => ({
+                    flies: fireflies.bugs.length,
+                    lit: fireflies.bugs.filter((b) => flyGlow(b) > 0.3).length,
+                    snail: snail ? { x: snail.x, y: snail.y, chew: snail.chew, leaving: snail.leaving } : null,
+                }),
+                /** call the snail now */
+                snail: () => {
+                    for (let k = 0; k < 20 && !snail; k++) snail = callSnail();
+                    return snail;
                 },
                 /** a pinch of seed at a cell */
                 sow: (x: number, y: number) => {
