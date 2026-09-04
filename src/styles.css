@@ -841,6 +841,30 @@ a:focus-visible {
     justify-content: center;
   }
 
+  /* nine materials spelled out are three rows over the word this narrow, so the
+     chips fold down to their swatches too; the pressed ring says which is on */
+  .sand-tools {
+    gap: 0.25rem;
+  }
+
+  .sand-tools .sand-tool:not(.sand-reset) {
+    padding-inline: 0.4rem;
+  }
+
+  .sand-tool-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .sand-tools .sand-swatch {
+    width: 0.95em;
+    height: 0.95em;
+  }
+
   .sand-hint {
     top: 1.05rem;
     left: 1rem;

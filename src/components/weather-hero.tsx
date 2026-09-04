@@ -2498,7 +2498,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                             ) : (
                                 <span className="sand-swatch" style={{ background: shades[t.id][0] }} />
                             )}
-                            {t.label}
+                            <span className="sand-tool-label">{t.label}</span>
                         </button>
                     ))}
                     {lab ? (
@@ -2507,7 +2507,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                         </button>
                     ) : null}
                     <button type="button" className="sand-tool sand-reset" onClick={() => resetRef.current()}>
-                        reset sand
+                        reset<span className="sand-tool-label"> sand</span>
                     </button>
                 </div>
 
