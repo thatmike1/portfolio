@@ -40,6 +40,24 @@
   --footer-ink: oklch(0.93 0.006 357);
 }
 
+/* dusk: the ground after the sun has gone but before the sky has. a warm dark
+   plum rather than black, cream ink rather than white, and the raspberry lifted
+   toward peach so links hold 6.7:1 on it. it only exists because the visitor
+   asked for it; no system setting lands here */
+:root[data-theme='dusk'] {
+  color-scheme: dark;
+
+  --bg: oklch(0.31 0.04 25);
+  --surface: oklch(0.36 0.04 25);
+  --ink: oklch(0.95 0.018 70);
+  --muted: oklch(0.78 0.03 55);
+  --rasp: oklch(0.64 0.21 357);
+  --rasp-deep: oklch(0.8 0.15 5);
+  --hairline: oklch(0.95 0.018 70 / 0.16);
+  --footer-bg: oklch(0.22 0.03 25);
+  --footer-ink: oklch(0.95 0.018 70);
+}
+
 /* ------------------------------------------------------------------ */
 /* base                                                                */
 /* ------------------------------------------------------------------ */
@@ -124,91 +142,241 @@ a:focus-visible {
 }
 
 /* ------------------------------------------------------------------ */
-/* hero + sand toy                                                     */
+/* hero: the weather                                                   */
 /* ------------------------------------------------------------------ */
 
-.sand-hero {
+/* one canvas behind both the sky band and the copy block, so the falls off the
+   island can run past the words and off the bottom of the picture. the band is
+   the old hero's height; the copy keeps its own padding and the canvas simply
+   reaches down to cover it. the pointer paints anywhere on the stage that is
+   not text or a button */
+.weather-hero {
   position: relative;
-  height: clamp(380px, 62vh, 640px);
-  border-bottom: 1px solid var(--hairline);
-}
-
-.sand-canvas {
-  position: relative;
-  z-index: 1;
-  display: block;
-  width: 100%;
-  height: 100%;
+  isolation: isolate;
   touch-action: pan-y;
   cursor: crosshair;
 }
 
-/* blurred copy of the grains; the lighting in dark mode. blur, saturation and
-   opacity are all baked into the canvas pixels at grid resolution, so css only
-   stretches it. no filter or opacity here: with hardware acceleration off,
-   firefox repaints a filtered element in software every frame, and the
-   saturate() this used to carry cost half the frame rate on a 2560px hero */
-.sand-glow {
+.weather-canvas {
   position: absolute;
   inset: 0;
+  z-index: 0;
+  display: block;
   width: 100%;
   height: 100%;
+  image-rendering: pixelated;
   pointer-events: none;
-  display: none;
 }
 
-:root[data-theme='dark'] .sand-glow {
-  display: block;
+.weather-band {
+  position: relative;
+  z-index: 1;
+  height: clamp(380px, 62vh, 640px);
+  /* the drawer sizes its chip block off the band's width, see .sand-tools */
+  container-type: inline-size;
 }
 
-.theme-toggle {
+/* on a phone 62vh is most of the fold and most of that is empty sky above the
+   island. the word is sized off the grid's width there, not the band's height,
+   so a shorter band costs it nothing and buys back the page under it */
+@media (max-width: 640px) {
+  .weather-band {
+    height: clamp(300px, 45vh, 440px);
+  }
+}
+
+/* the copy sits on the canvas. the container's gutters let the pointer through to
+   the falls beside it, and the words themselves stay real text: selectable, and
+   the heading still catches the hover for its hop */
+.weather-hero .hero-copy {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.weather-hero .hero-copy :is(h1, p) {
+  width: fit-content;
+  max-width: 100%;
+  pointer-events: auto;
+  cursor: auto;
+}
+
+/* the chrome shares one pill style: frosted glass over the sky, so each look
+   tints it and the clouds smear through, with a hairline edge and a thin
+   highlight along the top. mono labels in ink. the pieces place themselves —
+   only the surface is shared */
+.sand-dock,
+.sky-looks,
+.sand-reset,
+.sand-readout {
+  --glass-edge: color-mix(in oklch, var(--ink) 16%, transparent);
+  --glass-shine: oklch(1 0 0 / 0.55);
+  background: color-mix(in oklch, var(--bg) 48%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+  border: 1px solid var(--glass-edge);
+  border-radius: 999px;
+  box-shadow:
+    inset 0 1px 0 var(--glass-shine),
+    0 10px 30px -14px color-mix(in oklch, var(--ink) 55%, transparent);
+}
+
+:root:is([data-theme='dark'], [data-theme='dusk'])
+  :is(.sand-dock, .sky-looks, .sand-reset, .sand-readout) {
+  --glass-edge: color-mix(in oklch, var(--ink) 22%, transparent);
+  --glass-shine: oklch(1 0 0 / 0.12);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .sand-dock,
+  .sky-looks,
+  .sand-reset,
+  .sand-readout {
+    background: var(--bg);
+  }
+}
+
+.sky-looks {
   position: absolute;
   z-index: 2;
   top: 1.25rem;
   right: 1.25rem;
-  border: 1px solid var(--ink);
-  background: var(--bg);
-  color: var(--ink);
-  border-radius: 999px;
-  padding: 0.35rem 0.85rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  cursor: pointer;
-  transition: background 160ms var(--ease-out);
-}
-
-.theme-toggle:hover {
-  background: var(--surface);
-}
-
-.sand-hint {
-  position: absolute;
-  z-index: 2;
-  right: 1.25rem;
-  bottom: 1.25rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--muted);
-  pointer-events: none;
-  transition: opacity 400ms var(--ease-out);
-}
-
-.sand-hint[data-awake='true'] {
-  opacity: 0;
-}
-
-.sand-tools {
-  position: absolute;
-  z-index: 2;
-  left: 1.25rem;
-  bottom: 1.25rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.375rem;
   padding: 0.375rem;
-  background: var(--bg);
-  border: 1px solid var(--ink);
+  cursor: auto;
+}
+
+/* the nine materials live behind one handle at every width, phone and desktop
+   alike. the dock is the pill itself: one piece of glass that the handle and
+   the chips share, absolutely placed so pulling the bar out never touches the
+   band's height and so never resizes the sim. it grows to fit and stops at
+   the band's gutters; past that the chip row scrolls inside it */
+.sand-dock {
+  position: absolute;
+  z-index: 2;
+  left: 1.25rem;
+  bottom: 1.25rem;
+  max-width: calc(100% - 2.5rem);
+  display: flex;
+  align-items: stretch;
+  /* a capsule while it is one row tall, a rounded slab once the chips wrap:
+     a 999px radius on three rows is a stadium whose ends eat the row ends */
+  border-radius: 20px;
+  cursor: auto;
+}
+
+/* a fold is a track that goes from nothing to its content's width. the label,
+   the swatch and the whole chip row are all folds on the same clock and the
+   same curve, so the pill only ever does one thing: get longer or shorter */
+.sand-fold {
+  display: grid;
+  grid-template-columns: 0fr;
+  min-width: 0;
+  /* the track goes to zero but a child's padding does not, so the fold clips:
+     otherwise the chip row's padding and hairline peek out past the caret */
+  overflow: hidden;
+  transition: grid-template-columns 320ms var(--ease-out);
+}
+
+.sand-fold[data-shown='true'] {
+  grid-template-columns: 1fr;
+}
+
+.sand-fold > * {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sand-handle {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.7rem;
+  border: 0;
   border-radius: 999px;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.sand-handle:hover {
+  background: color-mix(in oklch, var(--ink) 8%, transparent);
+}
+
+.sand-handle-face {
+  display: inline-flex;
+  align-items: center;
+  /* the gap to the caret lives inside the fold, so it folds with the face */
+  padding-right: 0.4em;
+}
+
+/* the words carry their own gap from the swatch, so it folds with them */
+.sand-handle-label > span {
+  display: block;
+  padding-left: 0.4em;
+}
+
+/* the caret points the way the bar comes out, and turns back on itself when it
+   is out: the one bit of the handle that says which state you are in */
+.sand-handle-caret {
+  flex: none;
+  width: 0.42em;
+  height: 0.42em;
+  border-top: 1.5px solid currentColor;
+  border-right: 1.5px solid currentColor;
+  opacity: 0.6;
+  transform: rotate(45deg);
+  transition: transform 320ms var(--ease-out);
+}
+
+.sand-dock[data-open='true'] .sand-handle-caret {
+  transform: rotate(-135deg);
+}
+
+/* the chip drawer folds in both axes, so it grows out of the handle's corner */
+.sand-tools-fold {
+  flex: 0 1 auto;
+  grid-template-rows: 0fr;
+  transition:
+    grid-template-columns 320ms var(--ease-out),
+    grid-template-rows 320ms var(--ease-out);
+}
+
+.sand-tools-fold[data-shown='true'] {
+  grid-template-rows: 1fr;
+}
+
+/* the fold's own child stays bare: a child's padding survives a zero track and
+   would hold the pill open by that much, so the padding sits one level down */
+.sand-tools-well {
+  display: block;
+}
+
+/* the chip block is sized once, off the band, not off the fold's track: it is
+   as wide as one line of chips or as wide as the band's gutters allow, and
+   wraps inside that. sizing it off the track would reflow the rows on every
+   frame of the fold; sized this way the fold only reveals it */
+.sand-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  padding: 0.375rem;
+  width: max-content;
+  /* the dock's gutters plus the handle's width, so the pill never overruns */
+  max-width: calc(100cqw - 2.5rem - 2.75rem);
+  white-space: normal;
+  /* the hairline where the drawer leaves the handle */
+  box-shadow: inset 1px 0 0 var(--glass-edge);
+}
+
+.sand-tools .sand-tool {
+  flex: none;
 }
 
 .sand-tool {
@@ -227,11 +395,12 @@ a:focus-visible {
 }
 
 .sand-tool:hover {
-  background: var(--surface);
+  background: color-mix(in oklch, var(--ink) 8%, transparent);
 }
 
 .sand-tool[aria-pressed='true'] {
-  border-color: var(--ink);
+  background: color-mix(in oklch, var(--ink) 10%, transparent);
+  border-color: color-mix(in oklch, var(--ink) 55%, transparent);
 }
 
 .sand-swatch {
@@ -240,23 +409,94 @@ a:focus-visible {
   border-radius: 50%;
 }
 
+/* a look button carries a tile of its own sky rather than a dot of it: the sun,
+   the setting sun and the crescent, drawn as whole pixels. it keeps its ground,
+   so it reads on every page theme, and the hairline seats it in the pill */
+.sky-icon {
+  display: block;
+  flex: none;
+  /* 16px over eight cells, so a cell is a whole device pixel at any dpr */
+  width: 16px;
+  height: 16px;
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--ink) 28%, transparent);
+}
+
 .sand-swatch-erase {
   border: 1.5px solid var(--muted);
 }
 
-.sand-reset {
+.sand-swatch-bolt {
+  border-radius: 0;
+  background: oklch(0.85 0.17 95);
+  clip-path: polygon(45% 0, 100% 0, 60% 45%, 85% 45%, 30% 100%, 45% 55%, 15% 55%);
+  transform: scale(1.35);
+}
+
+.sand-swatch-snow {
+  background: oklch(0.97 0.01 240);
+  border: 1px solid color-mix(in oklch, var(--ink) 40%, transparent);
+}
+
+.sand-swatch-cloud {
+  background: color-mix(in oklch, var(--ink) 22%, var(--bg));
+  border: 1px solid color-mix(in oklch, var(--ink) 40%, transparent);
+}
+
+.sand-soak {
   color: var(--muted);
+}
+
+/* reset keeps the far corner to itself: a glyph, no word, opposite the looks */
+.sand-reset {
+  position: absolute;
+  z-index: 2;
+  top: 1.25rem;
+  left: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color 160ms var(--ease-out),
+    background 160ms var(--ease-out);
+}
+
+.sand-reset:hover {
+  color: var(--ink);
+  background: color-mix(in oklch, var(--bg) 68%, transparent);
+}
+
+/* 20px over ten cells: two device pixels a cell, the sky tiles' own scale */
+.sand-reset-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+/* the lab's own instrumentation. it sits on the island's seam, which is
+   dithered, so it carries its own ground */
+.sand-readout {
+  right: 1.25rem;
+  bottom: 1.25rem;
+  padding: 0.3rem 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  position: absolute;
+  z-index: 2;
 }
 
 .hero-copy {
   padding-block: clamp(3rem, 7vw, 5.5rem) clamp(1.5rem, 4vw, 3rem);
 }
 
-/* the heading is the hop's hover target, so its box has to stop where the words do —
-   a block-level h1 would hand the whole container width to the pointer */
 .hero-copy h1 {
-  width: fit-content;
-  max-width: 100%;
   font-size: clamp(2.6rem, 6.5vw, 5rem);
 }
 
@@ -381,7 +621,7 @@ a:focus-visible {
 }
 
 /* dark swallows shadows, so the glow has to push harder to read as light */
-:root[data-theme='dark'] .project-preview {
+:root:is([data-theme='dark'], [data-theme='dusk']) .project-preview {
   --glow-contact: color-mix(in oklch, var(--preview-glow) 72%, transparent);
   --glow-ambient: color-mix(in oklch, var(--preview-glow) 58%, transparent);
 }
@@ -483,11 +723,11 @@ a:focus-visible {
   display: none;
 }
 
-:root[data-theme='dark'] .preview-frame--light {
+:root:is([data-theme='dark'], [data-theme='dusk']) .preview-frame--light {
   display: none;
 }
 
-:root[data-theme='dark'] .preview-frame--dark {
+:root:is([data-theme='dark'], [data-theme='dusk']) .preview-frame--dark {
   display: block;
 }
 
@@ -697,7 +937,7 @@ a:focus-visible {
 }
 
 /* on the dark wash the page background is near-black too, so the chip lifts a step */
-:root[data-theme='dark'] .lightbox-close {
+:root:is([data-theme='dark'], [data-theme='dusk']) .lightbox-close {
   background: var(--surface);
 }
 
@@ -776,24 +1016,55 @@ a:focus-visible {
     grid-template-columns: 1fr;
   }
 
-  .sand-tools {
+  /* the corners pull in, and the bar out of the handle keeps every chip's word:
+     it simply scrolls sideways in the room it is given */
+  /* the pill hangs off the band's bottom edge here rather than sitting inside
+     it: the band is short on a phone and the chips wrap to three rows, so
+     the open drawer wants room, and the room is the page margin under the
+     band. this far and no further, or the drawer would reach the heading
+     (the copy's top padding is 3rem; the pill's bottom lands 2.25rem in) */
+  .sand-dock {
     left: 0.75rem;
+    bottom: -2.25rem;
+    max-width: calc(100% - 1.5rem);
+  }
+
+  .sand-tools {
+    gap: 0.25rem;
+    max-width: calc(100cqw - 1.5rem - 2.75rem);
+  }
+
+  .sand-reset {
+    top: 0.75rem;
+    left: 0.75rem;
+  }
+
+  /* the lab's numbers clear the dock rather than share its line */
+  .sand-readout {
     right: 0.75rem;
-    bottom: 0.75rem;
-    justify-content: center;
+    bottom: 3.5rem;
   }
 
-  .sand-hint {
-    top: 1.05rem;
-    left: 1rem;
-    right: auto;
-    bottom: auto;
-  }
-
-  .theme-toggle {
+  /* reset and the looks share the top edge here, so the looks fold down to
+     their tiles alone. the tile draws the hour, so it still says which is which */
+  .sky-looks {
     top: 0.75rem;
     right: 0.75rem;
   }
+
+  .sky-look {
+    padding-inline: 0.55rem;
+  }
+
+  .sky-look-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -873,14 +1144,14 @@ a:focus-visible {
   }
 }
 
-/* the toggle tips like a bucket while it spills its sand */
-.theme-toggle {
+/* a look button tips like a bucket while it spills its dust */
+.sky-look {
   transition:
     background 160ms var(--ease-out),
     transform 160ms var(--ease-out);
 }
 
-.theme-toggle:active {
+.sky-look:active {
   transform: rotate(-5deg) translateY(1px);
 }
 
@@ -891,7 +1162,7 @@ a:focus-visible {
     animation: none;
   }
 
-  .theme-toggle:active {
+  .sky-look:active {
     transform: none;
   }
 }
@@ -1344,7 +1615,7 @@ figcaption {
    raspberry measures 4.43:1 — under AA by a hair — so the block lights up to
    the brighter raspberry instead and takes the page's own near-black ink,
    which is 8:1 and looks like the luminous grains the dark theme is built on */
-:root[data-theme='dark'] ::selection {
+:root:is([data-theme='dark'], [data-theme='dusk']) ::selection {
   background: var(--rasp-deep);
   color: var(--bg);
 }

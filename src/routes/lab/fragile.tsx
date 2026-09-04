@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { readTheme } from "../../lib/theme";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import {
     Shatter,
@@ -152,7 +153,8 @@ function useReducedMotion(): boolean | null {
 function useDarkAtMount(): boolean {
     const [dark, setDark] = useState(false);
     useEffect(() => {
-        setDark(document.documentElement.dataset.theme === "dark");
+        // dusk is a dark ground too; the night gap colour is the nearer of the two
+        setDark(readTheme() !== "light");
     }, []);
     return dark;
 }

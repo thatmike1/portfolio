@@ -1,35 +1,9 @@
-/* weather — the front page's shape (hero band + copy block) with one simulation
-   behind both, chrome floated over it in the site's own type */
+/* weather — the front page's hero with the lab's words floated over the sky.
+   the stage, the chrome and the copy block all come from the shared component
+   and the site's own styles; this file only owns the overlay and the tail */
 
 .wx {
     min-height: 100vh;
-    background: #151214;
-    color: #fdfcfa;
-}
-
-.wx-stage {
-    position: relative;
-    isolation: isolate;
-}
-
-.wx-canvas {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    display: block;
-    width: 100%;
-    height: 100%;
-    image-rendering: pixelated;
-    touch-action: none;
-    cursor: crosshair;
-}
-
-/* the hero band, at the front page's height, so the sky is measured against the
-   real thing */
-.wx-band {
-    position: relative;
-    z-index: 1;
-    height: clamp(380px, 62vh, 640px);
 }
 
 /* --- words ------------------------------------------------------------- */
@@ -98,130 +72,15 @@
     opacity: 0.86;
 }
 
-/* --- looks ------------------------------------------------------------- */
-
-.wx-looks {
-    position: absolute;
-    left: clamp(1.25rem, 4vw, 3.5rem);
-    bottom: clamp(3.6rem, 8vh, 5rem);
-    display: flex;
-    gap: 0.55rem;
-}
-
-.wx-look {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    border: 1px solid rgb(255 255 255 / 0.55);
-    padding: 0;
-    cursor: pointer;
-    transition: transform 180ms ease-out, box-shadow 180ms ease-out;
-}
-
-.wx-look:hover {
-    transform: scale(1.12);
-}
-
-.wx-look[data-on="true"] {
-    box-shadow: 0 0 0 2px #0d1426, 0 0 0 3px #fdfcfa;
-}
-
-/* --- tools ------------------------------------------------------------- */
-
-.wx-bar {
-    position: absolute;
-    left: clamp(1.25rem, 4vw, 3.5rem);
-    bottom: clamp(1.25rem, 3.5vh, 2rem);
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.3rem 0.4rem;
-    border-radius: 999px;
-    background: rgb(13 20 38 / 0.72);
-    border: 1px solid rgb(255 255 255 / 0.22);
-    backdrop-filter: blur(6px);
-}
-
-.wx-chip {
-    font-family: "Martian Mono Variable", monospace;
-    font-size: 0.68rem;
-    letter-spacing: 0.01em;
-    color: #fdfcfa;
-    background: none;
-    border: 0;
-    border-radius: 999px;
-    padding: 0.32rem 0.6rem;
-    cursor: pointer;
-    opacity: 0.62;
-    transition: opacity 160ms ease-out, background 160ms ease-out;
-}
-
-.wx-chip:hover {
-    opacity: 1;
-}
-
-.wx-chip[data-on="true"] {
-    opacity: 1;
-    background: rgb(255 255 255 / 0.16);
-}
-
-.wx-sep {
-    width: 1px;
-    height: 16px;
-    margin-inline: 0.3rem;
-    background: rgb(255 255 255 / 0.22);
-}
-
-/* --- readout ----------------------------------------------------------- */
-
-.wx-hud {
-    position: absolute;
-    right: clamp(1.25rem, 4vw, 3.5rem);
-    bottom: clamp(1.4rem, 3.5vh, 2.15rem);
-    font-family: "Martian Mono Variable", monospace;
-    font-size: 0.68rem;
-    letter-spacing: 0.01em;
-    color: #fdfcfa;
-    opacity: 0.72;
-    text-shadow: 0 1px 2px rgb(0 0 0 / 0.5);
-    font-variant-numeric: tabular-nums;
-    pointer-events: none;
-}
-
-/* --- the copy block ---------------------------------------------------- */
-
-/* the front page's own classes carry the size and spacing; only the colour is
-   overridden, because this page is always on the dark ground. the block lets
-   the pointer through to the sand, links excepted */
-.wx-copy {
-    position: relative;
-    z-index: 1;
-    color: #fdfcfa;
-    pointer-events: none;
-}
-
-.wx-copy a,
-.wx-copy h1 {
-    pointer-events: auto;
-}
-
-.wx-copy .hero-note {
-    color: rgb(253 252 250 / 0.6);
-}
-
-.wx-copy .hero-note a {
-    color: #fdfcfa;
-}
-
 /* where the canvas ends: the same ground continues, so the falls run off the
    bottom of the picture into the page rather than hitting an edge */
 .wx-after {
     padding: clamp(2.5rem, 6vw, 4rem) 0 clamp(4rem, 10vw, 7rem);
-    border-top: 1px solid rgb(253 252 250 / 0.12);
+    border-top: 1px solid var(--hairline);
     text-align: center;
-    font-family: "Martian Mono Variable", monospace;
+    font-family: var(--font-mono);
     font-size: 0.72rem;
-    color: rgb(253 252 250 / 0.45);
+    color: var(--muted);
 }
 
 @media (max-width: 640px) {

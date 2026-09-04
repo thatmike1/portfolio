@@ -47,7 +47,7 @@ const EXPERIMENTS: Array<Experiment> = [
         slug: "weather",
         name: "weather",
         meta: "pixel cloud deck + water cycle · canvas 2d",
-        body: "clouds are fractal noise snapped to the sand grid. dense cells rain, rain fills the lake the name stands in, the lake runs off both ends of the island and falls past the intro copy. no keyframes anywhere \u2014 the sky and the ground feed each other.",
+        body: "clouds are fractal noise snapped to the sand grid. dense cells rain, rain fills the lake the name stands in, the lake runs off both ends of the island and falls past the intro copy. no keyframes anywhere \u2014 the sky and the ground feed each other. graduated: it is the front page now, and its three skies are the site's three themes. this copy keeps the soak tool and the drop count.",
     },
     {
         slug: "redline",

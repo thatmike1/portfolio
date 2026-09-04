@@ -9,6 +9,25 @@ export const RASP = 2;
 export const AMBER = 3;
 export const INK = 4;
 export const WATER = 5;
+/** sand that lightning fused: static, and rain has nothing to wash */
+export const GLASS = 6;
+/** falls like sand, takes on damp sand; see moss.ts */
+export const SEED = 7;
+/** static and alive: binds the grain it grew on, spreads over damp sand */
+export const MOSS = 8;
+/** a landed flake: static, caps what it fell on, melts in the sun; see frost.ts */
+export const SNOW = 9;
+/** frozen water: static until the sun takes it back */
+export const ICE = 10;
+/**
+ * flag bit, or'd onto a powder: the grain keeps its shade and its place until
+ * something loosens it. the automaton never moves a packed grain, so packed
+ * sand is solid to everything that does move; clear the bit and it is powder
+ * again, same tint, same spot. kinetic sand, in one bit
+ */
+export const PACKED = 16;
+/** strips the packed bit: what a cell is made of, moving or not */
+export const MATERIAL = 15;
 
 export type Material =
     | typeof EMPTY
@@ -16,7 +35,12 @@ export type Material =
     | typeof RASP
     | typeof AMBER
     | typeof INK
-    | typeof WATER;
+    | typeof WATER
+    | typeof GLASS
+    | typeof SEED
+    | typeof MOSS
+    | typeof SNOW
+    | typeof ICE;
 
 export type ThemeName = "light" | "dark";
 
@@ -57,6 +81,36 @@ export const PALETTES: Record<ThemeName, Record<number, string[]>> = {
             "oklch(0.6 0.14 248)",
             "oklch(0.68 0.11 254)",
         ],
+        [GLASS]: [
+            "oklch(0.9 0.08 190)",
+            "oklch(0.96 0.04 185)",
+            "oklch(0.82 0.1 195)",
+            "oklch(0.99 0.02 180)",
+        ],
+        [SEED]: [
+            "oklch(0.42 0.07 60)",
+            "oklch(0.38 0.06 55)",
+            "oklch(0.46 0.08 65)",
+            "oklch(0.35 0.05 50)",
+        ],
+        [MOSS]: [
+            "oklch(0.58 0.14 140)",
+            "oklch(0.63 0.15 135)",
+            "oklch(0.52 0.13 145)",
+            "oklch(0.68 0.14 130)",
+        ],
+        [SNOW]: [
+            "oklch(0.97 0.01 240)",
+            "oklch(0.99 0.005 240)",
+            "oklch(0.95 0.015 235)",
+            "oklch(0.98 0.008 245)",
+        ],
+        [ICE]: [
+            "oklch(0.84 0.07 225)",
+            "oklch(0.88 0.06 220)",
+            "oklch(0.8 0.08 230)",
+            "oklch(0.9 0.05 222)",
+        ],
     },
     dark: {
         [WALL]: [
@@ -89,10 +143,40 @@ export const PALETTES: Record<ThemeName, Record<number, string[]>> = {
             "oklch(0.68 0.15 242)",
             "oklch(0.78 0.12 250)",
         ],
+        [GLASS]: [
+            "oklch(0.92 0.09 190)",
+            "oklch(0.97 0.05 185)",
+            "oklch(0.86 0.11 195)",
+            "oklch(0.99 0.02 180)",
+        ],
+        [SEED]: [
+            "oklch(0.55 0.08 60)",
+            "oklch(0.5 0.07 55)",
+            "oklch(0.6 0.09 65)",
+            "oklch(0.47 0.06 50)",
+        ],
+        [MOSS]: [
+            "oklch(0.7 0.16 140)",
+            "oklch(0.75 0.17 135)",
+            "oklch(0.64 0.15 145)",
+            "oklch(0.8 0.15 130)",
+        ],
+        [SNOW]: [
+            "oklch(0.98 0.01 240)",
+            "oklch(0.99 0.005 240)",
+            "oklch(0.96 0.015 235)",
+            "oklch(0.99 0.008 245)",
+        ],
+        [ICE]: [
+            "oklch(0.88 0.08 225)",
+            "oklch(0.91 0.07 220)",
+            "oklch(0.85 0.09 230)",
+            "oklch(0.93 0.06 222)",
+        ],
     },
 };
 
-const FALLERS = new Set<number>([RASP, AMBER, INK]);
+const FALLERS = new Set<number>([RASP, AMBER, INK, SEED]);
 
 export class SandEngine {
     readonly cols: number;
@@ -230,7 +314,9 @@ export function stampWord(
     word: string,
     fontFamily: string,
     place?: WordPlacement,
+    opts: { packed?: boolean } = {},
 ): void {
+    const flag = opts.packed ? PACKED : 0;
     const { cols, rows } = engine;
     const c = document.createElement("canvas");
     c.width = cols;
@@ -258,7 +344,7 @@ export function stampWord(
         for (let x = 0; x < cols; x++) {
             const alpha = data[(y * cols + x) * 4 + 3];
             if (alpha > 120) {
-                engine.set(x, y, Math.random() < 0.12 ? AMBER : RASP);
+                engine.set(x, y, (Math.random() < 0.12 ? AMBER : RASP) | flag);
             }
         }
     }
