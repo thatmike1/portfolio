@@ -172,6 +172,8 @@ a:focus-visible {
   position: relative;
   z-index: 1;
   height: clamp(380px, 62vh, 640px);
+  /* the drawer sizes its chip block off the band's width, see .sand-tools */
+  container-type: inline-size;
 }
 
 /* on a phone 62vh is most of the fold and most of that is empty sky above the
@@ -259,6 +261,9 @@ a:focus-visible {
   max-width: calc(100% - 2.5rem);
   display: flex;
   align-items: stretch;
+  /* a capsule while it is one row tall, a rounded slab once the chips wrap:
+     a 999px radius on three rows is a stadium whose ends eat the row ends */
+  border-radius: 20px;
   cursor: auto;
 }
 
@@ -269,6 +274,9 @@ a:focus-visible {
   display: grid;
   grid-template-columns: 0fr;
   min-width: 0;
+  /* the track goes to zero but a child's padding does not, so the fold clips:
+     otherwise the chip row's padding and hairline peek out past the caret */
+  overflow: hidden;
   transition: grid-template-columns 320ms var(--ease-out);
 }
 
@@ -278,6 +286,7 @@ a:focus-visible {
 
 .sand-fold > * {
   min-width: 0;
+  min-height: 0;
   overflow: hidden;
   white-space: nowrap;
 }
@@ -330,29 +339,40 @@ a:focus-visible {
   transform: rotate(-135deg);
 }
 
+/* the chip drawer folds in both axes, so it grows out of the handle's corner */
 .sand-tools-fold {
   flex: 0 1 auto;
+  grid-template-rows: 0fr;
+  transition:
+    grid-template-columns 320ms var(--ease-out),
+    grid-template-rows 320ms var(--ease-out);
 }
 
+.sand-tools-fold[data-shown='true'] {
+  grid-template-rows: 1fr;
+}
+
+/* the fold's own child stays bare: a child's padding survives a zero track and
+   would hold the pill open by that much, so the padding sits one level down */
+.sand-tools-well {
+  display: block;
+}
+
+/* the chip block is sized once, off the band, not off the fold's track: it is
+   as wide as one line of chips or as wide as the band's gutters allow, and
+   wraps inside that. sizing it off the track would reflow the rows on every
+   frame of the fold; sized this way the fold only reveals it */
 .sand-tools {
-  /* below its content width it scrolls rather than wrapping, so the row is one
-     line from 320px to any desktop and there is no width that breaks it */
   display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  /* a sideways flick stays in the bar instead of chaining to the page, and both
-     axes stay live so a vertical drag still scrolls the page */
-  overscroll-behavior-x: contain;
-  touch-action: pan-x pan-y;
-  scrollbar-width: none;
+  flex-wrap: wrap;
   gap: 0.375rem;
   padding: 0.375rem;
+  width: max-content;
+  /* the dock's gutters plus the handle's width, so the pill never overruns */
+  max-width: calc(100cqw - 2.5rem - 2.75rem);
+  white-space: normal;
   /* the hairline where the drawer leaves the handle */
   box-shadow: inset 1px 0 0 var(--glass-edge);
-}
-
-.sand-tools::-webkit-scrollbar {
-  display: none;
 }
 
 .sand-tools .sand-tool {
@@ -450,11 +470,11 @@ a:focus-visible {
   background: color-mix(in oklch, var(--bg) 68%, transparent);
 }
 
-/* 16px over eight cells, the sky tiles' own scale */
+/* 20px over ten cells: two device pixels a cell, the sky tiles' own scale */
 .sand-reset-icon {
   display: block;
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
 }
 
 /* the lab's own instrumentation. it sits on the island's seam, which is
@@ -1006,6 +1026,7 @@ a:focus-visible {
 
   .sand-tools {
     gap: 0.25rem;
+    max-width: calc(100cqw - 1.5rem - 2.75rem);
   }
 
   .sand-reset {

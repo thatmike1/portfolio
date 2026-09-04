@@ -353,7 +353,6 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
     const stageRef = useRef<HTMLDivElement>(null);
     const bandRef = useRef<HTMLDivElement>(null);
     const handleRef = useRef<HTMLButtonElement>(null);
-    const toolsRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const themeRef = useRef<Theme>("light");
     const toolRef = useRef<number>(RASP);
@@ -374,20 +373,6 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
     useEffect(() => {
         toolRef.current = tool;
     }, [tool]);
-
-    // narrow enough and the bar scrolls, so bring the live material into sight
-    // rather than opening on a row whose pressed chip is off the end. runs once
-    // the drawer has finished coming out: while it is still growing the bar has
-    // no width to centre anything in
-    const centreLiveChip = () => {
-        const bar = toolsRef.current;
-        if (!bar) return;
-        const chip = bar.querySelector<HTMLElement>('[aria-pressed="true"]');
-        if (!chip) return;
-        const barBox = bar.getBoundingClientRect();
-        const chipBox = chip.getBoundingClientRect();
-        bar.scrollLeft += chipBox.left - barBox.left - (barBox.width - chipBox.width) / 2;
-    };
 
     useEffect(() => {
         const stage = stageRef.current;
@@ -2353,43 +2338,41 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                         <span className="sand-handle-caret" aria-hidden="true" />
                     </button>
 
-                    <div
-                        className="sand-fold sand-tools-fold"
-                        data-shown={drawer}
-                        onTransitionEnd={(e) => {
-                            if (e.target !== e.currentTarget || !drawer) return;
-                            centreLiveChip();
-                        }}
-                    >
-                        <div
-                            className="sand-tools"
-                            ref={toolsRef}
-                            id="sand-materials"
-                            role="toolbar"
-                            aria-label="sand materials"
-                            inert={!drawer}
-                        >
-                            {TOOLS.map((t) => (
-                                <button
-                                    key={t.id}
-                                    type="button"
-                                    className="sand-tool"
-                                    aria-pressed={tool === t.id}
-                                    onClick={() => setTool(t.id)}
-                                >
-                                    <ToolSwatch id={t.id} shades={shades} />
-                                    <span className="sand-tool-label">{t.label}</span>
-                                </button>
-                            ))}
-                            {lab ? (
-                                <button
-                                    type="button"
-                                    className="sand-tool sand-soak"
-                                    onClick={() => soakRef.current()}
-                                >
-                                    soak
-                                </button>
-                            ) : null}
+                    {/* the drawer unfolds in both axes from the handle's corner. the
+                        chips wrap to as many rows as the width needs, one on a desktop
+                        and two or three on a phone, so all nine are in view at once:
+                        a row that scrolls can end on a whole chip and look complete */}
+                    <div className="sand-fold sand-tools-fold" data-shown={drawer}>
+                        <div className="sand-tools-well">
+                            <div
+                                className="sand-tools"
+                                id="sand-materials"
+                                role="toolbar"
+                                aria-label="sand materials"
+                                inert={!drawer}
+                            >
+                                {TOOLS.map((t) => (
+                                    <button
+                                        key={t.id}
+                                        type="button"
+                                        className="sand-tool"
+                                        aria-pressed={tool === t.id}
+                                        onClick={() => setTool(t.id)}
+                                    >
+                                        <ToolSwatch id={t.id} shades={shades} />
+                                        <span className="sand-tool-label">{t.label}</span>
+                                    </button>
+                                ))}
+                                {lab ? (
+                                    <button
+                                        type="button"
+                                        className="sand-tool sand-soak"
+                                        onClick={() => soakRef.current()}
+                                    >
+                                        soak
+                                    </button>
+                                ) : null}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2428,29 +2411,34 @@ function ToolSwatch({ id, shades }: { id: number; shades: Record<number, Array<s
 type IconCell = [number, number, number, number];
 
 /**
- * reset as an 8x8 pixel tile, the same octagon the sky tiles are cut from: the
- * ring is broken at the top left and the arrow turns back into the gap, drawn
- * in whole cells so it sits with the three sky tiles rather than beside them.
- * it wears currentColor, not a ground: it is a glyph, not a picture of anything
+ * reset as a pixel tile on the sky tiles' scale: a 10x10 grid at 20px, so a
+ * cell is the same two device pixels as the sun's. the ring is broken at the
+ * top left and its left arm ends in a fat arrowhead aimed up into the gap;
+ * a thin head and a one-cell gap read as a closed ring at this size. it wears
+ * currentColor, not a ground: it is a glyph, not a picture of anything
  */
 function ResetIcon() {
     const cells: Array<IconCell> = [
         // the ring, clockwise from the top, minus the top-left arc
-        [3, 0, 3, 1],
-        [6, 1, 1, 1],
-        [7, 2, 1, 4],
-        [6, 6, 1, 1],
-        [2, 7, 4, 1],
-        [1, 6, 1, 1],
-        [0, 4, 1, 2],
-        // the arrowhead: the ring's left arm ends in a point aimed up into the gap
-        [0, 3, 3, 1],
+        [5, 0, 2, 1],
+        [7, 1, 1, 1],
+        [8, 2, 1, 1],
+        [9, 3, 1, 4],
+        [8, 7, 1, 1],
+        [7, 8, 1, 1],
+        [3, 9, 4, 1],
+        [2, 8, 1, 1],
+        [1, 7, 1, 1],
+        [0, 5, 1, 2],
+        // the arrowhead: four wide at the base, narrowing to a point
+        [0, 4, 4, 1],
+        [1, 3, 2, 1],
         [1, 2, 1, 1],
     ];
     return (
         <svg
             className="sand-reset-icon"
-            viewBox="0 0 8 8"
+            viewBox="0 0 10 10"
             shapeRendering="crispEdges"
             aria-hidden="true"
             focusable="false"
