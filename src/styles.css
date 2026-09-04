@@ -281,6 +281,18 @@ a:focus-visible {
   border-radius: 50%;
 }
 
+/* a look button carries a tile of its own sky rather than a dot of it: the sun,
+   the setting sun and the crescent, drawn as whole pixels. it keeps its ground,
+   so it reads on every page theme, and the hairline seats it in the pill */
+.sky-icon {
+  display: block;
+  flex: none;
+  /* 16px over eight cells, so a cell is a whole device pixel at any dpr */
+  width: 16px;
+  height: 16px;
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--ink) 28%, transparent);
+}
+
 .sand-swatch-erase {
   border: 1.5px solid var(--muted);
 }
@@ -843,35 +855,46 @@ a:focus-visible {
     grid-template-columns: 1fr;
   }
 
+  /* nine materials spelled out are three rows over the word this narrow. rather
+     than strip them to dots, the row leaves the picture: it drops to the band's
+     bottom edge, spans the full width as a strip of page furniture and scrolls
+     sideways, so every chip keeps its word. it is anchored to the band rather
+     than laid out in flow, so the sim's own height, which sets the island and
+     the lake, is untouched, and the headline is not pushed down: the strip sits
+     in the gap the copy's top padding already leaves */
   .sand-tools {
-    left: 0.75rem;
-    right: 0.75rem;
-    bottom: 0.75rem;
-    justify-content: center;
-  }
-
-  /* nine materials spelled out are three rows over the word this narrow, so the
-     chips fold down to their swatches too; the pressed ring says which is on */
-  .sand-tools {
+    top: 100%;
+    left: 0;
+    right: 0;
+    bottom: auto;
     gap: 0.25rem;
+    padding-inline: 0.75rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    /* a sideways flick stays in the strip instead of chaining to the page, and
+       both axes stay live so a vertical drag still scrolls the page */
+    overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y;
+    scrollbar-width: none;
+    border-radius: 0;
+    border-inline: 0;
+    box-shadow: none;
+    /* off the pills' frosted glass: this one sits on the dithered strata, so it
+       needs a near-solid ground to keep the labels readable */
+    background: color-mix(in oklch, var(--bg) 90%, transparent);
   }
 
-  .sand-tools .sand-tool:not(.sand-reset) {
-    padding-inline: 0.4rem;
+  .sand-tools::-webkit-scrollbar {
+    display: none;
   }
 
-  .sand-tool-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
+  .sand-tools .sand-tool {
+    flex: none;
   }
 
-  .sand-tools .sand-swatch {
-    width: 0.95em;
-    height: 0.95em;
+  /* the strip paints over the copy's padding, so it has to win the stack */
+  .weather-hero .weather-band {
+    z-index: 2;
   }
 
   .sand-hint {
@@ -888,7 +911,7 @@ a:focus-visible {
   }
 
   /* the readout and the looks share the top edge here, so the looks fold down to
-     their swatches. the pressed ring and the dot's colour still say which is which */
+     their tiles alone. the tile draws the hour, so it still says which is which */
   .sky-looks {
     top: 0.75rem;
     right: 0.75rem;
@@ -907,10 +930,6 @@ a:focus-visible {
     white-space: nowrap;
   }
 
-  .sky-look .sand-swatch {
-    width: 0.85em;
-    height: 0.85em;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
