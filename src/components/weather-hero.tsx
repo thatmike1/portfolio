@@ -349,15 +349,28 @@ type Props = {
     overlay?: ReactNode;
     /** the lab's extra chrome: the soak button and the drop count */
     lab?: boolean;
+    /**
+     * lab prototype: the island's rock carries on down the page as its
+     * background. "rock" is the keel's own tones, "washed" the same tile lifted
+     * most of the way to the page so the copy has something to stand on
+     */
+    ground?: Ground;
 };
 
-export function WeatherHero({ children, overlay, lab = false }: Props) {
+export type Ground = "off" | "rock" | "washed";
+
+/** the ground tile: cells across and down, tiled by the page's css */
+export const DIRT_COLS = 48;
+export const DIRT_ROWS = 28;
+
+export function WeatherHero({ children, overlay, lab = false, ground = "off" }: Props) {
     const stageRef = useRef<HTMLDivElement>(null);
     const bandRef = useRef<HTMLDivElement>(null);
     const handleRef = useRef<HTMLButtonElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const themeRef = useRef<Theme>("light");
     const toolRef = useRef<number>(RASP);
+    const groundRef = useRef<Ground>(ground);
     const [theme, setTheme] = useState<Theme>("light");
     const [tool, setTool] = useState<number>(RASP);
     const [awake, setAwake] = useState(false);
@@ -375,6 +388,13 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
     useEffect(() => {
         toolRef.current = tool;
     }, [tool]);
+
+    useEffect(() => {
+        groundRef.current = ground;
+        if (ground === "off") {
+            document.documentElement.style.removeProperty("--dirt");
+        }
+    }, [ground]);
 
     useEffect(() => {
         const stage = stageRef.current;
@@ -723,8 +743,16 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             wordSpan = ease(WORD_SPAN, WORD_SPAN_NARROW);
             shaft0 = Math.max(Math.round(ease(SHAFT_MIN, SHAFT_MIN_NARROW)), Math.round(cols * ease(SHAFT, SHAFT_NARROW)));
             // the copy block reads this to keep clear of the falls: beside the
-            // copy the shaft is a cell wider than in the band, see shaftAt()
-            stage.style.setProperty("--shaft", `${((shaft0 + 1) * rect.width) / cols}px`);
+            // copy the shaft is a cell wider than in the band, see shaftAt(). it
+            // lands on the next frame: build() runs from the resize observer, and
+            // a layout change made inside the callback is the loop the observer
+            // reports as an error
+            const shaftPx = `${((shaft0 + 1) * rect.width) / cols}px`;
+            if (stage.style.getPropertyValue("--shaft") !== shaftPx) {
+                requestAnimationFrame(() => stage.style.setProperty("--shaft", shaftPx));
+            }
+            // and the ground prototype's tile is sized off a cell
+            document.documentElement.style.setProperty("--cell", `${rect.width / cols}px`);
             canvas.width = cols * grain;
             canvas.height = rows * grain;
             src.width = cols;
@@ -1798,6 +1826,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
          */
         const render = () => {
             rasterize({
+                ground: groundRef.current !== "off",
                 buf,
                 cols,
                 rows,
@@ -1831,6 +1860,46 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             view.drawImage(src, 0, 0, canvas.width, canvas.height);
         };
 
+        /**
+         * the ground prototype's tile: the keel's bedding rules run over a small
+         * grid and the result goes to the page as a data url, so the texture
+         * under the copy is the same texture the island is drawn with, in the
+         * current look's light. regenerated as the look eases, see the loop
+         */
+        const dirtCanvas = document.createElement("canvas");
+        dirtCanvas.width = DIRT_COLS;
+        dirtCanvas.height = DIRT_ROWS;
+        const dirtCtx = dirtCanvas.getContext("2d");
+        const dirtImage = new ImageData(DIRT_COLS, DIRT_ROWS);
+        const dirtBuf = new Uint32Array(dirtImage.data.buffer);
+        const dirt = () => {
+            if (!dirtCtx) return;
+            const washed = groundRef.current === "washed" ? 0.72 : 0;
+            const slate = sandRGB[WALL];
+            const amb = cur.ambient;
+            const tones = slate.map((c) => {
+                const m = mix3(c, page.abyss, washed);
+                return (
+                    (255 << 24) |
+                    (Math.max(0, Math.min(255, Math.round(m[2] * amb[2]))) << 16) |
+                    (Math.max(0, Math.min(255, Math.round(m[1] * amb[1]))) << 8) |
+                    Math.max(0, Math.min(255, Math.round(m[0] * amb[0])))
+                );
+            });
+            for (let y = 0; y < DIRT_ROWS; y++) {
+                const band = ((y / 7) | 0) & 1;
+                for (let x = 0; x < DIRT_COLS; x++) {
+                    // the keel's rule: bedded cells take the row's stripe, a quarter
+                    // opt out and take their own shade
+                    const bedded = hash2(x + 97, y + 41) > 0.25;
+                    const shade = bedded ? [2, 3][band] : (hash2(x * 3 + 7, y * 5 + 11) * 4) | 0;
+                    dirtBuf[y * DIRT_COLS + x] = tones[shade & 3];
+                }
+            }
+            dirtCtx.putImageData(dirtImage, 0, 0);
+            document.documentElement.style.setProperty("--dirt", `url(${dirtCanvas.toDataURL()})`);
+        };
+
         /* ----------------------------------------------------------- loop */
 
         /** the simulation ticks at 60hz whatever the display refreshes at */
@@ -1839,6 +1908,8 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         const tick = () => {
             frame++;
             easeLook(LOOK_BY[themeRef.current], 0.035);
+            // the ground tile follows the look as it eases, a few times a second
+            if (groundRef.current !== "off" && frame % 20 === 0) dirt();
 
             // wind wanders on its own so the deck never drifts at a constant rate
             wind = 0.07 + 0.04 * Math.sin(frame * 0.0018) + 0.02 * Math.sin(frame * 0.0071);
@@ -2042,6 +2113,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         });
 
         build();
+        if (groundRef.current !== "off") dirt();
         // the variable font may still be loading on first paint; stamp after it settles
         document.fonts.ready
             .catch(() => undefined)

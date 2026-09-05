@@ -131,6 +131,14 @@ export type RasterizeParams = {
     frog: Frog | null;
     snail: Snail | null;
     flies: Firefly[];
+    /**
+     * the page is the ground (a lab prototype, see the weather route): the keel
+     * runs to the bottom of the band unlifted and unseamed, and everything under
+     * the band that is rock or air is left transparent for the page's own
+     * texture to show through, so the island reads as set into the page rather
+     * than dissolving onto it
+     */
+    ground?: boolean;
 };
 
 /**
@@ -273,6 +281,7 @@ export function rasterize(p: RasterizeParams): void {
     } = p;
     const amb = look.ambient;
     const lift = flashLift(p.flash, p.flashFrames);
+    const rockLift = p.ground ? 0 : look.rockLift;
 
     const topP = pack(
         clamp255(p.waterTop[0] * amb[0] + 255 * lift),
@@ -284,7 +293,7 @@ export function rasterize(p: RasterizeParams): void {
         const shades = sandRGB[m];
         const packed: number[] = [];
         for (let i = 0; i < shades.length; i++) {
-            const c = m === WALL ? mix3(shades[i], page.abyss, look.rockLift) : shades[i];
+            const c = m === WALL ? mix3(shades[i], page.abyss, rockLift) : shades[i];
             packed.push(
                 pack(
                     clamp255(c[0] * amb[0] + 255 * lift),
@@ -298,8 +307,8 @@ export function rasterize(p: RasterizeParams): void {
     const groundP = [packRGB(page.ground[0], lift), packRGB(page.ground[1], lift)];
     const abyssP = packRGB(page.abyss, lift);
     const seamN = seamRows(crestRow, heroRows);
-    const seam2 = seamTones(sandRGB[WALL], page, amb, lift, look.rockLift, seamN);
-    const rock = rockRows(sandRGB[WALL], page, amb, lift, look.rockLift, crestRow, heroRows);
+    const seam2 = seamTones(sandRGB[WALL], page, amb, lift, rockLift, seamN);
+    const rock = rockRows(sandRGB[WALL], page, amb, lift, rockLift, crestRow, heroRows);
     const rockSpan = rock.length - 1;
 
     const skyPacked = skyRamp(look, page, lift);
@@ -442,13 +451,27 @@ export function rasterize(p: RasterizeParams): void {
         // the keel turns into the page over the last few rows of the hero band:
         // dithered, so the seam is a texture change and not a line
         const seamRow = y - (heroRows - seamN);
-        const seam = y >= heroRows ? 1 : seamRow >= 0 ? (seamRow + 1) / (seamN + 1) : 0;
+        const seam = p.ground
+            ? y >= heroRows
+                ? 1
+                : 0
+            : y >= heroRows
+              ? 1
+              : seamRow >= 0
+                ? (seamRow + 1) / (seamN + 1)
+                : 0;
+        const under = p.ground && y >= heroRows;
         const bayerRow = (y & 3) * 4;
         const deep = y - crestRow;
         const rockRow = rock[deep < 0 ? 0 : deep > rockSpan ? rockSpan : deep];
         for (let x = 0; x < cols; x++) {
             const i = row + x;
             const m = cells[i];
+            if (under && (m === EMPTY || m === WALL)) {
+                // the page's texture shows through: alpha zero, not the page colour
+                buf[i] = 0;
+                continue;
+            }
             if (m === EMPTY) {
                 if (y >= heroRows) buf[i] = abyssP;
                 continue;
