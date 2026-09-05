@@ -3,12 +3,14 @@ import { clamp255, mix3, pack, packRGB } from "./pixel";
 import type { Page, RGB } from "./pixel";
 import {
     BED,
-    SEAM,
+    SEAM_MAX,
+    SEAM_MIN,
     SKY_BANDS,
     SKY_FADE,
     flashLift,
     rockLiftAt,
     rockRows,
+    seamRows,
     seamTones,
     skyBandAt,
     skyRamp,
@@ -113,9 +115,27 @@ describe("sky quantisation", () => {
     });
 });
 
+describe("seam rows", () => {
+    it("is a share of the keel, so a phone's short keel is not all seam", () => {
+        // a desktop band of 640px is 106 rows with the crest at 80: 26 rows of
+        // keel, and the seam keeps the twelve it always had
+        expect(seamRows(80, 106)).toBe(SEAM_MAX);
+        // the 390px keel measured at 16 rows gets about seven, leaving nine of rock
+        expect(seamRows(47, 63)).toBe(7);
+        expect(seamRows(47, 63)).toBeLessThan(16 - seamRows(47, 63));
+    });
+
+    it("never shrinks past the floor or grows past the ceiling", () => {
+        expect(seamRows(60, 63)).toBe(SEAM_MIN);
+        expect(seamRows(0, 400)).toBe(SEAM_MAX);
+        expect(seamRows(70, 60)).toBe(SEAM_MIN);
+    });
+});
+
 describe("rock lift ramp", () => {
     const crest = 76;
     const hero = 100;
+    const SEAM = seamRows(crest, hero);
 
     it("is off at the crest and full by the top of the seam", () => {
         expect(rockLiftAt(crest, crest, hero, 0.45)).toBe(0);
@@ -139,6 +159,14 @@ describe("rock lift ramp", () => {
 
     it("does not divide by zero when the seam eats the whole keel", () => {
         expect(Number.isFinite(rockLiftAt(90, 95, 100, 0.45))).toBe(true);
+    });
+
+    it("gives a phone's keel a ramp with rows in it", () => {
+        // sixteen rows of keel, seven of seam: the lift has nine rows to climb over
+        // instead of the four a fixed seam left it
+        const lifts = new Set<number>();
+        for (let y = 47; y <= 63; y++) lifts.add(rockLiftAt(y, 47, 63, 0.45));
+        expect(lifts.size).toBeGreaterThanOrEqual(8);
     });
 
     it("keeps the bedding pair legible at the crest and gives it up at the seam", () => {
@@ -168,8 +196,9 @@ describe("rock lift ramp", () => {
 });
 
 describe("seam dither", () => {
+    const SEAM = 12;
     it("runs the rock down to the page over exactly the seam's rows", () => {
-        const { rock, page } = seamTones(SLATE, PAGE, WHITE, 0, 0.45);
+        const { rock, page } = seamTones(SLATE, PAGE, WHITE, 0, 0.45, SEAM);
         expect(rock).toHaveLength(SEAM);
         expect(page).toHaveLength(SEAM);
         // the last row is the ground itself: nothing left to hand over
@@ -178,7 +207,7 @@ describe("seam dither", () => {
     });
 
     it("keeps the checker quiet: the two tones close in, never apart", () => {
-        const { rock, page } = seamTones(SLATE, PAGE, WHITE, 0, 0.45);
+        const { rock, page } = seamTones(SLATE, PAGE, WHITE, 0, 0.45, SEAM);
         // the step between them is fixed while there is room for it, then closes;
         // it never widens, so the checker cannot get louder further down
         const first = spread(rock[0][0], page[0][0]);
@@ -190,7 +219,7 @@ describe("seam dither", () => {
     });
 
     it("runs the page cells a step ahead of the rock cells", () => {
-        const { rock, page } = seamTones(SLATE, PAGE, WHITE, 0, 0.45);
+        const { rock, page } = seamTones(SLATE, PAGE, WHITE, 0, 0.45, SEAM);
         for (let r = 0; r < SEAM - 1; r++) {
             // ahead means lighter here, because the page under the island is pale
             expect(unpack(page[r][0])[0]).toBeGreaterThan(unpack(rock[r][0])[0]);
@@ -198,7 +227,7 @@ describe("seam dither", () => {
     });
 
     it("carries the same bedding pair the keel above it uses", () => {
-        const { rock } = seamTones(SLATE, PAGE, WHITE, 0, 0);
+        const { rock } = seamTones(SLATE, PAGE, WHITE, 0, 0, SEAM);
         // b=0 is the light shade, b=1 the dark one, so the strata do not invert
         expect(unpack(rock[0][0])[0]).toBeGreaterThan(unpack(rock[0][1])[0]);
         expect(unpack(rock[0][0])).toEqual(unpack(packRGB(SLATE[BED[0]])));
@@ -211,5 +240,16 @@ describe("flash", () => {
         expect(flashLift(12, 12)).toBeCloseTo(0.3);
         expect(flashLift(6, 12)).toBeCloseTo(0.075);
         expect(flashLift(12, 12)).toBeGreaterThan(2 * flashLift(6, 12));
+    });
+});
+
+describe("seam dither on a short keel", () => {
+    it("still lands on the ground in its last row whatever its length", () => {
+        for (const n of [4, 7, 12]) {
+            const { rock, page } = seamTones(SLATE, PAGE, WHITE, 0, 0.45, n);
+            expect(rock).toHaveLength(n);
+            expect(unpack(rock[n - 1][0])).toEqual(unpack(packRGB(PAGE.ground[0])));
+            expect(spread(rock[n - 1][0], page[n - 1][0])).toBe(0);
+        }
     });
 });

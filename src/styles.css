@@ -192,6 +192,11 @@ a:focus-visible {
   position: relative;
   z-index: 1;
   pointer-events: none;
+  /* the falls run down the shafts either side of the copy, and on a phone the
+     container's gutter is narrower than a shaft: 24px against 36px, so the
+     water ran under the words. the sim writes its shaft width to --shaft and
+     the copy keeps that plus a hand's width clear of it on both sides */
+  width: min(100% - max(3rem, 2 * (var(--shaft, 0px) + 0.5rem)), 68rem);
 }
 
 .weather-hero .hero-copy :is(h1, p) {
