@@ -2004,8 +2004,21 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             wake();
             paint(e);
         };
+        /**
+         * the sand wakes under a pointer that only passes over it: the old front
+         * page did, and a stage that waits for a press keeps spelling "touch the
+         * sand" at someone whose cursor is already on it. waking is cheap since the
+         * word is packed and nothing steps until something is loose. the chrome
+         * and the copy are not the sand, so crossing them wakes nothing
+         */
         const move = (e: PointerEvent) => {
-            if (painting) paint(e);
+            if (painting) {
+                paint(e);
+                return;
+            }
+            if (sandAwake || e.pointerType === "touch" || chrome(e)) return;
+            if ((e.target as HTMLElement).closest(".hero-copy")) return;
+            wake();
         };
         const up = () => {
             painting = false;
