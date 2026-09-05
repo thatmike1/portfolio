@@ -175,8 +175,10 @@ const LOOKS: Array<Look> = [
         bodyY: 0.2,
         starAlpha: 0,
         sun: 1,
-        ambient: [1, 1, 1],
-        rockLift: 0.45,
+        // a hair of warmth: a flat white ambient left the rock a neutral grey
+        // with nothing for the strata to differ in but lightness
+        ambient: [1.02, 0.99, 0.95],
+        rockLift: 0.38,
     },
     {
         id: "dusk",
@@ -455,11 +457,16 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         const waterTop = resolve(swatchCtx, "oklch(0.73 0.11 252)");
         // bedrock is the engine's wall material, but the front page's near-black ink
         // reads as a solid ui bar across a frame this size, so it gets slate instead
+        // the four shades span twice the lightness they used to (0.33 to 0.5,
+        // not 0.37 to 0.45): noon's lift toward the white page compresses that
+        // spread, and on a phone's short keel the old one had nothing left to
+        // read as strata. dusk and night dim the whole set with their ambient,
+        // so the wider pair costs them nothing
         sandRGB[WALL] = [
-            "oklch(0.425 0.022 357)",
-            "oklch(0.395 0.02 357)",
-            "oklch(0.45 0.024 357)",
-            "oklch(0.37 0.019 357)",
+            "oklch(0.43 0.024 357)",
+            "oklch(0.385 0.021 357)",
+            "oklch(0.5 0.027 357)",
+            "oklch(0.33 0.019 357)",
         ].map((css) => resolve(swatchCtx, css));
         // the inline head script set this before first paint
         const initial = readTheme();
