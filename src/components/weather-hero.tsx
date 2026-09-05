@@ -715,6 +715,9 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             bankU = ease(BANK_U, BANK_U_NARROW);
             wordSpan = ease(WORD_SPAN, WORD_SPAN_NARROW);
             shaft0 = Math.max(Math.round(ease(SHAFT_MIN, SHAFT_MIN_NARROW)), Math.round(cols * ease(SHAFT, SHAFT_NARROW)));
+            // the copy block reads this to keep clear of the falls: beside the
+            // copy the shaft is a cell wider than in the band, see shaftAt()
+            stage.style.setProperty("--shaft", `${((shaft0 + 1) * rect.width) / cols}px`);
             canvas.width = cols * grain;
             canvas.height = rows * grain;
             src.width = cols;
