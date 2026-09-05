@@ -1,0 +1,374 @@
+/* peel — everything is scoped under .peel and overrides styles.css from the
+   outside, so the weather hero and the front page keep their own behaviour.
+   6px is CELL in the sim; every number below that describes the notch is a
+   multiple of it.
+
+   round two, after mike's sketch of 2026-09-04. round one treated the notch
+   as a box for a horizontal row of three pills, which is why it had to bite
+   300px out of the hero and lose the labels to fit. the hole is a triangle,
+   so the pills are now a diagonal: each one sits a step down and a step right
+   of the last, hugging the hypotenuse, with its icon and its word. a diagonal
+   stack fits a diagonal hole, and the notch is back to 204px on a desktop.
+
+   on a phone the staircase is twice as steep (6px right for 12px down): a
+   108px strip peeled down the right edge instead of a 168px corner, which is
+   28% of a 390px frame rather than 43%. the pills fold to their icons there,
+   as they do on the front page.
+
+   the polygons are generated, not typed. see the note at the bottom. */
+
+.peel {
+    position: relative;
+    /* the notch's width and height */
+    --peel-w: 204px;
+    --peel-h: 204px;
+    /* the reflection across the fold: a 45° fold swaps x and y */
+    --peel-fold: matrix(0, 1, 1, 0, 0, 0);
+    /* perpendicular to the fold, pointing at the corner: the shading runs along it */
+    --peel-shade: 45deg;
+    /* where each look's left edge clears the staircase, see .sky-look */
+    --peel-x1: 46px;
+    --peel-x2: 84px;
+    --peel-x3: 122px;
+}
+
+/* getting the pills under the canvas without breaking them.
+   the obvious move — z-index: -1 on .sky-looks — paints them correctly and then
+   kills them: a negative-z descendant sits below its positioned ancestors' own
+   boxes, so .weather-band and then .weather-hero swallow every click, and
+   .weather-hero is the element the sand painting listens on, so it cannot simply
+   be told to ignore the pointer.
+   so nothing goes negative. .weather-band gives up its stacking context, the
+   pills drop to z-index 0, and the canvas is raised over them instead. the
+   canvas already carries pointer-events: none in styles.css, which is what makes
+   this work at all: it can cover the pills without taking their clicks. */
+.peel .weather-band {
+    z-index: auto;
+}
+
+.peel .weather-canvas {
+    z-index: 1;
+    clip-path: polygon(
+        0 0, calc(100% - 204px) 0, calc(100% - 204px) 6px, calc(100% - 198px) 6px,
+        calc(100% - 198px) 12px, calc(100% - 192px) 12px, calc(100% - 192px) 18px,
+        calc(100% - 186px) 18px, calc(100% - 186px) 24px, calc(100% - 180px) 24px,
+        calc(100% - 180px) 30px, calc(100% - 174px) 30px, calc(100% - 174px) 36px,
+        calc(100% - 168px) 36px, calc(100% - 168px) 42px, calc(100% - 162px) 42px,
+        calc(100% - 162px) 48px, calc(100% - 156px) 48px, calc(100% - 156px) 54px,
+        calc(100% - 150px) 54px, calc(100% - 150px) 60px, calc(100% - 144px) 60px,
+        calc(100% - 144px) 66px, calc(100% - 138px) 66px, calc(100% - 138px) 72px,
+        calc(100% - 132px) 72px, calc(100% - 132px) 78px, calc(100% - 126px) 78px,
+        calc(100% - 126px) 84px, calc(100% - 120px) 84px, calc(100% - 120px) 90px,
+        calc(100% - 114px) 90px, calc(100% - 114px) 96px, calc(100% - 108px) 96px,
+        calc(100% - 108px) 102px, calc(100% - 102px) 102px, calc(100% - 102px) 108px,
+        calc(100% - 96px) 108px, calc(100% - 96px) 114px, calc(100% - 90px) 114px,
+        calc(100% - 90px) 120px, calc(100% - 84px) 120px, calc(100% - 84px) 126px,
+        calc(100% - 78px) 126px, calc(100% - 78px) 132px, calc(100% - 72px) 132px,
+        calc(100% - 72px) 138px, calc(100% - 66px) 138px, calc(100% - 66px) 144px,
+        calc(100% - 60px) 144px, calc(100% - 60px) 150px, calc(100% - 54px) 150px,
+        calc(100% - 54px) 156px, calc(100% - 48px) 156px, calc(100% - 48px) 162px,
+        calc(100% - 42px) 162px, calc(100% - 42px) 168px, calc(100% - 36px) 168px,
+        calc(100% - 36px) 174px, calc(100% - 30px) 174px, calc(100% - 30px) 180px,
+        calc(100% - 24px) 180px, calc(100% - 24px) 186px, calc(100% - 18px) 186px,
+        calc(100% - 18px) 192px, calc(100% - 12px) 192px, calc(100% - 12px) 198px,
+        calc(100% - 6px) 198px, calc(100% - 6px) 204px, calc(100% - 0px) 204px, 100% 100%,
+        0 100%
+    );
+}
+
+/* what is under the picture: a tone a clear step under the page, so the hole
+   reads as a layer beneath and not as the page, and so the pale flap lying next
+   to it reads as lifted and not as more of the same */
+.peel .weather-hero {
+    background: color-mix(in oklch, var(--ink) 17%, var(--bg));
+}
+
+:root:is([data-theme='dark'], [data-theme='dusk']) .peel .weather-hero {
+    background: color-mix(in oklch, black 45%, var(--bg));
+}
+
+/* the picker gives up its pill and its glass: it is not chrome over the picture
+   any more, it is what the picture was covering. the group is the notch's box
+   and the three looks place themselves in it */
+.peel .sky-looks {
+    z-index: 0;
+    top: 0;
+    right: 0;
+    width: var(--peel-w);
+    height: var(--peel-h);
+    display: block;
+    padding: 0;
+    background: none;
+    border-color: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-radius: 0;
+}
+
+/* down the hypotenuse. a pill's left edge has to clear the staircase at the
+   pill's own bottom row, and on a 45° fold that row's x is its y: so each look
+   sits at top + height + a hand's width, one step down and right of the last */
+.peel .sky-look {
+    position: absolute;
+    display: inline-flex;
+    white-space: nowrap;
+}
+
+.peel .sky-look:nth-child(1) {
+    top: 10px;
+    left: var(--peel-x1);
+}
+
+.peel .sky-look:nth-child(2) {
+    top: 48px;
+    left: var(--peel-x2);
+}
+
+.peel .sky-look:nth-child(3) {
+    top: 86px;
+    left: var(--peel-x3);
+}
+
+/* the flap: the removed triangle folded back across the crease, so the material
+   that left the picture is still in the picture, lying over it. it is drawn in
+   the notch's own coordinates as the triangle that was cut away, then reflected
+   across the fold with a transform, which is what lets a phone's steeper fold
+   reuse the same markup.
+
+   its tone is the back of the sheet, and the back of a sheet is pale in every
+   light: that is the fix for dusk and night, where round one mixed the flap
+   from ink at 22-66% and it sank into the void behind it. the four bands are
+   lightest at the crease and darkest at the tip, and hard-stopped, because a
+   smooth curl is the one thing here that would not be made of cells */
+.peel-flap {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: var(--peel-w);
+    height: var(--peel-h);
+    pointer-events: none;
+    z-index: 2;
+    /* the shadow has to live on the parent: clip-path is applied to the filtered
+       result, so a drop-shadow on the clipped element gets clipped away with it.
+       one cell of offset and no blur, because a soft shadow is the one thing
+       that would give away that this is css and not the sim. */
+    filter: drop-shadow(-6px 6px 0 rgb(0 0 0 / 0.4));
+    --flap-0: var(--bg);
+    --flap-1: color-mix(in oklch, var(--ink) 7%, var(--bg));
+    --flap-2: color-mix(in oklch, var(--ink) 16%, var(--bg));
+    --flap-3: color-mix(in oklch, var(--ink) 30%, var(--bg));
+}
+
+:root:is([data-theme='dark'], [data-theme='dusk']) .peel-flap {
+    /* paper, not slate: mixed off the ink (near white in these themes) so the
+       flap is always lighter than the hole it came out of */
+    --flap-0: color-mix(in oklch, var(--ink) 88%, var(--bg));
+    --flap-1: color-mix(in oklch, var(--ink) 74%, var(--bg));
+    --flap-2: color-mix(in oklch, var(--ink) 58%, var(--bg));
+    --flap-3: color-mix(in oklch, var(--ink) 40%, var(--bg));
+    filter: drop-shadow(-6px 6px 0 rgb(0 0 0 / 0.6));
+}
+
+.peel-flap::before,
+.peel-flap::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: var(--peel-fold);
+    transform-origin: 0 0;
+    clip-path: polygon(
+        0 0, 0px 6px, 6px 6px, 6px 12px, 12px 12px, 12px 18px, 18px 18px, 18px 24px,
+        24px 24px, 24px 30px, 30px 30px, 30px 36px, 36px 36px, 36px 42px, 42px 42px,
+        42px 48px, 48px 48px, 48px 54px, 54px 54px, 54px 60px, 60px 60px, 60px 66px,
+        66px 66px, 66px 72px, 72px 72px, 72px 78px, 78px 78px, 78px 84px, 84px 84px,
+        84px 90px, 90px 90px, 90px 96px, 96px 96px, 96px 102px, 102px 102px, 102px 108px,
+        108px 108px, 108px 114px, 114px 114px, 114px 120px, 120px 120px, 120px 126px,
+        126px 126px, 126px 132px, 132px 132px, 132px 138px, 138px 138px, 138px 144px,
+        144px 144px, 144px 150px, 150px 150px, 150px 156px, 156px 156px, 156px 162px,
+        162px 162px, 162px 168px, 168px 168px, 168px 174px, 174px 174px, 174px 180px,
+        180px 180px, 180px 186px, 186px 186px, 186px 192px, 192px 192px, 192px 198px,
+        198px 198px, 198px 204px, 204px 204px, 204px 0
+    );
+}
+
+.peel-flap::before {
+    background: linear-gradient(
+        var(--peel-shade),
+        var(--flap-0) 0 52%,
+        var(--flap-1) 0 66%,
+        var(--flap-2) 0 80%,
+        var(--flap-3) 0 100%
+    );
+}
+
+/* the crease itself: one cell of shadow along the fold, so the flap meets the
+   picture on a line and not on a tone change */
+.peel-flap::after {
+    background: linear-gradient(
+        var(--peel-shade),
+        transparent 0 calc(50% - 3px),
+        rgb(0 0 0 / 0.3) 0 calc(50% + 3px),
+        transparent 0
+    );
+}
+
+/* phone: a strip down the right edge, not a corner. the fold is twice as
+   steep, the pills fold to their icons, and each one clears the staircase at
+   half its bottom row instead of all of it */
+@media (max-width: 640px) {
+    .peel {
+        --peel-w: 108px;
+        --peel-h: 216px;
+        /* reflection across a line of slope 2: cos 2θ = -0.6, sin 2θ = 0.8 */
+        --peel-fold: matrix(-0.6, 0.8, 0.8, 0.6, 0, 0);
+        --peel-shade: 63.4deg;
+        --peel-x1: 25px;
+        --peel-x2: 45px;
+        --peel-x3: 65px;
+    }
+
+    .peel .weather-canvas {
+        clip-path: polygon(
+            0 0, calc(100% - 108px) 0, calc(100% - 108px) 12px, calc(100% - 102px) 12px,
+            calc(100% - 102px) 24px, calc(100% - 96px) 24px, calc(100% - 96px) 36px,
+            calc(100% - 90px) 36px, calc(100% - 90px) 48px, calc(100% - 84px) 48px,
+            calc(100% - 84px) 60px, calc(100% - 78px) 60px, calc(100% - 78px) 72px,
+            calc(100% - 72px) 72px, calc(100% - 72px) 84px, calc(100% - 66px) 84px,
+            calc(100% - 66px) 96px, calc(100% - 60px) 96px, calc(100% - 60px) 108px,
+            calc(100% - 54px) 108px, calc(100% - 54px) 120px, calc(100% - 48px) 120px,
+            calc(100% - 48px) 132px, calc(100% - 42px) 132px, calc(100% - 42px) 144px,
+            calc(100% - 36px) 144px, calc(100% - 36px) 156px, calc(100% - 30px) 156px,
+            calc(100% - 30px) 168px, calc(100% - 24px) 168px, calc(100% - 24px) 180px,
+            calc(100% - 18px) 180px, calc(100% - 18px) 192px, calc(100% - 12px) 192px,
+            calc(100% - 12px) 204px, calc(100% - 6px) 204px, calc(100% - 6px) 216px,
+            calc(100% - 0px) 216px, 100% 100%, 0 100%
+        );
+    }
+
+    .peel .sky-look:nth-child(1) {
+        top: 8px;
+    }
+
+    .peel .sky-look:nth-child(2) {
+        top: 46px;
+    }
+
+    .peel .sky-look:nth-child(3) {
+        top: 84px;
+    }
+
+    .peel-flap::before,
+    .peel-flap::after {
+        clip-path: polygon(
+            0 0, 0px 12px, 6px 12px, 6px 24px, 12px 24px, 12px 36px, 18px 36px, 18px 48px,
+            24px 48px, 24px 60px, 30px 60px, 30px 72px, 36px 72px, 36px 84px, 42px 84px,
+            42px 96px, 48px 96px, 48px 108px, 54px 108px, 54px 120px, 60px 120px, 60px 132px,
+            66px 132px, 66px 144px, 72px 144px, 72px 156px, 78px 156px, 78px 168px, 84px 168px,
+            84px 180px, 90px 180px, 90px 192px, 96px 192px, 96px 204px, 102px 204px, 102px 216px,
+            108px 216px, 108px 0
+        );
+    }
+
+    .peel-flap::before {
+        background: linear-gradient(
+            var(--peel-shade),
+            var(--flap-0) 0 58%,
+            var(--flap-1) 0 70%,
+            var(--flap-2) 0 82%,
+            var(--flap-3) 0 100%
+        );
+    }
+
+    /* the other answer for a phone, behind the fold toggle: the desktop's 45°
+       corner shrunk to what an icon-only stack needs, 162px of 390. the flap
+       stays a corner and the hole eats 42% of the width, against the strip's
+       28% and its flap swinging out over the sky. neither is free */
+    .peel.is-square {
+        --peel-w: 162px;
+        --peel-h: 162px;
+        --peel-fold: matrix(0, 1, 1, 0, 0, 0);
+        --peel-shade: 45deg;
+        --peel-x1: 42px;
+        --peel-x2: 80px;
+        --peel-x3: 118px;
+    }
+
+    .peel.is-square .weather-canvas {
+        clip-path: polygon(
+            0 0, calc(100% - 162px) 0, calc(100% - 162px) 6px, calc(100% - 156px) 6px,
+            calc(100% - 156px) 12px, calc(100% - 150px) 12px, calc(100% - 150px) 18px,
+            calc(100% - 144px) 18px, calc(100% - 144px) 24px, calc(100% - 138px) 24px,
+            calc(100% - 138px) 30px, calc(100% - 132px) 30px, calc(100% - 132px) 36px,
+            calc(100% - 126px) 36px, calc(100% - 126px) 42px, calc(100% - 120px) 42px,
+            calc(100% - 120px) 48px, calc(100% - 114px) 48px, calc(100% - 114px) 54px,
+            calc(100% - 108px) 54px, calc(100% - 108px) 60px, calc(100% - 102px) 60px,
+            calc(100% - 102px) 66px, calc(100% - 96px) 66px, calc(100% - 96px) 72px,
+            calc(100% - 90px) 72px, calc(100% - 90px) 78px, calc(100% - 84px) 78px,
+            calc(100% - 84px) 84px, calc(100% - 78px) 84px, calc(100% - 78px) 90px,
+            calc(100% - 72px) 90px, calc(100% - 72px) 96px, calc(100% - 66px) 96px,
+            calc(100% - 66px) 102px, calc(100% - 60px) 102px, calc(100% - 60px) 108px,
+            calc(100% - 54px) 108px, calc(100% - 54px) 114px, calc(100% - 48px) 114px,
+            calc(100% - 48px) 120px, calc(100% - 42px) 120px, calc(100% - 42px) 126px,
+            calc(100% - 36px) 126px, calc(100% - 36px) 132px, calc(100% - 30px) 132px,
+            calc(100% - 30px) 138px, calc(100% - 24px) 138px, calc(100% - 24px) 144px,
+            calc(100% - 18px) 144px, calc(100% - 18px) 150px, calc(100% - 12px) 150px,
+            calc(100% - 12px) 156px, calc(100% - 6px) 156px, calc(100% - 6px) 162px,
+            calc(100% - 0px) 162px, 100% 100%, 0 100%
+        );
+    }
+
+    .peel.is-square .peel-flap::before,
+    .peel.is-square .peel-flap::after {
+        clip-path: polygon(
+            0 0, 0px 6px, 6px 6px, 6px 12px, 12px 12px, 12px 18px, 18px 18px, 18px 24px,
+            24px 24px, 24px 30px, 30px 30px, 30px 36px, 36px 36px, 36px 42px, 42px 42px,
+            42px 48px, 48px 48px, 48px 54px, 54px 54px, 54px 60px, 60px 60px, 60px 66px,
+            66px 66px, 66px 72px, 72px 72px, 72px 78px, 78px 78px, 78px 84px, 84px 84px,
+            84px 90px, 90px 90px, 90px 96px, 96px 96px, 96px 102px, 102px 102px, 102px 108px,
+            108px 108px, 108px 114px, 114px 114px, 114px 120px, 120px 120px, 120px 126px,
+            126px 126px, 126px 132px, 132px 132px, 132px 138px, 138px 138px, 138px 144px,
+            144px 144px, 144px 150px, 150px 150px, 150px 156px, 156px 156px, 156px 162px,
+            162px 162px, 162px 0
+        );
+    }
+
+    .peel.is-square .peel-flap::before {
+        background: linear-gradient(
+            var(--peel-shade),
+            var(--flap-0) 0 52%,
+            var(--flap-1) 0 66%,
+            var(--flap-2) 0 80%,
+            var(--flap-3) 0 100%
+        );
+    }
+}
+
+/* prototype chrome, not part of the idea */
+.peel-toggles {
+    position: fixed;
+    z-index: 5;
+    left: 50%;
+    bottom: 1rem;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.4rem;
+}
+
+.peel-toggle {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    padding: 0.35rem 0.75rem;
+    cursor: pointer;
+}
+
+/* regenerate the polygons with (N, step right, step down), a desktop being
+   (204, 6, 6) and a phone (108, 6, 12):
+   node -e '
+   const c=(N,sx,sy)=>{const p=["0 0",`calc(100% - ${N}px) 0`];for(let i=0;i<N/sx;i++){const x=N-i*sx,y=(i+1)*sy;p.push(`calc(100% - ${x}px) ${y}px`,`calc(100% - ${x-sx}px) ${y}px`)}p.push("100% 100%","0 100%");return p.join(", ")};
+   const f=(N,sx,sy)=>{const p=["0 0"];for(let i=0;i<N/sx;i++)p.push(`${i*sx}px ${(i+1)*sy}px`,`${(i+1)*sx}px ${(i+1)*sy}px`);p.push(`${N}px 0`);return p.join(", ")};
+   console.log(c(204,6,6),"\n",f(204,6,6),"\n",c(108,6,12),"\n",f(108,6,12),"\n",c(162,6,6),"\n",f(162,6,6))' */
