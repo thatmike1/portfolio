@@ -2076,6 +2076,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 seed: (x: number, y: number) => seed(x, y, 4),
                 tool: () => toolRef.current,
                 strokes: () => strokes,
+                awake: () => sandAwake,
                 /** glass cells, what the lightning has fused so far */
                 glass: () => {
                     let n = 0;
