@@ -35,7 +35,7 @@ import { applyTheme, readTheme, THEMES } from "../lib/theme";
 import type { Theme } from "../lib/theme";
 import { hash2, mix3, smooth } from "../lib/pixel";
 import type { Page, RGB } from "../lib/pixel";
-import { rasterize } from "../lib/rasterize";
+import { BED, dirtShades, pageSink, rasterize } from "../lib/rasterize";
 import type { LookColors } from "../lib/rasterize";
 
 /**
@@ -175,8 +175,10 @@ const LOOKS: Array<Look> = [
         bodyY: 0.2,
         starAlpha: 0,
         sun: 1,
-        ambient: [1, 1, 1],
-        rockLift: 0.45,
+        // a hair of warmth: a flat white ambient left the rock a neutral grey
+        // with nothing for the strata to differ in but lightness
+        ambient: [1.02, 0.99, 0.95],
+        rockLift: 0.38,
     },
     {
         id: "dusk",
@@ -347,15 +349,28 @@ type Props = {
     overlay?: ReactNode;
     /** the lab's extra chrome: the soak button and the drop count */
     lab?: boolean;
+    /**
+     * lab prototype: the island's rock carries on down the page as its
+     * background. "rock" is the keel's own tones, "washed" the same tile lifted
+     * most of the way to the page so the copy has something to stand on
+     */
+    ground?: Ground;
 };
 
-export function WeatherHero({ children, overlay, lab = false }: Props) {
+export type Ground = "off" | "rock" | "washed";
+
+/** the ground tile: cells across and down, tiled by the page's css */
+export const DIRT_COLS = 48;
+export const DIRT_ROWS = 28;
+
+export function WeatherHero({ children, overlay, lab = false, ground = "off" }: Props) {
     const stageRef = useRef<HTMLDivElement>(null);
     const bandRef = useRef<HTMLDivElement>(null);
     const handleRef = useRef<HTMLButtonElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const themeRef = useRef<Theme>("light");
     const toolRef = useRef<number>(RASP);
+    const groundRef = useRef<Ground>(ground);
     const [theme, setTheme] = useState<Theme>("light");
     const [tool, setTool] = useState<number>(RASP);
     const [awake, setAwake] = useState(false);
@@ -373,6 +388,13 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
     useEffect(() => {
         toolRef.current = tool;
     }, [tool]);
+
+    useEffect(() => {
+        groundRef.current = ground;
+        if (ground === "off") {
+            document.documentElement.style.removeProperty("--dirt");
+        }
+    }, [ground]);
 
     useEffect(() => {
         const stage = stageRef.current;
@@ -455,11 +477,16 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         const waterTop = resolve(swatchCtx, "oklch(0.73 0.11 252)");
         // bedrock is the engine's wall material, but the front page's near-black ink
         // reads as a solid ui bar across a frame this size, so it gets slate instead
+        // the four shades span twice the lightness they used to (0.33 to 0.5,
+        // not 0.37 to 0.45): noon's lift toward the white page compresses that
+        // spread, and on a phone's short keel the old one had nothing left to
+        // read as strata. dusk and night dim the whole set with their ambient,
+        // so the wider pair costs them nothing
         sandRGB[WALL] = [
-            "oklch(0.425 0.022 357)",
-            "oklch(0.395 0.02 357)",
-            "oklch(0.45 0.024 357)",
-            "oklch(0.37 0.019 357)",
+            "oklch(0.43 0.024 357)",
+            "oklch(0.385 0.021 357)",
+            "oklch(0.5 0.027 357)",
+            "oklch(0.33 0.019 357)",
         ].map((css) => resolve(swatchCtx, css));
         // the inline head script set this before first paint
         const initial = readTheme();
@@ -715,6 +742,17 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             bankU = ease(BANK_U, BANK_U_NARROW);
             wordSpan = ease(WORD_SPAN, WORD_SPAN_NARROW);
             shaft0 = Math.max(Math.round(ease(SHAFT_MIN, SHAFT_MIN_NARROW)), Math.round(cols * ease(SHAFT, SHAFT_NARROW)));
+            // the copy block reads this to keep clear of the falls: beside the
+            // copy the shaft is a cell wider than in the band, see shaftAt(). it
+            // lands on the next frame: build() runs from the resize observer, and
+            // a layout change made inside the callback is the loop the observer
+            // reports as an error
+            const shaftPx = `${((shaft0 + 1) * rect.width) / cols}px`;
+            if (stage.style.getPropertyValue("--shaft") !== shaftPx) {
+                requestAnimationFrame(() => stage.style.setProperty("--shaft", shaftPx));
+            }
+            // and the ground prototype's tile is sized off a cell
+            document.documentElement.style.setProperty("--cell", `${rect.width / cols}px`);
             canvas.width = cols * grain;
             canvas.height = rows * grain;
             src.width = cols;
@@ -1787,7 +1825,17 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
          * off so a cell stays a hard square
          */
         const render = () => {
+            const onGround = groundRef.current !== "off";
+            // where the keel hands over: the page's own tokens normally, the
+            // ground tile's two bedding tones when the page is painted with it
+            const seamPage: Page = onGround
+                ? (() => {
+                      const t = dirtRGB();
+                      return { abyss: page.abyss, ground: [t[BED[0]], t[BED[1]]] };
+                  })()
+                : page;
             rasterize({
+                ground: onGround,
                 buf,
                 cols,
                 rows,
@@ -1795,7 +1843,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 skyRows,
                 crestRow,
                 look: cur,
-                page,
+                page: seamPage,
                 sandRGB,
                 waterTop,
                 flash,
@@ -1821,6 +1869,54 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             view.drawImage(src, 0, 0, canvas.width, canvas.height);
         };
 
+        /**
+         * the ground prototype's tile: the keel's bedding rules run over a small
+         * grid and the result goes to the page as a data url, so the texture
+         * under the copy is the same texture the island is drawn with, in the
+         * current look's light. regenerated as the look eases, see the loop
+         */
+        const dirtCanvas = document.createElement("canvas");
+        dirtCanvas.width = DIRT_COLS;
+        dirtCanvas.height = DIRT_ROWS;
+        const dirtCtx = dirtCanvas.getContext("2d");
+        const dirtImage = new ImageData(DIRT_COLS, DIRT_ROWS);
+        const dirtBuf = new Uint32Array(dirtImage.data.buffer);
+        /**
+         * how far the tile sinks toward the page: whatever it takes to bring the
+         * rock into the page's own register, plus a further wash for the second
+         * setting. dusk and night need nothing for the first and half for the
+         * second; noon needs most of the way for both, because slate at full
+         * strength behind dark copy on a white page is a slab, not a grain
+         */
+        const dirtSink = (): number => {
+            const base = pageSink(sandRGB[WALL], page, cur.ambient);
+            return groundRef.current === "washed" ? base + (1 - base) * 0.6 : base;
+        };
+        /** the tile's four tones, live, so the seam can hand the keel over to them */
+        const dirtRGB = (): RGB[] => dirtShades(sandRGB[WALL], page, cur.ambient, dirtSink());
+        const dirt = () => {
+            if (!dirtCtx) return;
+            const tones = dirtRGB().map(
+                (m) =>
+                    (255 << 24) |
+                    (Math.max(0, Math.min(255, Math.round(m[2]))) << 16) |
+                    (Math.max(0, Math.min(255, Math.round(m[1]))) << 8) |
+                    Math.max(0, Math.min(255, Math.round(m[0]))),
+            );
+            for (let y = 0; y < DIRT_ROWS; y++) {
+                const band = ((y / 7) | 0) & 1;
+                for (let x = 0; x < DIRT_COLS; x++) {
+                    // the keel's rule: bedded cells take the row's stripe, a quarter
+                    // opt out and take their own shade
+                    const bedded = hash2(x + 97, y + 41) > 0.25;
+                    const shade = bedded ? BED[band] : (hash2(x * 3 + 7, y * 5 + 11) * 4) | 0;
+                    dirtBuf[y * DIRT_COLS + x] = tones[shade & 3];
+                }
+            }
+            dirtCtx.putImageData(dirtImage, 0, 0);
+            document.documentElement.style.setProperty("--dirt", `url(${dirtCanvas.toDataURL()})`);
+        };
+
         /* ----------------------------------------------------------- loop */
 
         /** the simulation ticks at 60hz whatever the display refreshes at */
@@ -1829,6 +1925,8 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         const tick = () => {
             frame++;
             easeLook(LOOK_BY[themeRef.current], 0.035);
+            // the ground tile follows the look as it eases, a few times a second
+            if (groundRef.current !== "off" && frame % 20 === 0) dirt();
 
             // wind wanders on its own so the deck never drifts at a constant rate
             wind = 0.07 + 0.04 * Math.sin(frame * 0.0018) + 0.02 * Math.sin(frame * 0.0071);
@@ -1994,8 +2092,21 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
             wake();
             paint(e);
         };
+        /**
+         * the sand wakes under a pointer that only passes over it: the old front
+         * page did, and a stage that waits for a press keeps spelling "touch the
+         * sand" at someone whose cursor is already on it. waking is cheap since the
+         * word is packed and nothing steps until something is loose. the chrome
+         * and the copy are not the sand, so crossing them wakes nothing
+         */
         const move = (e: PointerEvent) => {
-            if (painting) paint(e);
+            if (painting) {
+                paint(e);
+                return;
+            }
+            if (sandAwake || e.pointerType === "touch" || chrome(e)) return;
+            if ((e.target as HTMLElement).closest(".hero-copy")) return;
+            wake();
         };
         const up = () => {
             painting = false;
@@ -2019,6 +2130,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
         });
 
         build();
+        if (groundRef.current !== "off") dirt();
         // the variable font may still be loading on first paint; stamp after it settles
         document.fonts.ready
             .catch(() => undefined)
@@ -2053,6 +2165,7 @@ export function WeatherHero({ children, overlay, lab = false }: Props) {
                 seed: (x: number, y: number) => seed(x, y, 4),
                 tool: () => toolRef.current,
                 strokes: () => strokes,
+                awake: () => sandAwake,
                 /** glass cells, what the lightning has fused so far */
                 glass: () => {
                     let n = 0;
@@ -2411,35 +2524,65 @@ function ToolSwatch({ id, shades }: { id: number; shades: Record<number, Array<s
 type IconCell = [number, number, number, number];
 
 /**
- * reset as a pixel tile on the sky tiles' scale: a 10x10 grid at 20px, so a
- * cell is the same two device pixels as the sun's. the ring runs round from
- * the left arm, under, up the right and back along the top, and its top arc
- * ends in an arrowhead pointing down into the gap: the head sits where the
- * travel ends, the way a rotate-back glyph reads. it wears currentColor, not
- * a ground: it is a glyph, not a picture of anything
+ * reset glyph: tri32s smooth cells chosen from lab.html. 32-cell pixel
+ * geometry rendered with smooth edges (auto shape rendering) in a tight
+ * 28x28 viewBox so it fills 20px and wears currentColor to re-tint with the button.
  */
 function ResetIcon() {
     const cells: Array<IconCell> = [
-        // the left arm, then round under and up the right side to the top arc
-        [0, 4, 1, 3],
-        [1, 7, 1, 1],
-        [2, 8, 1, 1],
-        [3, 9, 4, 1],
-        [7, 8, 1, 1],
-        [8, 7, 1, 1],
-        [9, 3, 1, 4],
-        [8, 2, 1, 1],
-        [7, 1, 1, 1],
-        [3, 0, 4, 1],
-        // the arrowhead under the top arc's end, three wide narrowing to a point
-        [2, 1, 3, 1],
-        [3, 2, 1, 1],
+        [11, 2, 10, 1],
+        [24, 2, 2, 1],
+        [9, 3, 14, 1],
+        [24, 3, 3, 1],
+        [7, 4, 6, 1],
+        [19, 4, 8, 1],
+        [6, 5, 4, 1],
+        [22, 5, 6, 1],
+        [5, 6, 4, 1],
+        [22, 6, 7, 1],
+        [4, 7, 4, 1],
+        [21, 7, 8, 1],
+        [4, 8, 3, 1],
+        [22, 8, 8, 1],
+        [3, 9, 3, 1],
+        [3, 10, 2, 1],
+        [2, 11, 3, 1],
+        [2, 12, 3, 1],
+        [2, 13, 2, 1],
+        [2, 14, 2, 1],
+        [2, 15, 2, 1],
+        [2, 16, 2, 1],
+        [28, 16, 2, 1],
+        [2, 17, 2, 1],
+        [28, 17, 2, 1],
+        [2, 18, 2, 1],
+        [28, 18, 2, 1],
+        [2, 19, 3, 1],
+        [27, 19, 3, 1],
+        [2, 20, 3, 1],
+        [27, 20, 3, 1],
+        [3, 21, 2, 1],
+        [27, 21, 2, 1],
+        [3, 22, 3, 1],
+        [26, 22, 3, 1],
+        [4, 23, 3, 1],
+        [25, 23, 3, 1],
+        [4, 24, 4, 1],
+        [24, 24, 4, 1],
+        [5, 25, 4, 1],
+        [23, 25, 4, 1],
+        [6, 26, 4, 1],
+        [22, 26, 4, 1],
+        [7, 27, 6, 1],
+        [19, 27, 6, 1],
+        [9, 28, 14, 1],
+        [11, 29, 10, 1],
     ];
     return (
         <svg
             className="sand-reset-icon"
-            viewBox="0 0 10 10"
-            shapeRendering="crispEdges"
+            viewBox="2 2 28 28"
+            shapeRendering="auto"
             aria-hidden="true"
             focusable="false"
         >

@@ -88,3 +88,36 @@
         display: none;
     }
 }
+
+/* --- ground prototype ---------------------------------------------------- */
+
+/* the hero writes the tile to --dirt and a cell's size to --cell; the page is
+   painted with it from its own top, which is the stage's top, so the tile's
+   bedding stripes land on the same rows the keel's do. the stage's canvas
+   leaves everything under the band transparent in this mode, see rasterize() */
+.wx.is-ground {
+    background: var(--dirt) 0 0 / calc(48 * var(--cell, 6px)) calc(28 * var(--cell, 6px)) repeat;
+    image-rendering: pixelated;
+}
+
+.wx.is-ground .wx-after {
+    border-top: 0;
+    color: var(--ink);
+}
+
+/* prototype chrome, not part of the idea */
+.wx-toggle {
+    position: fixed;
+    z-index: 5;
+    left: 50%;
+    bottom: 1rem;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    padding: 0.35rem 0.75rem;
+    cursor: pointer;
+}

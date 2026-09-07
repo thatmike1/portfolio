@@ -40,8 +40,67 @@ import type { Fish } from "./fish";
 import { frogCells } from "./frog";
 import type { Frog } from "./frog";
 
-/** rows over which the keel dissolves into the page at the bottom of the band */
-export const SEAM = 12;
+/**
+ * the seam, where the keel dissolves into the page at the bottom of the band,
+ * is a share of the keel rather than a count of rows. a fixed twelve rows was
+ * half of a desktop keel and three quarters of a phone's: on a 390px screen
+ * the crest sat at row 47 and the band ended at 63, so of sixteen rows of rock
+ * twelve were dither, and rock dissolving into the page read instead as the
+ * grey and white checker an image editor draws for transparency. the share
+ * keeps every keel the same proportion of rock to dissolve whatever its height.
+ *
+ * the share is two thirds rather than the old 0.45 because the dissolve is the
+ * part that has to read as gradual, and ten rows of it on a desktop was a fade
+ * you could see the top and bottom of at once. what made a long ramp unaffordable
+ * before was the checker, and SEAM_STEP is what pays for it: with the two tones
+ * held close, more rows are more fade rather than more checkerboard.
+ *
+ * KEEL_MIN is what keeps that raise off a phone. a share alone would have taken
+ * a phone's sixteen-row keel from seven rows of dither to ten, walking back into
+ * the bug this share was written for; the floor says a keel keeps this many rows
+ * of undissolved rock whatever its height, so a phone comes out at the seven it
+ * already had and only a tall desktop keel spends the extra share.
+ */
+export const SEAM_SHARE = 0.65;
+export const SEAM_MIN = 4;
+export const SEAM_MAX = 20;
+export const KEEL_MIN = 9;
+
+/**
+ * the widest the seam's two dither tones are ever allowed to sit apart, in
+ * levels of 0..255.
+ *
+ * a dither reads as a checkerboard exactly when the eye can tell which of the
+ * two squares it is looking at, and that is a question about the gap between
+ * them, not about how far the ramp as a whole has to travel. dusk never had the
+ * problem because its page is already a dark warm ground the slate could have
+ * come out of: a fraction of that short distance is a small gap for free. noon
+ * dithers slate against a white page, and the same fraction of that distance is
+ * a check you can count the squares of. so the seam holds the gap instead of
+ * the fraction, and noon gets what dusk always had.
+ */
+export const SEAM_STEP = 16;
+
+/**
+ * how close rock and page have to be before they read as one material in two
+ * lights rather than as two materials. the same idea as SEAM_STEP at the scale
+ * of the whole picture, and the reason it is a distance and not a per-look
+ * number: a look whose page is already near the rock is left alone by it.
+ */
+export const PAGE_REGISTER = 48;
+
+/** mean absolute distance between two colours, in levels */
+const apart = (a: RGB, b: RGB): number =>
+    (Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2])) / 3;
+
+/** how many rows of seam a keel this tall gets */
+export function seamRows(crestRow: number, heroRows: number): number {
+    const keel = Math.max(0, heroRows - crestRow);
+    return Math.max(
+        SEAM_MIN,
+        Math.min(SEAM_MAX, Math.round(keel * SEAM_SHARE), keel - KEEL_MIN),
+    );
+}
 /** how the vertical sky ramp is quantised: bands over the sky, then a fade to the page */
 export const SKY_BANDS = 14;
 export const SKY_FADE = 7;
@@ -115,6 +174,16 @@ export type RasterizeParams = {
     frog: Frog | null;
     snail: Snail | null;
     flies: Firefly[];
+    /**
+     * the page is the ground (a lab prototype, see the weather route): the keel
+     * runs to the bottom of the band unlifted, and everything under the band that
+     * is rock or air is left transparent for the page's own texture to show
+     * through, so the island reads as set into the page rather than laid on it.
+     * the seam still runs, because a keel stopping dead on a tile is an edge; in
+     * this mode `page.ground` is the tile's own bedding pair, so the last rows of
+     * rock dissolve into the ground the page is actually painted with
+     */
+    ground?: boolean;
 };
 
 /**
@@ -129,7 +198,7 @@ export type RasterizeParams = {
  * where the rock has to hand over to the page.
  */
 export function rockLiftAt(y: number, crestRow: number, heroRows: number, rockLift: number): number {
-    const span = Math.max(1, heroRows - SEAM - crestRow);
+    const span = Math.max(1, heroRows - seamRows(crestRow, heroRows) - crestRow);
     return rockLift * smooth((y - crestRow) / span);
 }
 
@@ -147,7 +216,7 @@ export function rockRows(
     crestRow: number,
     heroRows: number,
 ): number[][] {
-    const span = Math.max(1, heroRows - SEAM - crestRow);
+    const span = Math.max(1, heroRows - seamRows(crestRow, heroRows) - crestRow);
     const rows: number[][] = [];
     for (let r = 0; r <= span; r++) {
         const l = rockLiftAt(crestRow + r, crestRow, heroRows, rockLift);
@@ -179,23 +248,59 @@ export function seamTones(
     amb: RGB,
     lift: number,
     rockLift: number,
+    seam: number,
 ): { rock: number[][]; page: number[][] } {
     const rock: number[][] = [];
     const paged: number[][] = [];
-    for (let r = 0; r < SEAM; r++) {
-        const sink = r / (SEAM - 1);
+    const slabs: RGB[] = [0, 1].map((b) => {
+        const slab = mix3(slate[BED[b]], page.abyss, rockLift);
+        return [slab[0] * amb[0], slab[1] * amb[1], slab[2] * amb[2]] as RGB;
+    });
+    // both tones are the same mix a step apart, so the gap the eye sees is that
+    // step times the whole distance the ramp crosses. hold the gap, not the step
+    const span = (apart(slabs[0], page.ground[0]) + apart(slabs[1], page.ground[1])) / 2;
+    const lead = span <= SEAM_STEP ? 0.4 : Math.min(0.4, SEAM_STEP / span);
+    for (let r = 0; r < seam; r++) {
+        const sink = r / (seam - 1);
         const rockRow: number[] = [];
         const pageRow: number[] = [];
         for (let b = 0; b < 2; b++) {
-            const slab = mix3(slate[BED[b]], page.abyss, rockLift);
-            const litSlab: RGB = [slab[0] * amb[0], slab[1] * amb[1], slab[2] * amb[2]];
-            rockRow.push(packRGB(mix3(litSlab, page.ground[b], sink), lift));
-            pageRow.push(packRGB(mix3(litSlab, page.ground[b], Math.min(1, sink + 0.4)), lift));
+            rockRow.push(packRGB(mix3(slabs[b], page.ground[b], sink), lift));
+            pageRow.push(packRGB(mix3(slabs[b], page.ground[b], Math.min(1, sink + lead)), lift));
         }
         rock.push(rockRow);
         paged.push(pageRow);
     }
     return { rock, page: paged };
+}
+
+/**
+ * the keel's bedding pair under this look's light, sunk `sink` of the way to the
+ * page. this is the ground tile's whole palette: the tile is the keel's own rule
+ * run over a small grid, so whatever the keel is made of the page is made of too
+ */
+export function dirtShades(slate: RGB[], page: Page, amb: RGB, sink: number): RGB[] {
+    return slate.map((c) => {
+        const m = mix3(c, page.abyss, sink);
+        return [m[0] * amb[0], m[1] * amb[1], m[2] * amb[2]] as RGB;
+    });
+}
+
+/**
+ * how far the ground tile has to sink toward the page before the two sit in the
+ * same register.
+ *
+ * dusk and night need none of it: their page is a dark warm ground already, and
+ * full-strength slate laid on it reads as the page having a grain. noon's page
+ * is white, and the same slate on it is not a page with a grain, it is a slab of
+ * rock behind the words. so the sink is whatever closes the distance to
+ * PAGE_REGISTER, which is nothing at all for the two dark looks and most of the
+ * way for noon, off one rule rather than a number per look.
+ */
+export function pageSink(slate: RGB[], page: Page, amb: RGB): number {
+    const mid = dirtShades(slate, page, amb, 0);
+    const d = (apart(mid[BED[0]], page.abyss) + apart(mid[BED[1]], page.abyss)) / 2;
+    return d <= PAGE_REGISTER ? 0 : 1 - PAGE_REGISTER / d;
 }
 
 /**
@@ -256,6 +361,7 @@ export function rasterize(p: RasterizeParams): void {
     } = p;
     const amb = look.ambient;
     const lift = flashLift(p.flash, p.flashFrames);
+    const rockLift = p.ground ? 0 : look.rockLift;
 
     const topP = pack(
         clamp255(p.waterTop[0] * amb[0] + 255 * lift),
@@ -267,7 +373,7 @@ export function rasterize(p: RasterizeParams): void {
         const shades = sandRGB[m];
         const packed: number[] = [];
         for (let i = 0; i < shades.length; i++) {
-            const c = m === WALL ? mix3(shades[i], page.abyss, look.rockLift) : shades[i];
+            const c = m === WALL ? mix3(shades[i], page.abyss, rockLift) : shades[i];
             packed.push(
                 pack(
                     clamp255(c[0] * amb[0] + 255 * lift),
@@ -280,8 +386,9 @@ export function rasterize(p: RasterizeParams): void {
     }
     const groundP = [packRGB(page.ground[0], lift), packRGB(page.ground[1], lift)];
     const abyssP = packRGB(page.abyss, lift);
-    const seam2 = seamTones(sandRGB[WALL], page, amb, lift, look.rockLift);
-    const rock = rockRows(sandRGB[WALL], page, amb, lift, look.rockLift, crestRow, heroRows);
+    const seamN = seamRows(crestRow, heroRows);
+    const seam2 = seamTones(sandRGB[WALL], page, amb, lift, rockLift, seamN);
+    const rock = rockRows(sandRGB[WALL], page, amb, lift, rockLift, crestRow, heroRows);
     const rockSpan = rock.length - 1;
 
     const skyPacked = skyRamp(look, page, lift);
@@ -423,14 +530,23 @@ export function rasterize(p: RasterizeParams): void {
         const band = ((y / 7) | 0) & 1;
         // the keel turns into the page over the last few rows of the hero band:
         // dithered, so the seam is a texture change and not a line
-        const seamRow = y - (heroRows - SEAM);
-        const seam = y >= heroRows ? 1 : seamRow >= 0 ? (seamRow + 1) / (SEAM + 1) : 0;
+        const seamRow = y - (heroRows - seamN);
+        // the ground mode runs the same seam: what the keel hands over to there
+        // is the tile rather than the page's flat colour, and the caller says so
+        // by handing the tile's own two tones in as page.ground
+        const seam = y >= heroRows ? 1 : seamRow >= 0 ? (seamRow + 1) / (seamN + 1) : 0;
+        const under = p.ground && y >= heroRows;
         const bayerRow = (y & 3) * 4;
         const deep = y - crestRow;
         const rockRow = rock[deep < 0 ? 0 : deep > rockSpan ? rockSpan : deep];
         for (let x = 0; x < cols; x++) {
             const i = row + x;
             const m = cells[i];
+            if (under && (m === EMPTY || m === WALL)) {
+                // the page's texture shows through: alpha zero, not the page colour
+                buf[i] = 0;
+                continue;
+            }
             if (m === EMPTY) {
                 if (y >= heroRows) buf[i] = abyssP;
                 continue;

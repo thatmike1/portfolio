@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as LabIndexRouteImport } from './routes/lab/index'
 import { Route as LabWeatherRouteImport } from './routes/lab/weather'
 import { Route as LabRedlineRouteImport } from './routes/lab/redline'
+import { Route as LabPeelRouteImport } from './routes/lab/peel'
 import { Route as LabFrostRouteImport } from './routes/lab/frost'
 import { Route as LabFragileRouteImport } from './routes/lab/fragile'
 import { Route as LabDustRouteImport } from './routes/lab/dust'
@@ -43,6 +44,11 @@ const LabRedlineRoute = LabRedlineRouteImport.update({
   path: '/lab/redline',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LabPeelRoute = LabPeelRouteImport.update({
+  id: '/lab/peel',
+  path: '/lab/peel',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LabFrostRoute = LabFrostRouteImport.update({
   id: '/lab/frost',
   path: '/lab/frost',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/lab/dust': typeof LabDustRoute
   '/lab/fragile': typeof LabFragileRoute
   '/lab/frost': typeof LabFrostRoute
+  '/lab/peel': typeof LabPeelRoute
   '/lab/redline': typeof LabRedlineRoute
   '/lab/weather': typeof LabWeatherRoute
   '/lab/': typeof LabIndexRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/lab/dust': typeof LabDustRoute
   '/lab/fragile': typeof LabFragileRoute
   '/lab/frost': typeof LabFrostRoute
+  '/lab/peel': typeof LabPeelRoute
   '/lab/redline': typeof LabRedlineRoute
   '/lab/weather': typeof LabWeatherRoute
   '/lab': typeof LabIndexRoute
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/lab/dust': typeof LabDustRoute
   '/lab/fragile': typeof LabFragileRoute
   '/lab/frost': typeof LabFrostRoute
+  '/lab/peel': typeof LabPeelRoute
   '/lab/redline': typeof LabRedlineRoute
   '/lab/weather': typeof LabWeatherRoute
   '/lab/': typeof LabIndexRoute
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/lab/dust'
     | '/lab/fragile'
     | '/lab/frost'
+    | '/lab/peel'
     | '/lab/redline'
     | '/lab/weather'
     | '/lab/'
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/lab/dust'
     | '/lab/fragile'
     | '/lab/frost'
+    | '/lab/peel'
     | '/lab/redline'
     | '/lab/weather'
     | '/lab'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/lab/dust'
     | '/lab/fragile'
     | '/lab/frost'
+    | '/lab/peel'
     | '/lab/redline'
     | '/lab/weather'
     | '/lab/'
@@ -129,6 +141,7 @@ export interface RootRouteChildren {
   LabDustRoute: typeof LabDustRoute
   LabFragileRoute: typeof LabFragileRoute
   LabFrostRoute: typeof LabFrostRoute
+  LabPeelRoute: typeof LabPeelRoute
   LabRedlineRoute: typeof LabRedlineRoute
   LabWeatherRoute: typeof LabWeatherRoute
   LabIndexRoute: typeof LabIndexRoute
@@ -171,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LabRedlineRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lab/peel': {
+      id: '/lab/peel'
+      path: '/lab/peel'
+      fullPath: '/lab/peel'
+      preLoaderRoute: typeof LabPeelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lab/frost': {
       id: '/lab/frost'
       path: '/lab/frost'
@@ -201,6 +221,7 @@ const rootRouteChildren: RootRouteChildren = {
   LabDustRoute: LabDustRoute,
   LabFragileRoute: LabFragileRoute,
   LabFrostRoute: LabFrostRoute,
+  LabPeelRoute: LabPeelRoute,
   LabRedlineRoute: LabRedlineRoute,
   LabWeatherRoute: LabWeatherRoute,
   LabIndexRoute: LabIndexRoute,
