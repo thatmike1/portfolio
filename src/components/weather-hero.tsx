@@ -2524,35 +2524,65 @@ function ToolSwatch({ id, shades }: { id: number; shades: Record<number, Array<s
 type IconCell = [number, number, number, number];
 
 /**
- * reset as a pixel tile on the sky tiles' scale: a 10x10 grid at 20px, so a
- * cell is the same two device pixels as the sun's. the ring runs round from
- * the left arm, under, up the right and back along the top, and its top arc
- * ends in an arrowhead pointing down into the gap: the head sits where the
- * travel ends, the way a rotate-back glyph reads. it wears currentColor, not
- * a ground: it is a glyph, not a picture of anything
+ * reset glyph: tri32s smooth cells chosen from lab.html. 32-cell pixel
+ * geometry rendered with smooth edges (auto shape rendering) in a tight
+ * 28x28 viewBox so it fills 20px and wears currentColor to re-tint with the button.
  */
 function ResetIcon() {
     const cells: Array<IconCell> = [
-        // the left arm, then round under and up the right side to the top arc
-        [0, 4, 1, 3],
-        [1, 7, 1, 1],
-        [2, 8, 1, 1],
-        [3, 9, 4, 1],
-        [7, 8, 1, 1],
-        [8, 7, 1, 1],
-        [9, 3, 1, 4],
-        [8, 2, 1, 1],
-        [7, 1, 1, 1],
-        [3, 0, 4, 1],
-        // the arrowhead under the top arc's end, three wide narrowing to a point
-        [2, 1, 3, 1],
-        [3, 2, 1, 1],
+        [11, 2, 10, 1],
+        [24, 2, 2, 1],
+        [9, 3, 14, 1],
+        [24, 3, 3, 1],
+        [7, 4, 6, 1],
+        [19, 4, 8, 1],
+        [6, 5, 4, 1],
+        [22, 5, 6, 1],
+        [5, 6, 4, 1],
+        [22, 6, 7, 1],
+        [4, 7, 4, 1],
+        [21, 7, 8, 1],
+        [4, 8, 3, 1],
+        [22, 8, 8, 1],
+        [3, 9, 3, 1],
+        [3, 10, 2, 1],
+        [2, 11, 3, 1],
+        [2, 12, 3, 1],
+        [2, 13, 2, 1],
+        [2, 14, 2, 1],
+        [2, 15, 2, 1],
+        [2, 16, 2, 1],
+        [28, 16, 2, 1],
+        [2, 17, 2, 1],
+        [28, 17, 2, 1],
+        [2, 18, 2, 1],
+        [28, 18, 2, 1],
+        [2, 19, 3, 1],
+        [27, 19, 3, 1],
+        [2, 20, 3, 1],
+        [27, 20, 3, 1],
+        [3, 21, 2, 1],
+        [27, 21, 2, 1],
+        [3, 22, 3, 1],
+        [26, 22, 3, 1],
+        [4, 23, 3, 1],
+        [25, 23, 3, 1],
+        [4, 24, 4, 1],
+        [24, 24, 4, 1],
+        [5, 25, 4, 1],
+        [23, 25, 4, 1],
+        [6, 26, 4, 1],
+        [22, 26, 4, 1],
+        [7, 27, 6, 1],
+        [19, 27, 6, 1],
+        [9, 28, 14, 1],
+        [11, 29, 10, 1],
     ];
     return (
         <svg
             className="sand-reset-icon"
-            viewBox="0 0 10 10"
-            shapeRendering="crispEdges"
+            viewBox="2 2 28 28"
+            shapeRendering="auto"
             aria-hidden="true"
             focusable="false"
         >

@@ -475,7 +475,7 @@ a:focus-visible {
   background: color-mix(in oklch, var(--bg) 68%, transparent);
 }
 
-/* 20px over ten cells: two device pixels a cell, the sky tiles' own scale */
+/* 20px over 28 cells: tri32s smooth-cell reset glyph */
 .sand-reset-icon {
   display: block;
   width: 20px;
