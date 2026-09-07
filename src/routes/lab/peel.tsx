@@ -20,6 +20,11 @@ import "./peel.css";
  * is a staircase of 6px squares — the sim's own CELL — because a smooth diagonal
  * in a world drawn at grain resolution reads as a different piece of software.
  *
+ * all of it is desktop-only. round two gave a phone its own steeper fold and a
+ * shrunk corner behind a toggle, and both spent a third of a 390px frame on a
+ * hole; below the breakpoint the hero keeps its own canvas and the plain glass
+ * picker, which is the honest comparison anyway.
+ *
  * a clip-path alone only makes a hole. the flap is the second half of the idea:
  * the removed triangle mirrored back across the fold, filled with four quantised
  * tones off the theme's own --bg/--ink and a hard one-cell shadow, so the corner
@@ -38,11 +43,9 @@ export const Route = createFileRoute("/lab/peel")({
 
 function Page() {
     const [flap, setFlap] = useState(true);
-    // phone only: the steep strip down the right edge, or the desktop's corner shrunk
-    const [square, setSquare] = useState(false);
 
     return (
-        <div className={`peel${square ? " is-square" : ""}`}>
+        <div className="peel">
             <main className="wx">
                 <WeatherHero
                     lab
@@ -80,15 +83,6 @@ function Page() {
                     aria-pressed={flap}
                 >
                     flap {flap ? "on" : "off"}
-                </button>
-                <button
-                    type="button"
-                    className="peel-toggle"
-                    onClick={() => setSquare((v) => !v)}
-                    aria-pressed={square}
-                    title="phone only: the strip down the edge, or the corner shrunk"
-                >
-                    phone fold: {square ? "corner" : "strip"}
                 </button>
             </div>
         </div>
