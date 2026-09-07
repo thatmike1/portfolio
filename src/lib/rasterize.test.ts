@@ -3,11 +3,16 @@ import { clamp255, mix3, pack, packRGB } from "./pixel";
 import type { Page, RGB } from "./pixel";
 import {
     BED,
+    KEEL_MIN,
+    PAGE_REGISTER,
     SEAM_MAX,
     SEAM_MIN,
+    SEAM_STEP,
     SKY_BANDS,
     SKY_FADE,
+    dirtShades,
     flashLift,
+    pageSink,
     rockLiftAt,
     rockRows,
     seamRows,
@@ -118,11 +123,21 @@ describe("sky quantisation", () => {
 describe("seam rows", () => {
     it("is a share of the keel, so a phone's short keel is not all seam", () => {
         // a desktop band of 640px is 106 rows with the crest at 80: 26 rows of
-        // keel, and the seam keeps the twelve it always had
-        expect(seamRows(80, 106)).toBe(SEAM_MAX);
-        // the 390px keel measured at 16 rows gets about seven, leaving nine of rock
+        // keel, and the longer share spends seventeen of them on the dissolve
+        expect(seamRows(80, 106)).toBe(17);
+        // the 390px keel measured at 16 rows still gets seven, leaving nine of rock
         expect(seamRows(47, 63)).toBe(7);
         expect(seamRows(47, 63)).toBeLessThan(16 - seamRows(47, 63));
+    });
+
+    it("leaves a keel its rock however tall it is", () => {
+        // the floor, not the share, is what a short keel is held by: raising the
+        // share lengthened the dissolve on a desktop and left a phone alone
+        // below SEAM_MIN + KEEL_MIN rows there is not enough keel to honour both
+        // and the seam's own floor wins, because a two-row dissolve is an edge
+        for (const keel of [SEAM_MIN + KEEL_MIN, 16, 20, 26, 40]) {
+            expect(keel - seamRows(100 - keel, 100)).toBeGreaterThanOrEqual(KEEL_MIN);
+        }
     });
 
     it("never shrinks past the floor or grows past the ceiling", () => {
@@ -231,6 +246,59 @@ describe("seam dither", () => {
         // b=0 is the light shade, b=1 the dark one, so the strata do not invert
         expect(unpack(rock[0][0])[0]).toBeGreaterThan(unpack(rock[0][1])[0]);
         expect(unpack(rock[0][0])).toEqual(unpack(packRGB(SLATE[BED[0]])));
+    });
+});
+
+/** dusk's page: a dark warm ground the slate could have come out of */
+const DARK_PAGE: Page = { abyss: [94, 72, 68], ground: [[94, 72, 68], [104, 80, 76]] };
+
+describe("seam step", () => {
+    it("holds the gap between the two tones, not a fraction of the distance", () => {
+        // noon: dark slate against a near-white page. a fixed fraction of that
+        // distance is the checker; the cap turns it into a gap you cannot resolve
+        const { rock, page } = seamTones(SLATE, PAGE, WHITE, 0, 0.45, 12);
+        for (let r = 0; r < 12; r++) {
+            expect(spread(rock[r][0], page[r][0])).toBeLessThanOrEqual(3 * SEAM_STEP + 3);
+        }
+    });
+
+    it("leaves a look whose page is already near the rock alone", () => {
+        // dusk: the gap was small for free, so nothing is capped and the ramp
+        // keeps the full step it always had
+        const near = seamTones(SLATE, DARK_PAGE, WHITE, 0, 0, 12);
+        const far = seamTones(SLATE, PAGE, WHITE, 0, 0.45, 12);
+        const step = (t: { rock: number[][]; page: number[][] }) =>
+            (unpack(t.page[0][0])[0] - unpack(t.rock[0][0])[0]) /
+            (unpack(t.rock[11][0])[0] - unpack(t.rock[0][0])[0] || 1);
+        expect(step(near)).toBeCloseTo(0.4, 1);
+        expect(step(far)).toBeLessThan(0.3);
+    });
+});
+
+describe("page sink", () => {
+    it("is nothing when the page is already a ground the rock could sit in", () => {
+        expect(pageSink(SLATE, DARK_PAGE, WHITE)).toBe(0);
+    });
+
+    it("closes a white page's distance to the register and no further", () => {
+        const sink = pageSink(SLATE, PAGE, WHITE);
+        expect(sink).toBeGreaterThan(0.5);
+        const sunk = dirtShades(SLATE, PAGE, WHITE, sink);
+        for (const b of BED) {
+            const d =
+                (Math.abs(sunk[b][0] - PAGE.abyss[0]) +
+                    Math.abs(sunk[b][1] - PAGE.abyss[1]) +
+                    Math.abs(sunk[b][2] - PAGE.abyss[2])) /
+                3;
+            // the tile lands within a hair of the register: near enough the page
+            // to read as its grain, far enough off it to still be a grain
+            expect(Math.abs(d - PAGE_REGISTER)).toBeLessThan(PAGE_REGISTER * 0.35);
+        }
+    });
+
+    it("keeps a grain in the tile it sinks: the two bedding tones stay apart", () => {
+        const sunk = dirtShades(SLATE, PAGE, WHITE, pageSink(SLATE, PAGE, WHITE));
+        expect(Math.abs(sunk[BED[0]][0] - sunk[BED[1]][0])).toBeGreaterThan(3);
     });
 });
 

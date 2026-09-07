@@ -35,7 +35,7 @@ import { applyTheme, readTheme, THEMES } from "../lib/theme";
 import type { Theme } from "../lib/theme";
 import { hash2, mix3, smooth } from "../lib/pixel";
 import type { Page, RGB } from "../lib/pixel";
-import { rasterize } from "../lib/rasterize";
+import { BED, dirtShades, pageSink, rasterize } from "../lib/rasterize";
 import type { LookColors } from "../lib/rasterize";
 
 /**
@@ -1825,8 +1825,17 @@ export function WeatherHero({ children, overlay, lab = false, ground = "off" }: 
          * off so a cell stays a hard square
          */
         const render = () => {
+            const onGround = groundRef.current !== "off";
+            // where the keel hands over: the page's own tokens normally, the
+            // ground tile's two bedding tones when the page is painted with it
+            const seamPage: Page = onGround
+                ? (() => {
+                      const t = dirtRGB();
+                      return { abyss: page.abyss, ground: [t[BED[0]], t[BED[1]]] };
+                  })()
+                : page;
             rasterize({
-                ground: groundRef.current !== "off",
+                ground: onGround,
                 buf,
                 cols,
                 rows,
@@ -1834,7 +1843,7 @@ export function WeatherHero({ children, overlay, lab = false, ground = "off" }: 
                 skyRows,
                 crestRow,
                 look: cur,
-                page,
+                page: seamPage,
                 sandRGB,
                 waterTop,
                 flash,
@@ -1872,27 +1881,35 @@ export function WeatherHero({ children, overlay, lab = false, ground = "off" }: 
         const dirtCtx = dirtCanvas.getContext("2d");
         const dirtImage = new ImageData(DIRT_COLS, DIRT_ROWS);
         const dirtBuf = new Uint32Array(dirtImage.data.buffer);
+        /**
+         * how far the tile sinks toward the page: whatever it takes to bring the
+         * rock into the page's own register, plus a further wash for the second
+         * setting. dusk and night need nothing for the first and half for the
+         * second; noon needs most of the way for both, because slate at full
+         * strength behind dark copy on a white page is a slab, not a grain
+         */
+        const dirtSink = (): number => {
+            const base = pageSink(sandRGB[WALL], page, cur.ambient);
+            return groundRef.current === "washed" ? base + (1 - base) * 0.6 : base;
+        };
+        /** the tile's four tones, live, so the seam can hand the keel over to them */
+        const dirtRGB = (): RGB[] => dirtShades(sandRGB[WALL], page, cur.ambient, dirtSink());
         const dirt = () => {
             if (!dirtCtx) return;
-            const washed = groundRef.current === "washed" ? 0.72 : 0;
-            const slate = sandRGB[WALL];
-            const amb = cur.ambient;
-            const tones = slate.map((c) => {
-                const m = mix3(c, page.abyss, washed);
-                return (
+            const tones = dirtRGB().map(
+                (m) =>
                     (255 << 24) |
-                    (Math.max(0, Math.min(255, Math.round(m[2] * amb[2]))) << 16) |
-                    (Math.max(0, Math.min(255, Math.round(m[1] * amb[1]))) << 8) |
-                    Math.max(0, Math.min(255, Math.round(m[0] * amb[0])))
-                );
-            });
+                    (Math.max(0, Math.min(255, Math.round(m[2]))) << 16) |
+                    (Math.max(0, Math.min(255, Math.round(m[1]))) << 8) |
+                    Math.max(0, Math.min(255, Math.round(m[0]))),
+            );
             for (let y = 0; y < DIRT_ROWS; y++) {
                 const band = ((y / 7) | 0) & 1;
                 for (let x = 0; x < DIRT_COLS; x++) {
                     // the keel's rule: bedded cells take the row's stripe, a quarter
                     // opt out and take their own shade
                     const bedded = hash2(x + 97, y + 41) > 0.25;
-                    const shade = bedded ? [2, 3][band] : (hash2(x * 3 + 7, y * 5 + 11) * 4) | 0;
+                    const shade = bedded ? BED[band] : (hash2(x * 3 + 7, y * 5 + 11) * 4) | 0;
                     dirtBuf[y * DIRT_COLS + x] = tones[shade & 3];
                 }
             }
