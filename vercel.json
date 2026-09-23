@@ -2,9 +2,21 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "redirects": [
     {
+      "source": "/",
+      "has": [{ "type": "host", "value": "thatmike1\\.portfolio\\.ssscribe\\.app" }],
+      "destination": "https://thatmike1.dev/",
+      "permanent": true
+    },
+    {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "thatmike1\\.portfolio\\.ssscribe\\.app" }],
       "destination": "https://thatmike1.dev/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "www\\.thatmike1\\.dev" }],
+      "destination": "https://thatmike1.dev/",
       "permanent": true
     },
     {
