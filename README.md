@@ -2,6 +2,8 @@
 
 personal site for [thatmike1](https://github.com/thatmike1). the hero is a tiny falling-sand toy (an homage to [powder-lab](https://github.com/thatmike1/powder-lab)) with "mike" written in raspberry sand; touch it and it crumbles.
 
+live at [thatmike1.dev](https://thatmike1.dev). the previous `thatmike1.portfolio.ssscribe.app` address permanently redirects here, including `/hire` and other paths.
+
 ## stack
 
 - [TanStack Start](https://tanstack.com/start) (react, ssr, file-based routing)
@@ -13,7 +15,7 @@ personal site for [thatmike1](https://github.com/thatmike1). the hero is a tiny 
 ```bash
 npm install
 npm run dev      # http://localhost:3000
-npm run build    # production build into dist/
+npm run build    # production build into .output/
 ```
 
 ## structure

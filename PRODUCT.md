@@ -12,6 +12,8 @@ Whoever lands on Mike's personal link: other devs, potential freelance collabora
 
 Michal "Mike" Pšenčík's personal site (github.com/thatmike1). Explicitly NOT a job-hunting portfolio and not a client pitch. The brief in his own words: "this is me and i make cool shit and i like doing it." Success = a visitor plays with the page, reads two project blurbs, and remembers the site.
 
+The public address is `https://thatmike1.dev`, with `/hire` for recruiters. The former `thatmike1.portfolio.ssscribe.app` hostname is retained as a permanent redirect so links in sent applications and CVs continue to work.
+
 ## Brand Personality
 
 Hand-built, playful, stubborn. The voice is his actual GitHub bio: "i do stuff, sometimes it works and sometimes it doesn't, but give me enough time and i'll make it work. probably haha." All-lowercase copy (matches his commit style and bio), honest to a fault (an abandoned project is labeled abandoned), specifics over adjectives.

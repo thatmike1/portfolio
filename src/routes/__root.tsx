@@ -24,7 +24,7 @@ export const Route = createRootRoute({
             { property: "og:title", content: TITLE },
             { property: "og:description", content: DESCRIPTION },
             { property: "og:type", content: "website" },
-            { property: "og:image", content: "https://thatmike1.portfolio.ssscribe.app/og.png" },
+            { property: "og:image", content: "https://thatmike1.dev/og.png" },
             { property: "og:image:width", content: "1200" },
             { property: "og:image:height", content: "630" },
             { name: "twitter:card", content: "summary_large_image" },
