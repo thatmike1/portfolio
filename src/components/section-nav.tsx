@@ -8,8 +8,8 @@ import { useEffect, useRef, useState } from "react";
 const SECTIONS = [
     { id: "top", label: "i make stuff" },
     { id: "things-i-made", label: "things i made" },
-    { id: "what-was-mine", label: "work experience" },
-    { id: "smaller-things", label: "smaller things" },
+    { id: "smaller-things", label: "different itches" },
+    { id: "what-was-mine", label: "the day job" },
     { id: "say-hi", label: "say hi" },
 ] as const;
 
@@ -27,7 +27,7 @@ export function SectionNav() {
 
     useEffect(() => {
         const targets = SECTIONS.map(({ id }) => document.getElementById(id)).filter(
-            (el): el is HTMLElement => el !== null
+            (el): el is HTMLElement => el !== null,
         );
         if (!targets.length) return;
 
@@ -44,7 +44,7 @@ export function SectionNav() {
             },
             // a sliver of viewport rather than the whole thing: with the full height
             // three sections can be "visible" at once and the answer is ambiguous
-            { rootMargin: "-45% 0px -50% 0px" }
+            { rootMargin: "-45% 0px -50% 0px" },
         );
 
         for (const target of targets) observer.observe(target);
@@ -81,6 +81,7 @@ export function SectionNav() {
                             <a
                                 className={`section-nav-link${isActive ? " is-active" : ""}`}
                                 href={`#${id}`}
+                                tabIndex={past ? undefined : -1}
                                 aria-current={isActive ? "true" : undefined}
                             >
                                 <span className="section-nav-mark" aria-hidden="true" />

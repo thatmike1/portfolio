@@ -1,299 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import type { CSSProperties, ReactNode } from "react";
 import { WeatherHero } from "../components/weather-hero";
 import { HeroCopy } from "../components/hero-copy";
 import { GrainCursor } from "../components/grain-cursor";
 import { ExperienceCustody } from "../components/experience-custody";
-import { LightboxProvider, useLightbox } from "../components/lightbox";
+import { LightboxProvider } from "../components/lightbox";
 import { SectionNav } from "../components/section-nav";
-import { HireNudge } from "../components/hire-nudge";
+import { ProjectCollection, ProjectImage } from "../components/project-collection";
 
 export const Route = createFileRoute("/")({ component: Home });
-
-type Preview = {
-    src: string;
-    alt: string;
-    /** the asset's real pixel size — declared on the img so nothing shifts or upscales */
-    width: number;
-    height: number;
-    /** theme-swapped variant of the same shot, same dimensions */
-    darkSrc?: string;
-};
-
-type ProjectPreview = {
-    layout: "wide-phones" | "wide-panels" | "single";
-    caption?: string;
-    /** oklch tint for this project's screenshot shadows; falls back to raspberry in css */
-    glow?: string;
-    wide: Preview;
-    supporting?: Array<Preview>;
-};
-
-type Project = {
-    name: string;
-    tagline: string;
-    body: ReactNode;
-    stack: string;
-    code?: string;
-    note?: string;
-    preview?: ProjectPreview;
-    live?: { href: string; label: string };
-};
-
-const PROJECTS: Array<Project> = [
-    {
-        name: "ssscribe",
-        tagline: "speak or paste anywhere, it's text everywhere",
-        body: (
-            <>
-                talk to my phone, paste from my laptop, and it all lands as text in one private feed
-                that syncs to every device, copy-ready. then run ai on any capture: tldr it, clean
-                up the transcription, pull out the todos, whatever. self-hosted on my own box,
-                pocketbase doing realtime and storage, installable as a pwa. the snake from the
-                landing pages survives here as a waveform that threads the ai outputs together.
-            </>
-        ),
-        stack: "react 19 · tanstack · pocketbase · pwa · deepgram",
-        note: "private during the build · public at launch",
-        preview: {
-            layout: "wide-phones",
-            caption: "design mockups · the app itself is mid-build",
-            glow: "oklch(0.62 0.16 60)",
-            wide: {
-                src: "/ssscribe/desktop.webp",
-                alt: "ssscribe desktop: watch the stream",
-                width: 1360,
-                height: 836,
-            },
-            supporting: [
-                {
-                    src: "/ssscribe/capture.webp",
-                    alt: "ssscribe capture screen on phone",
-                    width: 390,
-                    height: 844,
-                },
-            ],
-        },
-    },
-    {
-        name: "on-task",
-        tagline: "a creature that knows when i've drifted",
-        body: (
-            <>
-                i declare what i'm working on and a little ink creature in the corner of my screen
-                watches whether i actually do it. regexes over activitywatch handle the obvious
-                calls; when it genuinely can't tell, it screenshots the screen and asks sonnet,
-                announcing itself first, because a thing that watches you should say when it's
-                looking. drift and it gets agitated. ignore it and it deflates rather than nags. the
-                landing page runs the same loop on you while you read it. tab away and it'll
-                notice.
-            </>
-        ),
-        stack: "python · activitywatch · webgl2 · gtk3 · systemd · claude sonnet",
-        note: "private repo · the site is public",
-        live: { href: "https://ontask.ssscribe.app/", label: "it'll watch you read it" },
-        preview: {
-            layout: "wide-panels",
-            caption:
-                "the live landing page runs the real detection loop on you while you read it",
-            glow: "oklch(0.6 0.15 230)",
-            wide: {
-                src: "/on-task/hero.webp",
-                alt: "the on-task landing page: it knows what you said you'd do, and the ink creature is asleep next to it",
-                width: 1440,
-                height: 790,
-            },
-            supporting: [
-                {
-                    src: "/on-task/log-nudge.webp",
-                    alt: "the session log the daemon writes, with a nudge card saying it won't repeat itself",
-                    width: 1440,
-                    height: 754,
-                },
-                {
-                    src: "/on-task/ladder.webp",
-                    alt: "the precedence ladder of watcher states, from no-task and on-task down to nudge",
-                    width: 1440,
-                    height: 838,
-                },
-            ],
-        },
-    },
-    {
-        name: "cc-bench",
-        tagline: "does your CLAUDE.md actually do anything?",
-        body: (
-            <>
-                everyone writes a CLAUDE.md full of "be concise" and "don't hedge", and nobody knows
-                if any of it lands. this swaps the config, runs the same 48 prompts against a
-                deliberately broken little repo, and counts what changed (words, hedges, lists,
-                tool calls) instead of asking a model whether the answer got better. the first
-                version couldn't produce a negative result, so i killed it and wrote down why. the
-                landing page runs the real counters on whatever you paste in.
-            </>
-        ),
-        stack: "node 22 · zero deps · bwrap sandbox · paired stats · 160 tests",
-        note: "instrument built and tested · no findings yet",
-        code: "https://github.com/thatmike1/cc-bench",
-        live: { href: "https://thatmike1.github.io/cc-bench/", label: "paste your config in" },
-        preview: {
-            layout: "single",
-            caption:
-                "the counters on the page are the benchmark's own code. a guarded build step keeps them from drifting",
-            glow: "oklch(0.45 0.13 30)",
-            wide: {
-                src: "/cc-bench/instrument.webp",
-                darkSrc: "/cc-bench/instrument-dark.webp",
-                alt: "the cc-bench fingerprint tool comparing a terse answer against a padded one, counter by counter",
-                width: 908,
-                height: 1089,
-            },
-        },
-    },
-    {
-        name: "powder-lab",
-        tagline: "a falling-sand sandbox",
-        body: (
-            <>
-                paint with fourteen-ish materials and watch them fall, flow, burn, dissolve and
-                react. react owns the buttons; an imperative core owns the pixels, so the simulation
-                never touches a re-render. dirty-chunk scheduling (the noita trick) means settled
-                sand costs nothing. the toy at the top of this page is its little cousin.
-            </>
-        ),
-        stack: "react · typescript · canvas · vitest",
-        code: "https://github.com/thatmike1/powder-lab",
-        live: { href: "https://thatmike1.github.io/powder-lab/", label: "play it" },
-    },
-    {
-        name: "claude-skills",
-        tagline: "my claude code, customized",
-        body: (
-            <>
-                a dozen installable skills that run my actual days: a morning briefing parsed
-                straight from conversation history, an end-of-day receipt that proves the day
-                happened, an adhd thought-structurer for when it didn't. zero-dependency parsers and
-                an interactive installer, symlink or copy, your choice.
-            </>
-        ),
-        stack: "node · markdown · zero deps",
-        code: "https://github.com/thatmike1/claude-skills",
-    },
-    {
-        name: "aw-watcher-git",
-        tagline: "time tracking that knows which repo i’m in",
-        body: (
-            <>
-                an activitywatch watcher that logs which repo and branch i'm actually working in, no
-                matter the editor or terminal. three layers of detection (filesystem events, window
-                cross-checks, git status polling) so long uncommitted thinking still counts. it
-                stores repo and branch, never file paths. on-task further up this page reads the
-                same activitywatch buckets, so the creature knows which repo i've wandered out of.
-            </>
-        ),
-        stack: "python · watchdog · activitywatch",
-        code: "https://github.com/thatmike1/aw-watcher-git",
-    },
-    {
-        name: "ssscribe-landing-pages",
-        tagline: "landing pages with actual personality",
-        body: (
-            <>
-                marketing pages for a voice-note transcription bot. one shared page component themed
-                entirely through css variables, so the next product is a class swap, not a fork.
-                handcoded chunky look: ink borders, hard shadows, and a dot grid that follows your
-                cursor around.
-            </>
-        ),
-        stack: "react 19 · tailwind 4 · gsap",
-        code: "https://github.com/thatmike1/ssscribe-landing-pages",
-    },
-];
-
-type ShotVariant = "wide" | "single" | "panel" | "phone";
-
-/**
- * one framed screenshot. clicking opens the in-page viewer; the href stays a real link to the
- * asset, so a modifier-click and a javascript-less visit both still work.
- * a shot with a darkSrc renders both variants and lets css pick — the dimensions match, so
- * the hidden one costs no layout.
- */
-function PreviewShot({ shot, variant }: { shot: Preview; variant: ShotVariant }) {
-    const openShot = useLightbox();
-
-    const frame = (src: string, theme?: "light" | "dark") => (
-        <a
-            key={src}
-            className={`preview-frame preview-frame--${variant}${theme ? ` preview-frame--${theme}` : ""}`}
-            href={src}
-            target="_blank"
-            rel="noopener"
-            onClick={(event) => {
-                // leave every deliberate "open this elsewhere" gesture alone
-                if (!openShot || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
-                    return;
-                event.preventDefault();
-                openShot({ ...shot, src });
-            }}
-            // never upscale a screenshot past its own 1x css size; its text stops being readable.
-            // the ssscribe shots are 2x assets, so their width/height here are the css size, not
-            // the pixel size — that's also what the lightbox's actual-size mode wants
-            style={{ maxWidth: `min(100%, ${shot.width}px)` }}
-        >
-            <img
-                className={`preview-shot preview-shot--${variant}`}
-                src={src}
-                alt={shot.alt}
-                loading="lazy"
-                width={shot.width}
-                height={shot.height}
-            />
-        </a>
-    );
-
-    if (!shot.darkSrc) return frame(shot.src);
-
-    return (
-        <>
-            {frame(shot.src, "light")}
-            {frame(shot.darkSrc, "dark")}
-        </>
-    );
-}
-
-function PreviewFigure({ preview }: { preview: ProjectPreview }) {
-    const leadVariant = preview.layout === "single" ? "single" : "wide";
-    const supportVariant = preview.layout === "wide-panels" ? "panel" : "phone";
-
-    // react's CSSProperties has no index signature for custom properties, so the cast is
-    // the only way to hand --preview-glow to the stylesheet. a single layout is capped to
-    // its own pixels here rather than on the frame, so the caption centres with the image.
-    const figureStyle = {
-        ...(preview.glow ? { "--preview-glow": preview.glow } : null),
-        ...(preview.layout === "single"
-            ? { maxWidth: `min(100%, ${preview.wide.width}px)` }
-            : null),
-    } as CSSProperties;
-
-    return (
-        <figure
-            className={`project-preview project-preview--${preview.layout}`}
-            style={figureStyle}
-        >
-            <PreviewShot shot={preview.wide} variant={leadVariant} />
-            {preview.supporting?.length ? (
-                <div className={`preview-supporting preview-supporting--${supportVariant}s`}>
-                    {preview.supporting.map((shot) => (
-                        <PreviewShot key={shot.src} shot={shot} variant={supportVariant} />
-                    ))}
-                </div>
-            ) : null}
-            {preview.caption ? (
-                <figcaption className="preview-caption">{preview.caption}</figcaption>
-            ) : null}
-        </figure>
-    );
-}
 
 function Home() {
     return (
@@ -301,88 +15,132 @@ function Home() {
             <main>
                 <GrainCursor />
                 <SectionNav />
-                <HireNudge />
                 <header className="hero" id="top">
                     <WeatherHero>
                         <HeroCopy />
                     </WeatherHero>
                 </header>
-
-                <section className="projects" id="things-i-made" aria-labelledby="projects-heading">
+                <ProjectCollection />
+                <section className="further" id="smaller-things" aria-labelledby="further-heading">
                     <div className="container">
-                        <h2 id="projects-heading">things i made</h2>
-                        <p className="section-sub">
-                            all built to scratch an itch. most are public, two are still private.
+                        <h2 id="further-heading">different itches.</h2>
+                        <p className="further-lede">
+                            a small business, a shared list, a little room to play.
                         </p>
-                        <ul className="project-list">
-                            {PROJECTS.map((p) => (
-                                <li className="project" key={p.name}>
-                                    <div className="project-head">
-                                        {p.code ? (
-                                            <a className="project-name" href={p.code}>
-                                                {p.name}
-                                                <span className="arrow" aria-hidden="true">
-                                                    {"↗"}
-                                                </span>
-                                            </a>
-                                        ) : (
-                                            <span className="project-name project-name--static">
-                                                {p.name}
-                                            </span>
-                                        )}
-                                        <p className="project-tagline">{p.tagline}</p>
-                                        <p className="project-stack">{p.stack}</p>
-                                        {p.note ? <p className="project-note">{p.note}</p> : null}
-                                    </div>
-                                    <div className="project-body">
-                                        <p>{p.body}</p>
-                                        {p.live ? (
-                                            <p className="project-live">
-                                                <a href={p.live.href}>{p.live.label}</a>
-                                            </p>
-                                        ) : null}
-                                    </div>
-                                    {p.preview ? <PreviewFigure preview={p.preview} /> : null}
+                        <div className="further-pair">
+                            <article className="further-product" id="good-cookie">
+                                <ProjectImage
+                                    image={{
+                                        src: "/showcase/good-cookie.webp",
+                                        width: 1440,
+                                        height: 900,
+                                        alt: "Good Cookie's live demo shows its consent banner blocking a tracking script on an invented shop",
+                                        caption: "a working banner demo on a made-up shop",
+                                    }}
+                                />
+                                <h3>Good Cookie</h3>
+                                <p>
+                                    one payment, your own files. a short wizard turns a site's
+                                    answers into privacy pages and a self-hosted consent banner. i
+                                    built the product, checkout and zip delivery. a small business
+                                    experiment, shipped and open for business.
+                                </p>
+                                <p className="collection-stack">
+                                    node · express · stripe · file generation
+                                </p>
+                                <p>
+                                    <a href="https://goodcookie.app/">
+                                        try the banner <span aria-hidden="true">↗</span>
+                                    </a>
+                                </p>
+                            </article>
+                            <article className="further-product further-product--nakup" id="nakup">
+                                <ProjectImage
+                                    image={{
+                                        src: "/showcase/nakup.webp",
+                                        width: 440,
+                                        height: 850,
+                                        alt: "Nákup with invented groceries and anonymous people, in blue and yellow inks",
+                                        caption: "the actual app · invented groceries and people",
+                                    }}
+                                />
+                                <div>
+                                    <h3>nákup</h3>
+                                    <p>
+                                        a grocery list for two people, one ink each. it works in the
+                                        supermarket basement, syncs when signal returns, and
+                                        remembers which aisle a thing belongs in.
+                                    </p>
+                                    <p>
+                                        small on purpose. optimistic operations, retry-safe sync and
+                                        a list that gets easier to use the more you use it.
+                                    </p>
+                                    <p className="collection-stack">
+                                        react · typescript · node · sse · offline replay
+                                    </p>
+                                    <p className="collection-use">
+                                        in real household use · private app
+                                    </p>
+                                </div>
+                            </article>
+                        </div>
+                        <ul className="further-small">
+                            <li id="powder-lab">
+                                <h3>
+                                    <a href="https://powder.ssscribe.app/">powder lab ↗</a>
+                                </h3>
+                                <p>
+                                    falling sand, reactive materials and deterministic multiplayer.
+                                    react does the buttons; the simulation does the pixels. the sand
+                                    above is its little cousin.{" "}
+                                    <a href="https://github.com/thatmike1/powder-lab">source</a>.
+                                </p>
+                            </li>
+                            <li id="ssscribe">
+                                <h3>ssscribe</h3>
+                                <p>
+                                    speak on my phone, get copy-ready text on my laptop. a private,
+                                    self-hosted transcription pwa with realtime sync and ai
+                                    transforms. react, pocketbase and deepgram.{" "}
+                                    <a href="/ssscribe/desktop.webp">early design study</a>.
+                                </p>
+                            </li>
+                            <li id="reader">
+                                <h3>
+                                    <a href="https://read.thatmike1.dev/">Reader ↗</a>
+                                </h3>
+                                <p>
+                                    a finite edition instead of an endless feed. exact reading
+                                    markers, guest storage and account sync, so coming back means
+                                    continuing rather than starting over.
+                                </p>
+                            </li>
+                        </ul>
+                        <details className="collection-archive">
+                            <summary>older experiments, still worth a look</summary>
+                            <ul>
+                                <li>
+                                    <a href="https://ontask.ssscribe.app/">on-task</a>: a desktop
+                                    creature that noticed when i drifted. the daemon is retired; the
+                                    interactive site survives.
                                 </li>
-                            ))}
-                        </ul>
+                                <li>
+                                    <a href="https://thatmike1.github.io/cc-bench/">cc-bench</a>: an
+                                    instrument for measuring what an agent config changes. the tool
+                                    is built; the research question is still open.{" "}
+                                    <a href="https://github.com/thatmike1/cc-bench">source</a>.
+                                </li>
+                                <li>
+                                    <a href="https://github.com/thatmike1/aw-watcher-git">
+                                        aw-watcher-git
+                                    </a>
+                                    : editor-independent repo and branch tracking for ActivityWatch.
+                                </li>
+                            </ul>
+                        </details>
                     </div>
                 </section>
-
-                {/* the hinge: everything above is mine, everything below someone paid for */}
-                <section className="interlude">
-                    <p className="container">
-                        that's the stuff i built because i wanted to. below is the stuff someone
-                        paid me to build. turns out i like that too.
-                    </p>
-                </section>
-
                 <ExperienceCustody />
-
-                <section className="smaller" id="smaller-things" aria-labelledby="smaller-heading">
-                    <div className="container">
-                        <h2 id="smaller-heading">smaller things</h2>
-                        <ul className="smaller-list">
-                            <li>
-                                <a href="https://github.com/thatmike1/vite-react-supabase-starter">
-                                    vite-react-supabase-starter
-                                </a>{" "}
-                                and{" "}
-                                <a href="https://github.com/thatmike1/vite-react-shadcn-starter">
-                                    vite-react-shadcn-starter
-                                </a>
-                                : the two starters i clone so future me skips a day of wiring. react
-                                19, tanstack query, auth, the boring parts done.
-                            </li>
-                            <li>
-                                <a href="https://github.com/thatmike1/backlogged">backlogged</a>: a
-                                game library with an ai recommender that remembers what it already
-                                suggested. probably abandoned, if i'm being honest.
-                            </li>
-                        </ul>
-                    </div>
-                </section>
-
                 <footer className="footer" id="say-hi">
                     <div className="container">
                         <h2>say hi</h2>

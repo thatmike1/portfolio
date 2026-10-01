@@ -1624,3 +1624,6 @@ figcaption {
   background: var(--rasp-deep);
   color: var(--bg);
 }
+
+/* direct doors into the collection and the quiet recruiter route */
+.hero-doors { display: flex; flex-wrap: wrap; gap: .7rem 1.8rem; font-size: .9rem; margin: 1.5rem 0; }
