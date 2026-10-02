@@ -16,6 +16,8 @@ live at [thatmike1.dev](https://thatmike1.dev). the previous `thatmike1.portfoli
 npm install
 npm run dev      # http://localhost:3000
 npm run build    # production build into .output/
+npm test         # vitest
+npm run images -- <masters-dir>   # rebuild public/showcase/ and its manifest from master screenshots
 ```
 
 ## structure
@@ -30,6 +32,9 @@ npm run build    # production build into .output/
 - `src/lib/frost.ts` — snow and ice: flakes drift down and cap the word, freeze the lake, and the noon sun melts them
 - `src/lib/fish.ts` — fish for the lake: they arrive with the water, cruise the basin and now and then one leaps
 - `src/lib/frog.ts` — a frog that comes for the fireflies, sits on a letter and snaps them with its tongue
-- `src/routes/index.tsx` — the whole page
-- `src/styles.css` — design tokens + all styling
+- `src/routes/index.tsx` — the homepage; `src/routes/hire.tsx` — the recruiter page
+- `src/lib/showcase.ts` — every project fact both pages show
+- `scripts/showcase-images.mjs` — master screenshots in, webp ladder + `src/lib/showcase-images-generated.ts` out; commit both
+- `src/components/showcase-image.tsx`, `src/components/lightbox.tsx` — a screenshot on the page, and the viewer it opens
+- `src/styles.css` — design tokens + global styling; components carry their own css
 - `PRODUCT.md` / `DESIGN.md` — design system context
