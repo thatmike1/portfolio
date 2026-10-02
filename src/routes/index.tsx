@@ -5,7 +5,9 @@ import { GrainCursor } from "../components/grain-cursor";
 import { ExperienceCustody } from "../components/experience-custody";
 import { LightboxProvider } from "../components/lightbox";
 import { SectionNav } from "../components/section-nav";
-import { ProjectCollection, ProjectImage } from "../components/project-collection";
+import { ProjectCollection } from "../components/project-collection";
+import { ShowcaseImage } from "../components/showcase-image";
+import { SHOWCASE_IMAGES } from "../lib/showcase-images-generated";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -29,14 +31,15 @@ function Home() {
                         </p>
                         <div className="further-pair">
                             <article className="further-product" id="good-cookie">
-                                <ProjectImage
-                                    image={{
-                                        src: "/showcase/good-cookie.webp",
-                                        width: 1440,
-                                        height: 900,
-                                        alt: "Good Cookie's live demo shows its consent banner blocking a tracking script on an invented shop",
-                                        caption: "a working banner demo on a made-up shop",
-                                    }}
+                                <ShowcaseImage
+                                    shots={[
+                                        {
+                                            image: SHOWCASE_IMAGES["good-cookie"],
+                                            alt: "Good Cookie's live demo shows its consent banner blocking a tracking script on an invented shop",
+                                            caption: "a working banner demo on a made-up shop",
+                                        },
+                                    ]}
+                                    sizes="(min-width: 1136px) 600px, (min-width: 601px) 55vw, calc(100vw - 3rem)"
                                 />
                                 <h3>Good Cookie</h3>
                                 <p>
@@ -55,14 +58,15 @@ function Home() {
                                 </p>
                             </article>
                             <article className="further-product further-product--nakup" id="nakup">
-                                <ProjectImage
-                                    image={{
-                                        src: "/showcase/nakup.webp",
-                                        width: 440,
-                                        height: 850,
-                                        alt: "Nákup with invented groceries and anonymous people, in blue and yellow inks",
-                                        caption: "the actual app · invented groceries and people",
-                                    }}
+                                <ShowcaseImage
+                                    shots={[
+                                        {
+                                            image: SHOWCASE_IMAGES.nakup,
+                                            alt: "Nákup with invented groceries and anonymous people, in blue and yellow inks",
+                                            caption: "the actual app · invented groceries and people",
+                                        },
+                                    ]}
+                                    sizes="240px"
                                 />
                                 <div>
                                     <h3>nákup</h3>

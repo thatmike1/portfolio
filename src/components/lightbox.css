@@ -1,0 +1,226 @@
+/*
+ * the screenshot viewer. a neutral near-black room in every look, because a shot
+ * needs one: the wash, the bar and the caption are spelled out rather than tokened,
+ * since the page's tokens flip with the theme and this room does not.
+ */
+
+.lightbox {
+  --lb-ink: oklch(0.94 0.006 357);
+  --lb-muted: oklch(0.74 0.015 357);
+  --lb-edge: oklch(0.94 0.006 357 / 0.22);
+
+  /* display is only flipped on [open] so the ua's own dialog:not([open]) rule still
+     hides it, and it transitions discretely so the close still gets to fade */
+  display: none;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  margin: 0;
+  padding: clamp(0.5rem, 1.6vw, 1.25rem);
+  border: 0;
+  background: transparent;
+  color: var(--lb-ink);
+  opacity: 0;
+  transition:
+    opacity 180ms var(--ease-out),
+    display 180ms allow-discrete,
+    overlay 180ms allow-discrete;
+}
+
+.lightbox[open] {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: clamp(0.5rem, 1.2vw, 0.85rem);
+  opacity: 1;
+}
+
+@starting-style {
+  .lightbox[open] {
+    opacity: 0;
+  }
+}
+
+.lightbox::backdrop {
+  background: oklch(0.13 0.01 357 / 0.96);
+  opacity: 0;
+  transition: opacity 180ms var(--ease-out);
+}
+
+.lightbox[open]::backdrop {
+  opacity: 1;
+}
+
+@starting-style {
+  .lightbox[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+/* a modal leaves the page scrollable under the wash; this holds it still. the page
+   keeps its scrollbar gutter, so nothing shifts sideways when the bar goes */
+:root:has(.lightbox[open]) {
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------- */
+/* bar and foot                                                      */
+/* --------------------------------------------------------------- */
+
+.lightbox-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 2.25rem;
+}
+
+.lightbox-count,
+.lightbox-keys {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--lb-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.lightbox-count {
+  color: var(--lb-ink);
+}
+
+.lightbox-keys {
+  flex: 1;
+  min-width: 0;
+}
+
+.lightbox-keys-touch {
+  display: none;
+}
+
+@media (hover: none) {
+  .lightbox-keys-mouse {
+    display: none;
+  }
+
+  .lightbox-keys-touch {
+    display: inline;
+  }
+}
+
+.lightbox-close,
+.lightbox-step {
+  flex: none;
+  border: 1px solid var(--lb-edge);
+  border-radius: 999px;
+  background: oklch(0.2 0.012 357);
+  color: var(--lb-ink);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition:
+    background 160ms var(--ease-out),
+    border-color 160ms var(--ease-out);
+}
+
+.lightbox-close {
+  margin-left: auto;
+  padding: 0.4rem 0.95rem;
+}
+
+.lightbox-close:hover,
+.lightbox-step:hover {
+  background: oklch(0.27 0.015 357);
+  border-color: oklch(0.94 0.006 357 / 0.4);
+}
+
+.lightbox-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 2.25rem;
+}
+
+.lightbox-caption {
+  max-width: 70ch;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--lb-muted);
+  text-align: center;
+}
+
+.lightbox-step {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 0.95rem;
+}
+
+/* --------------------------------------------------------------- */
+/* the stage                                                         */
+/* --------------------------------------------------------------- */
+
+/* fit: the shot sits centred and the stage never scrolls. zoomed: the stage is a
+   scroller and the shot sits at its actual pixels inside it. safe centring keeps a
+   shot that is bigger than the stage starting at its top-left, not pushed out of
+   reach on both sides */
+.lightbox-stage {
+  display: flex;
+  align-items: safe center;
+  justify-content: safe center;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.lightbox-stage[data-zoomed] {
+  overflow: auto;
+  overscroll-behavior: contain;
+  cursor: grab;
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.94 0.006 357 / 0.35) transparent;
+}
+
+.lightbox-stage[data-dragging] {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.lightbox-zoom {
+  display: block;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  cursor: default;
+}
+
+.lightbox-zoom[data-can-zoom] {
+  cursor: zoom-in;
+}
+
+.lightbox-stage[data-zoomed] .lightbox-zoom {
+  cursor: inherit;
+}
+
+.lightbox-zoom:focus-visible {
+  outline: 2px solid oklch(0.74 0.17 357);
+  outline-offset: 3px;
+}
+
+/* the shot paints its own placeholder until its pixels arrive: the average colour
+   under a 24px blurred copy of itself */
+.lightbox-img {
+  display: block;
+  max-width: none;
+  height: auto;
+  border-radius: 10px;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.lightbox-stage[data-zoomed] .lightbox-img {
+  border-radius: 0;
+}

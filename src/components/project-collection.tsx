@@ -1,46 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { SHOWCASE, nextProjectIndex, projectIndex } from "../lib/showcase";
-import type { ShowcaseProject } from "../lib/showcase";
-import { useLightbox } from "./lightbox";
+import { ShowcaseImage } from "./showcase-image";
 import "./project-collection.css";
 
-export function ProjectImage({ image }: { image: ShowcaseProject["image"] }) {
-    const openShot = useLightbox();
-    return (
-        <figure className="collection-figure">
-            <a
-                href={image.src}
-                className="collection-image"
-                target="_blank"
-                rel="noopener"
-                onClick={(event) => {
-                    if (
-                        !openShot ||
-                        event.metaKey ||
-                        event.ctrlKey ||
-                        event.shiftKey ||
-                        event.altKey
-                    )
-                        return;
-                    event.preventDefault();
-                    openShot(image);
-                }}
-            >
-                <img
-                    src={image.src}
-                    width={image.width}
-                    height={image.height}
-                    alt={image.alt}
-                    loading="lazy"
-                />
-                <span className="collection-enlarge">
-                    enlarge
-                </span>
-            </a>
-            <figcaption>{image.caption}</figcaption>
-        </figure>
-    );
-}
+/** the panel's image column: 1.5 of 2.35 shares of the 68rem container, full width once stacked */
+const PANEL_SIZES = "(min-width: 1136px) 670px, (min-width: 901px) 62vw, calc(100vw - 3rem)";
 
 /** the server renders every project; hydration turns the list into an accessible tab collection */
 export function ProjectCollection() {
@@ -144,7 +108,12 @@ export function ProjectCollection() {
                                 ))}
                             </ul>
                         </div>
-                        <ProjectImage image={project.image} />
+                        <ShowcaseImage
+                            shots={project.shots}
+                            sizes={PANEL_SIZES}
+                            // the panel on show is the first shot anyone sees; the hidden ones wait
+                            priority={index === active}
+                        />
                     </article>
                 ))}
             </div>

@@ -1,0 +1,83 @@
+/*
+ * a screenshot on the page. the frame is the link and the placeholder at once: until
+ * the webp lands it shows the shot's own 24px thumbnail, which the browser smooths
+ * into soft focus, over the shot's average colour. no animation and no filter, so
+ * nothing repaints while it waits.
+ */
+
+.shot {
+  margin: 0;
+  min-width: 0;
+}
+
+.shot-frame {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.4rem;
+  background: var(--shot-placeholder) center / cover no-repeat, var(--shot-color, var(--surface));
+  /* the frame stays put on the page; the shadow seats it on white and in the dark looks */
+  box-shadow:
+    0 0 0 1px var(--hairline),
+    0 14px 36px -18px oklch(0.18 0.015 357 / 0.28);
+  cursor: zoom-in;
+  text-decoration: none;
+}
+
+:root:is([data-theme='dark'], [data-theme='dusk']) .shot-frame {
+  box-shadow:
+    0 0 0 1px var(--hairline),
+    0 14px 40px -18px oklch(0 0 0 / 0.6);
+}
+
+.shot-frame:focus-visible {
+  outline-offset: 4px;
+  border-radius: 0.4rem;
+}
+
+.shot-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* the door into the viewer. quiet until the pointer is on the shot; on a touch
+   screen there is no hover to wait for, so it simply stays */
+.shot-hint {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.6rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: oklch(0.18 0.015 357 / 0.82);
+  color: oklch(0.97 0.004 357);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  line-height: 1.4;
+  opacity: 0;
+  transform: translateY(2px);
+  transition:
+    opacity 180ms var(--ease-out),
+    transform 180ms var(--ease-out);
+  pointer-events: none;
+}
+
+.shot-frame:hover .shot-hint,
+.shot-frame:focus-visible .shot-hint {
+  opacity: 1;
+  transform: none;
+}
+
+@media (hover: none) {
+  .shot-hint {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.shot figcaption {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
