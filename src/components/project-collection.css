@@ -1,73 +1,743 @@
-.collection { padding-block: clamp(3.5rem, 7vw, 6rem); }
-.collection-intro { display: flex; justify-content: space-between; gap: 2rem; align-items: end; margin-bottom: 2.5rem; }
-.collection-intro h2 { font-size: clamp(2rem, 4vw, 3.35rem); line-height: 1.15; margin: 0; }
-.collection-intro h2 span { color: var(--muted); }
-.collection-intro > p { color: var(--muted); font-size: .95rem; margin: 0 0 .2rem; max-width: 23rem; }
-.collection-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--hairline); margin-bottom: 3rem; }
-.collection-tabs button { font: inherit; color: var(--muted); background: transparent; border: 0; border-bottom: 1px solid var(--hairline); padding: 1rem .9rem 1rem 0; text-align: left; cursor: pointer; position: relative; }
-.collection-tabs button > span:first-child { font-weight: 700; font-size: 1.1rem; display: block; color: var(--ink); }
-.collection-tab-purpose { display: block; font-size: .8rem; margin-top: .2rem; }
-.collection-tabs button[aria-selected="true"] { color: var(--rasp-deep); }
-.collection-tabs button[aria-selected="true"] > span:first-child { color: var(--rasp-deep); }
-.collection-tabs button[aria-selected="true"]::after { content: ""; position: absolute; bottom: -1px; height: 2px; background: var(--rasp-deep); width: calc(100% - 1.25rem); left: 0; }
-.collection-tabs button:hover > span:first-child { color: var(--rasp-deep); }
-.collection-project { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.5fr); align-items: start; gap: 2.5rem; scroll-margin-top: 3rem; }
-.collection-project[hidden] { display: none; }
-.collection-story h3 { font-size: clamp(1.65rem, 3vw, 2.4rem); line-height: 1.12; margin: 0 0 1rem; }
-.collection-summary { font-size: 1.15rem; line-height: 1.5; margin: 0 0 1rem; }
-.collection-detail { font-size: .95rem; margin: 0 0 1.4rem; }
-.collection-use { font-size: .8rem; color: var(--rasp-deep); margin: 0 0 .5rem; }
-.collection-stack { font-family: var(--font-mono); font-size: .7rem; line-height: 1.8; color: var(--muted); margin: 0; }
-.collection-links { display: flex; flex-wrap: wrap; gap: 1rem; list-style: none; margin: 1.4rem 0 0; padding: 0; font-size: .9rem; }
-.collection-figure { margin: 0; min-width: 0; }
-.collection-image { display: block; position: relative; color: var(--ink); }
-.collection-image img { display: block; width: 100%; height: auto; border-radius: .35rem; box-shadow: 0 12px 32px oklch(.18 .015 357 / .1); }
-.collection-enlarge { position: absolute; right: .65rem; bottom: .65rem; background: var(--bg); color: var(--ink); border: 1px solid var(--hairline); padding: .25rem .55rem; font-size: .7rem; border-radius: .2rem; }
-.collection-figure figcaption { font-size: .72rem; color: var(--muted); line-height: 1.5; margin-top: .8rem; }
-.further { padding-block: clamp(3rem, 6vw, 5rem); background: var(--surface); }
-.further h2 { font-size: clamp(1.8rem, 3vw, 2.6rem); margin: 0 0 .5rem; }
-.further-lede { margin: 0 0 3rem; color: var(--muted); }
-.further-pair { display: grid; grid-template-columns: 1.4fr 1fr; gap: 4rem; }
-.further-product h3 { font-size: 1.65rem; margin: 1.7rem 0 .4rem; }
-.further-product > p { font-size: .95rem; max-width: 31rem; }
-.further-product--nakup { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
-.further-product--nakup .collection-image { max-width: 220px; }
-.further-product--nakup h3 { margin-top: 0; }
-.further-product--nakup .collection-figure figcaption { max-width: 15rem; }
-.further-small { margin: 3.5rem 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; border-top: 1px solid var(--hairline); padding-top: 1.5rem; }
-.further-small h3 { font-size: 1.1rem; margin: 0 0 .5rem; }
-.further-small p { font-size: .85rem; color: var(--muted); margin: 0; }
-.collection-archive { margin-top: 2rem; border-top: 1px solid var(--hairline); padding-top: 1rem; }
-.collection-archive summary { cursor: pointer; font-size: .9rem; color: var(--muted); }
-.collection-archive ul { padding-left: 1.2rem; font-size: .85rem; }
-.day-job { padding-block: 3rem; }
-.day-job .container { display: flex; gap: 2rem; align-items: baseline; justify-content: space-between; }
-.day-job h2 { font-size: 1.2rem; margin: 0; }
-.day-job p { margin: 0; }
-.collection-project:focus-visible { outline-offset: 1rem; }
-@media (max-width: 900px) {
-    .collection-project { grid-template-columns: 1fr; gap: 2rem; }
-    .collection-story { display: grid; grid-template-columns: 1fr 1fr; column-gap: 2rem; }
-    .collection-story h3, .collection-summary { grid-column: 1; }
-    .collection-detail { grid-column: 2; grid-row: 1 / span 3; }
-    .collection-use, .collection-stack, .collection-links { grid-column: 1; }
-    .further-pair { gap: 2rem; grid-template-columns: 1fr 1fr; }
-    .further-product--nakup { grid-template-columns: 1fr; }
-    .further-product--nakup .collection-figure { max-width: 220px; }
+/* ------------------------------------------------------------------ */
+/* the homepage's width                                                */
+/* ------------------------------------------------------------------ */
+
+/* the page uses the screen: a gutter that grows with it and a cap far out at
+   2400px. width goes to putting things side by side and to bigger screenshots;
+   prose keeps its own measure inside that */
+:root {
+  --gutter: clamp(1.25rem, 4vw, 5rem);
+  --wide-max: 150rem;
 }
-@media (max-width: 600px) {
-    .collection-intro { display: block; }
-    .collection-intro > p { margin-top: 1rem; }
-    .collection-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 2rem; }
-    .collection-tabs button > span:first-child { font-size: .95rem; }
-    .collection-tab-purpose { font-size: .72rem; }
-    .collection-story { display: block; }
-    .collection-detail { font-size: .95rem; }
-    .collection-summary { font-size: 1.08rem; }
-    .further-pair { grid-template-columns: 1fr; gap: 3rem; }
-    .further-product--nakup { grid-template-columns: 1fr; gap: 1.5rem; }
-    .further-product--nakup .collection-figure { max-width: 240px; }
-    .further-small { grid-template-columns: 1fr; gap: 1.4rem; margin-top: 2.5rem; }
-    .day-job .container { display: block; }
-    .day-job h2 { margin-bottom: .6rem; }
+
+.wide,
+.home .container {
+  width: min(100% - 2 * var(--gutter), var(--wide-max));
+  margin-inline: auto;
+}
+
+/* the hero copy lines up with everything under it, and still keeps clear of the
+   falls the sim runs down both edges of the canvas */
+.home .weather-hero .hero-copy {
+  width: min(100% - max(2 * var(--gutter), 2 * (var(--shaft, 0px) + 0.5rem)), var(--wide-max));
+}
+
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* the mark for "this one has a toy": the page's square grain, in raspberry */
+.toy-mark {
+  display: inline-block;
+  width: 0.5em;
+  height: 0.5em;
+  background: var(--rasp);
+  vertical-align: 0.1em;
+  flex: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* the collection                                                      */
+/* ------------------------------------------------------------------ */
+
+.collection {
+  padding-block: clamp(3.5rem, 7vw, 6.5rem) clamp(2rem, 4vw, 3rem);
+}
+
+.collection-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 34rem) minmax(0, 1fr);
+  gap: 2.5rem clamp(3rem, 6vw, 8rem);
+  align-items: end;
+  margin-bottom: clamp(2.5rem, 5vw, 4.5rem);
+}
+
+.collection-letter h2 {
+  font-size: clamp(2.2rem, 4.2vw, 4rem);
+  line-height: 1.04;
+}
+
+.collection-letter h2 span {
+  color: var(--muted);
+}
+
+.collection-letter p {
+  margin-top: 1.4rem;
+  max-width: 44ch;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.collection-letter .toy-mark {
+  margin-inline: 0.05em;
+}
+
+/* the index is the way around now: every project, its one-line purpose, and a
+   grain where there is something to poke */
+.collection-index ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+  column-gap: 2rem;
+}
+
+.collection-index li {
+  border-top: 1px solid var(--hairline);
+}
+
+.collection-index a {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.85rem 0 1rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.index-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 750;
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+  transition: color 160ms var(--ease-out);
+}
+
+.index-name .toy-mark {
+  width: 0.42rem;
+  height: 0.42rem;
+}
+
+.index-purpose {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.collection-index a:hover .index-name {
+  color: var(--rasp-deep);
+}
+
+/* ------------------------------------------------------------------ */
+/* a spread: the words, the toy, the screenshot                        */
+/* ------------------------------------------------------------------ */
+
+.spread {
+  display: grid;
+  gap: 2.25rem clamp(2rem, 3vw, 3.5rem);
+  align-items: start;
+  padding-block: clamp(2.75rem, 5vw, 4.5rem);
+  border-top: 1px solid var(--hairline);
+  scroll-margin-top: 1rem;
+}
+
+.spread-copy {
+  grid-area: copy;
+  min-width: 0;
+}
+
+.spread-toy {
+  grid-area: toy;
+}
+
+.spread-shot {
+  grid-area: shot;
+  min-width: 0;
+}
+
+.spread-purpose {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-bottom: 0.7rem;
+}
+
+.spread-copy h3,
+.pair-copy h3,
+.further-copy h3 {
+  font-size: clamp(1.9rem, 3vw, 2.7rem);
+  line-height: 1.05;
+  margin: 0 0 0.9rem;
+}
+
+.spread-summary {
+  font-size: 1.2rem;
+  line-height: 1.45;
+  font-weight: 500;
+  margin-bottom: 0.9rem;
+  max-width: 34ch;
+}
+
+.spread-detail {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  max-width: 60ch;
+  margin-bottom: 1.2rem;
+}
+
+.spread-use {
+  font-size: 0.8rem;
+  color: var(--rasp-deep);
+  margin-bottom: 0.35rem;
+}
+
+.spread-stack {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  line-height: 1.8;
+  color: var(--muted);
+}
+
+.spread-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.4rem;
+  list-style: none;
+  margin: 1.3rem 0 0;
+  padding: 0;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+/* ------------------------------------------------------------------ */
+/* the toy frame                                                       */
+/* ------------------------------------------------------------------ */
+
+.mini {
+  margin: 0;
+  min-width: 0;
+}
+
+.mini-stage {
+  container-type: inline-size;
+}
+
+/* the slot before the toy arrives: the same footprint, a quiet tint, no spinner */
+.mini-wait {
+  height: 100%;
+  min-height: inherit;
+  border-radius: 0.5rem;
+  background: color-mix(in oklch, var(--ink) 4%, var(--bg));
+  display: grid;
+  place-items: center;
+}
+
+.mini-wait-grain {
+  width: 6px;
+  height: 6px;
+  background: var(--rasp);
+  opacity: 0.6;
+}
+
+.mini-caption {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+  max-width: 58ch;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.mini-caption .toy-mark {
+  width: 0.45rem;
+  height: 0.45rem;
+  flex: none;
+  vertical-align: 0;
+  transform: translateY(-0.05rem);
+}
+
+.mini-caption b {
+  color: var(--rasp-deep);
+  font-weight: 650;
+}
+
+/* ------------------------------------------------------------------ */
+/* screenshots                                                         */
+/* ------------------------------------------------------------------ */
+
+.collection-figure {
+  margin: 0;
+  min-width: 0;
+}
+
+.collection-image {
+  display: block;
+  position: relative;
+  color: var(--ink);
+}
+
+/* the frame is tinted before the shot arrives, so a lazy image is a calm block
+   of the right shape instead of an empty hole */
+.collection-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.4rem;
+  background: color-mix(in oklch, var(--ink) 5%, var(--bg));
+  box-shadow:
+    0 0 0 1px var(--hairline),
+    0 14px 36px -18px oklch(0.18 0.015 357 / 0.35);
+}
+
+.collection-enlarge {
+  position: absolute;
+  right: 0.65rem;
+  bottom: 0.65rem;
+  background: var(--ink);
+  color: var(--bg);
+  padding: 0.25rem 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  border-radius: 999px;
+  opacity: 0;
+  transform: translateY(3px);
+  transition:
+    opacity 160ms var(--ease-out),
+    transform 160ms var(--ease-out);
+}
+
+.collection-image:hover .collection-enlarge,
+.collection-image:focus-visible .collection-enlarge {
+  opacity: 1;
+  transform: none;
+}
+
+@media (hover: none) {
+  .collection-enlarge {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.collection-figure figcaption {
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-top: 0.75rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* the pair: two projects side by side                                 */
+/* ------------------------------------------------------------------ */
+
+.pair {
+  display: grid;
+  gap: clamp(2.75rem, 5vw, 4.5rem) clamp(2rem, 3vw, 3.5rem);
+  padding-block: clamp(2.75rem, 5vw, 4.5rem) 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.pair-item {
+  display: grid;
+  gap: 1.75rem;
+  align-content: start;
+  scroll-margin-top: 1rem;
+  min-width: 0;
+}
+
+.pair-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 1rem clamp(1.5rem, 3vw, 3rem);
+}
+
+.pair-copy .spread-detail {
+  margin-top: 1.6rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* different itches                                                    */
+/* ------------------------------------------------------------------ */
+
+.further {
+  padding-block: clamp(3.5rem, 7vw, 6rem);
+  background: var(--surface);
+}
+
+.further-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 2rem;
+  margin-bottom: clamp(2rem, 4vw, 3.5rem);
+}
+
+.further h2 {
+  font-size: clamp(2rem, 3.6vw, 3.2rem);
+}
+
+.further-lede {
+  color: var(--muted);
+}
+
+.further-pair {
+  display: grid;
+  gap: clamp(3rem, 5vw, 5rem);
+  align-items: start;
+}
+
+.further-product {
+  scroll-margin-top: 1rem;
+  min-width: 0;
+}
+
+.further-copy p {
+  font-size: 0.95rem;
+  max-width: 52ch;
+}
+
+.further-copy p + p {
+  margin-top: 0.8rem;
+}
+
+.further-copy .spread-summary {
+  font-size: 1.2rem;
+}
+
+.further-cookie {
+  display: grid;
+  gap: 1.75rem;
+}
+
+.further-cookie .further-copy {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.6rem clamp(1.5rem, 3vw, 3rem);
+  align-items: start;
+}
+
+.further-cookie .further-copy h3 {
+  grid-row: 1 / span 3;
+}
+
+.further-cookie .further-copy > * {
+  grid-column: 2;
+}
+
+.further-cookie .further-copy > h3 {
+  grid-column: 1;
+}
+
+.further-copy .spread-stack {
+  font-size: 0.68rem;
+}
+
+.further-copy .spread-use {
+  font-size: 0.8rem;
+}
+
+.further-copy .spread-links {
+  margin-top: 0.6rem;
+}
+
+.further-nakup {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1fr) minmax(0, 23.5rem);
+  grid-template-areas:
+    'copy toy'
+    'phone toy';
+  gap: 1.5rem clamp(1.75rem, 3vw, 3rem);
+  align-items: start;
+}
+
+.further-nakup .further-copy {
+  grid-area: copy;
+}
+
+.further-toy {
+  grid-area: toy;
+}
+
+.further-phone {
+  grid-area: phone;
+  max-width: 13rem;
+}
+
+.further-small {
+  margin: clamp(3rem, 5vw, 4.5rem) 0 0;
+  padding: 1.5rem 0 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 2rem clamp(2rem, 3vw, 3.5rem);
+  border-top: 1px solid var(--hairline);
+}
+
+.further-small h3 {
+  font-size: 1.15rem;
+  margin: 0 0 0.5rem;
+}
+
+.further-small p {
+  font-size: 0.86rem;
+  color: var(--muted);
+  max-width: 48ch;
+}
+
+.collection-archive summary {
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.collection-archive ul {
+  padding-left: 1.1rem;
+  margin: 0.8rem 0 0;
+  font-size: 0.84rem;
+  color: var(--muted);
+  display: grid;
+  gap: 0.5rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* the day job line                                                    */
+/* ------------------------------------------------------------------ */
+
+.day-job {
+  padding-block: 3rem;
+}
+
+.day-job .container {
+  display: flex;
+  gap: 2rem;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.day-job h2 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.day-job p {
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* layouts by width                                                    */
+/* ------------------------------------------------------------------ */
+
+/* phones and narrow tablets: one column, the toy straight after the words */
+.spread--toy {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'copy'
+    'toy'
+    'shot';
+}
+
+.spread--plain {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'copy'
+    'shot';
+}
+
+/* laptops: the words and the toy share a row, the screenshot gets the full width
+   under them, which is the only way a 1440px shot stays readable on a 1440px screen */
+@media (min-width: 900px) {
+  .spread--toy {
+    grid-template-columns: minmax(0, 1fr) minmax(26rem, 36rem);
+    grid-template-areas:
+      'copy toy'
+      'shot shot';
+  }
+
+  .spread--plain .spread-copy,
+  .spread--toy .spread-copy {
+    max-width: 44rem;
+  }
+
+  .spread-shot {
+    max-width: 90rem;
+  }
+
+  .further-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* big screens: everything in one row. words, toy, then the screenshot as large as
+   the row allows, capped at its own pixels */
+@media (min-width: 1700px) {
+  .spread--toy {
+    grid-template-columns: minmax(18rem, 24rem) minmax(32rem, 40rem) minmax(0, 1fr);
+    grid-template-areas: 'copy toy shot';
+  }
+
+  .spread--plain {
+    grid-template-columns: minmax(19rem, 1fr) minmax(0, 90rem);
+    grid-template-areas: 'copy shot';
+  }
+
+  .spread--plain .spread-copy {
+    max-width: 34rem;
+  }
+
+  .pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .further-pair {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  }
+
+  .further-nakup {
+    grid-template-columns: minmax(14rem, 1fr) minmax(0, 23.5rem);
+  }
+}
+
+@media (min-width: 2100px) {
+  .further-nakup {
+    grid-template-columns: minmax(16rem, 1fr) 23.5rem 12rem;
+    grid-template-areas: 'copy toy phone';
+  }
+}
+
+@media (max-width: 899px) {
+  .collection-intro {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .pair-copy {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pair-copy .spread-detail {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .collection-index ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1rem;
+  }
+
+  .index-name {
+    font-size: 0.98rem;
+  }
+
+  .index-purpose {
+    font-size: 0.74rem;
+  }
+
+  .further-cookie .further-copy {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .further-cookie .further-copy > *,
+  .further-cookie .further-copy > h3 {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .further-nakup {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'copy'
+      'toy'
+      'phone';
+  }
+
+  .further-phone {
+    max-width: 14rem;
+  }
+
+  .day-job .container {
+    display: block;
+  }
+
+  .day-job h2 {
+    margin-bottom: 0.6rem;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* hero copy, footer and day job on the wide page                      */
+/* ------------------------------------------------------------------ */
+
+.home .weather-hero .hero-copy .lede {
+  max-width: 46ch;
+}
+
+@media (min-width: 1300px) {
+  .home .weather-hero .hero-copy {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 27rem);
+    column-gap: clamp(3rem, 6vw, 8rem);
+    align-items: end;
+  }
+
+  .home .weather-hero .hero-copy > * {
+    grid-column: 1;
+  }
+
+  .home .weather-hero .hero-copy .hero-note {
+    grid-column: 2;
+    grid-row: 2 / span 2;
+    align-self: end;
+    margin: 0 0 1.5rem;
+  }
+}
+
+.home .day-job .container {
+  justify-content: flex-start;
+  gap: 1.5rem;
+}
+
+.home .day-job p {
+  color: var(--muted);
+}
+
+@media (min-width: 1100px) {
+  .home .footer .container {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'title links'
+      'lede links'
+      'hire colophon';
+    column-gap: clamp(3rem, 6vw, 8rem);
+    align-items: start;
+  }
+
+  .home .footer h2 {
+    grid-area: title;
+  }
+
+  .home .footer .footer-lede {
+    grid-area: lede;
+  }
+
+  .home .footer .footer-hire {
+    grid-area: hire;
+    align-self: end;
+  }
+
+  .home .footer .footer-links {
+    grid-area: links;
+    flex-direction: column;
+    margin-top: 0.6rem;
+    align-self: start;
+  }
+
+  .home .footer .footer-links a {
+    font-size: clamp(1.4rem, 2.4vw, 2.4rem);
+    letter-spacing: -0.02em;
+  }
+
+  .home .footer .colophon {
+    grid-area: colophon;
+    align-self: end;
+  }
 }

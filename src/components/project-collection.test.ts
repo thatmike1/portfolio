@@ -1,54 +1,79 @@
 // @vitest-environment jsdom
-import { act, createElement } from "react";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { createElement } from "react";
+import { render, screen, fireEvent, cleanup, act } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ProjectCollection } from "./project-collection";
+import { SHOWCASE } from "../lib/showcase";
+import { parse } from "./minis/nakup-parse";
+import TallyMini from "./minis/tally-mini";
+import BeadsideMini from "./minis/beadside-mini";
 
-beforeEach(() => window.history.replaceState(null, "", "/"));
-afterEach(cleanup);
+afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+});
 
 describe("project collection", () => {
-    it("moves keyboard focus and selection together, wraps, and leaves the preview reachable", () => {
-        render(createElement(ProjectCollection));
-        const tabs = screen.getAllByRole("tab");
-        tabs[0].focus();
-        fireEvent.keyDown(tabs[0], { key: "ArrowLeft" });
-        expect(document.activeElement).toBe(tabs.at(-1));
-        expect(tabs.at(-1)?.getAttribute("aria-selected")).toBe("true");
-        expect(screen.getAllByRole("tabpanel")).toHaveLength(1);
-        fireEvent.keyDown(document.activeElement ?? tabs[0], { key: "Home" });
-        expect(document.activeElement).toBe(tabs[0]);
-        fireEvent.keyDown(tabs[0], { key: "ArrowRight" });
-        expect(window.location.hash).toBe("#font-tinder");
-        expect(screen.getByRole("tabpanel").id).toBe("font-tinder");
-        expect(tabs.filter((tab) => tab.tabIndex === 0)).toEqual([tabs[1]]);
-    });
-
-    it("opens a project permalink and follows browser history without stealing focus", () => {
-        window.history.replaceState(null, "", "/#model-map");
-        render(createElement(ProjectCollection));
-        expect(screen.getByRole("tabpanel").id).toBe("model-map");
-        fireEvent.click(screen.getByRole("tab", { name: /tally/ }));
-        expect(window.location.hash).toBe("#tally");
-        act(() => {
-            window.history.replaceState(null, "", "/#model-map");
-            window.dispatchEvent(new PopStateEvent("popstate"));
-        });
-        expect(screen.getByRole("tabpanel").id).toBe("model-map");
-        act(() => {
-            window.history.replaceState(null, "", "/#say-hi");
-            window.dispatchEvent(new HashChangeEvent("hashchange"));
-        });
-        expect(screen.getByRole("tabpanel").id).toBe("model-map");
-    });
-
-    it("keeps the full collection and outbound links available without javascript", () => {
+    it("puts every featured project on the page at once, with no tabs to hide any of them", () => {
         const html = renderToString(createElement(ProjectCollection));
-        expect(html).toContain('id="beadside"');
-        expect(html).toContain('id="model-map"');
-        expect(html).toContain('id="t3-code"');
-        expect(html).toContain('href="https://models.thatmike1.dev/"');
-        expect(html).not.toContain(' hidden=""');
+        for (const project of SHOWCASE) {
+            expect(html).toContain(`id="${project.id}"`);
+            expect(html).toContain(`href="#${project.id}"`);
+            for (const link of project.links) expect(html).toContain(`href="${link.href}"`);
+        }
+        expect(html).not.toContain('role="tab"');
+        expect(html).not.toContain(" hidden=");
+    });
+
+    it("leaves the toys out of the server render, so they cost nothing until someone gets near", () => {
+        const html = renderToString(createElement(ProjectCollection));
+        expect(html).toContain("mini-wait");
+        expect(html).not.toContain("tally-chart");
+        expect(html).not.toContain("bs-composer");
+    });
+});
+
+describe("nákup's quantity parser", () => {
+    it("reads a leading or trailing count and a unit, and files the thing by aisle", () => {
+        expect(parse("2x bananas")).toEqual({ name: "Bananas", qty: "2×", aisle: "fruit and veg" });
+        expect(parse("eggs 6×")).toEqual({ name: "Eggs", qty: "6×", aisle: "dairy and eggs" });
+        expect(parse("flour 1kg")).toEqual({ name: "Flour", qty: "1 kg", aisle: "pantry" });
+        expect(parse("a new kettle")).toEqual({
+            name: "A new kettle",
+            qty: undefined,
+            aisle: "other",
+        });
+        expect(parse("   ")).toBeNull();
+    });
+});
+
+describe("tally miniature", () => {
+    it("scrubs the block by keyboard and comes back to now on escape", () => {
+        render(createElement(TallyMini));
+        const chart = screen.getByRole("slider");
+        expect(chart.getAttribute("aria-valuenow")).toBe("54");
+        fireEvent.keyDown(chart, { key: "Home" });
+        expect(chart.getAttribute("aria-valuenow")).toBe("0");
+        fireEvent.keyDown(chart, { key: "ArrowRight" });
+        expect(chart.getAttribute("aria-valuetext")).toMatch(/^20:27: 2%/);
+        fireEvent.keyDown(chart, { key: "Escape" });
+        expect(chart.getAttribute("aria-valuenow")).toBe("54");
+    });
+});
+
+describe("beadside miniature", () => {
+    it("flags the bead with your note, then lets the next session answer and clear the flag", () => {
+        vi.useFakeTimers();
+        render(createElement(BeadsideMini));
+        fireEvent.click(screen.getByRole("button", { name: "iso. it sorts." }));
+        expect(screen.getByText("your note, still unread")).toBeTruthy();
+        act(() => {
+            vi.advanceTimersByTime(4000);
+        });
+        expect(screen.getByText(/going with iso/)).toBeTruthy();
+        expect(screen.queryByText("your note, still unread")).toBeNull();
+        fireEvent.click(screen.getByRole("button", { name: "start over" }));
+        expect(screen.getByRole("button", { name: "iso. it sorts." })).toBeTruthy();
     });
 });

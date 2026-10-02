@@ -1,20 +1,22 @@
+import { lazy } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { WeatherHero } from "../components/weather-hero";
 import { HeroCopy } from "../components/hero-copy";
 import { GrainCursor } from "../components/grain-cursor";
 import { ExperienceCustody } from "../components/experience-custody";
 import { LightboxProvider } from "../components/lightbox";
-import { SectionNav } from "../components/section-nav";
 import { ProjectCollection, ProjectImage } from "../components/project-collection";
+import { LazyMini } from "../components/minis/lazy-mini";
 
 export const Route = createFileRoute("/")({ component: Home });
+
+const NakupMini = lazy(() => import("../components/minis/nakup-mini"));
 
 function Home() {
     return (
         <LightboxProvider>
-            <main>
+            <main className="home">
                 <GrainCursor />
-                <SectionNav />
                 <header className="hero" id="top">
                     <WeatherHero>
                         <HeroCopy />
@@ -22,13 +24,15 @@ function Home() {
                 </header>
                 <ProjectCollection />
                 <section className="further" id="smaller-things" aria-labelledby="further-heading">
-                    <div className="container">
-                        <h2 id="further-heading">different itches.</h2>
-                        <p className="further-lede">
-                            a small business, a shared list, a little room to play.
-                        </p>
+                    <div className="wide">
+                        <div className="further-head">
+                            <h2 id="further-heading">different itches.</h2>
+                            <p className="further-lede">
+                                a small business, a shared list, a little room to play.
+                            </p>
+                        </div>
                         <div className="further-pair">
-                            <article className="further-product" id="good-cookie">
+                            <article className="further-product further-cookie" id="good-cookie">
                                 <ProjectImage
                                     image={{
                                         src: "/showcase/good-cookie.webp",
@@ -38,56 +42,71 @@ function Home() {
                                         caption: "a working banner demo on a made-up shop",
                                     }}
                                 />
-                                <h3>Good Cookie</h3>
-                                <p>
-                                    one payment, your own files. a short wizard turns a site's
-                                    answers into privacy pages and a self-hosted consent banner. i
-                                    built the product, checkout and zip delivery. a small business
-                                    experiment, shipped and open for business.
-                                </p>
-                                <p className="collection-stack">
-                                    node · express · stripe · file generation
-                                </p>
-                                <p>
-                                    <a href="https://goodcookie.app/">
-                                        try the banner <span aria-hidden="true">↗</span>
-                                    </a>
-                                </p>
+                                <div className="further-copy">
+                                    <h3>Good Cookie</h3>
+                                    <p>
+                                        one payment, your own files. a short wizard turns a site's
+                                        answers into privacy pages and a self-hosted consent banner.
+                                        i built the product, checkout and zip delivery. a small
+                                        business experiment, shipped and open for business.
+                                    </p>
+                                    <p className="spread-stack">
+                                        node · express · stripe · file generation
+                                    </p>
+                                    <ul className="spread-links">
+                                        <li>
+                                            <a href="https://goodcookie.app/">try the banner</a>
+                                        </li>
+                                    </ul>
+                                </div>
                             </article>
-                            <article className="further-product further-product--nakup" id="nakup">
-                                <ProjectImage
-                                    image={{
-                                        src: "/showcase/nakup.webp",
-                                        width: 440,
-                                        height: 850,
-                                        alt: "Nákup with invented groceries and anonymous people, in blue and yellow inks",
-                                        caption: "the actual app · invented groceries and people",
-                                    }}
-                                />
-                                <div>
+                            <article className="further-product further-nakup" id="nakup">
+                                <div className="further-copy">
                                     <h3>nákup</h3>
-                                    <p>
-                                        a grocery list for two people, one ink each. it works in the
-                                        supermarket basement, syncs when signal returns, and
-                                        remembers which aisle a thing belongs in.
+                                    <p className="spread-summary">
+                                        a grocery list for two people, one ink each.
                                     </p>
                                     <p>
-                                        small on purpose. optimistic operations, retry-safe sync and
-                                        a list that gets easier to use the more you use it.
+                                        it works in the supermarket basement, syncs when signal
+                                        returns, and remembers which aisle a thing belongs in.
+                                        small on purpose: optimistic operations, retry-safe sync,
+                                        and a list that gets easier the more you use it.
                                     </p>
-                                    <p className="collection-stack">
+                                    <p className="spread-use">in real household use · private app</p>
+                                    <p className="spread-stack">
                                         react · typescript · node · sse · offline replay
                                     </p>
-                                    <p className="collection-use">
-                                        in real household use · private app
-                                    </p>
+                                </div>
+                                <LazyMini
+                                    toy={NakupMini}
+                                    label="a working miniature of nákup, with invented people and groceries"
+                                    minHeight="38rem"
+                                    className="further-toy"
+                                    caption={
+                                        <>
+                                            <b>try it:</b> pick whose phone, tick something the
+                                            other one added. the list is private, so the people and
+                                            groceries are made up.
+                                        </>
+                                    }
+                                />
+                                <div className="further-phone">
+                                    <ProjectImage
+                                        image={{
+                                            src: "/showcase/nakup.webp",
+                                            width: 440,
+                                            height: 850,
+                                            alt: "Nákup with invented groceries and anonymous people, in blue and yellow inks",
+                                            caption: "the actual app · invented groceries and people",
+                                        }}
+                                    />
                                 </div>
                             </article>
                         </div>
                         <ul className="further-small">
                             <li id="powder-lab">
                                 <h3>
-                                    <a href="https://powder.ssscribe.app/">powder lab ↗</a>
+                                    <a href="https://powder.ssscribe.app/">powder lab</a>
                                 </h3>
                                 <p>
                                     falling sand, reactive materials and deterministic multiplayer.
@@ -107,7 +126,7 @@ function Home() {
                             </li>
                             <li id="reader">
                                 <h3>
-                                    <a href="https://read.thatmike1.dev/">Reader ↗</a>
+                                    <a href="https://read.thatmike1.dev/">Reader</a>
                                 </h3>
                                 <p>
                                     a finite edition instead of an endless feed. exact reading
@@ -115,29 +134,35 @@ function Home() {
                                     continuing rather than starting over.
                                 </p>
                             </li>
+                            <li className="further-archive">
+                                <details className="collection-archive">
+                                    <summary>older experiments, still worth a look</summary>
+                                    <ul>
+                                        <li>
+                                            <a href="https://ontask.ssscribe.app/">on-task</a>: a
+                                            desktop creature that noticed when i drifted. the daemon
+                                            is retired; the interactive site survives.
+                                        </li>
+                                        <li>
+                                            <a href="https://thatmike1.github.io/cc-bench/">
+                                                cc-bench
+                                            </a>
+                                            : an instrument for measuring what an agent config
+                                            changes. the tool is built; the research question is
+                                            still open.{" "}
+                                            <a href="https://github.com/thatmike1/cc-bench">source</a>.
+                                        </li>
+                                        <li>
+                                            <a href="https://github.com/thatmike1/aw-watcher-git">
+                                                aw-watcher-git
+                                            </a>
+                                            : editor-independent repo and branch tracking for
+                                            ActivityWatch.
+                                        </li>
+                                    </ul>
+                                </details>
+                            </li>
                         </ul>
-                        <details className="collection-archive">
-                            <summary>older experiments, still worth a look</summary>
-                            <ul>
-                                <li>
-                                    <a href="https://ontask.ssscribe.app/">on-task</a>: a desktop
-                                    creature that noticed when i drifted. the daemon is retired; the
-                                    interactive site survives.
-                                </li>
-                                <li>
-                                    <a href="https://thatmike1.github.io/cc-bench/">cc-bench</a>: an
-                                    instrument for measuring what an agent config changes. the tool
-                                    is built; the research question is still open.{" "}
-                                    <a href="https://github.com/thatmike1/cc-bench">source</a>.
-                                </li>
-                                <li>
-                                    <a href="https://github.com/thatmike1/aw-watcher-git">
-                                        aw-watcher-git
-                                    </a>
-                                    : editor-independent repo and branch tracking for ActivityWatch.
-                                </li>
-                            </ul>
-                        </details>
                     </div>
                 </section>
                 <ExperienceCustody />

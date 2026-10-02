@@ -11,7 +11,7 @@ export type ShowcaseProject = {
     links: ShowcaseLink[];
 };
 
-/** the homepage and recruiter shortlist share the same project facts */
+/** the homepage and recruiter shortlist share the same project facts, in the order mike ranks them */
 export const SHOWCASE: ShowcaseProject[] = [
     {
         id: "beadside",
@@ -29,40 +29,6 @@ export const SHOWCASE: ShowcaseProject[] = [
             caption: "the real board, with an invented backlog",
         },
         links: [{ href: "https://github.com/thatmike1/beadside", label: "get beadside" }],
-    },
-    {
-        id: "font-tinder",
-        name: "font tinder",
-        purpose: "find the font you stop noticing",
-        summary: "a font picker that learns what my eyes like.",
-        detail: "swipe on fonts inside a chat, a long read or a bit of ui. names stay hidden, x-height and stroke darkness stay matched, and the next pick learns from the last one. duel the shortlist, explore the shape map, then take the css home. passkeys keep your picks across devices.",
-        use: "public app · i use it to choose type",
-        stack: "react · typescript · font analysis · umap · passkeys",
-        image: {
-            src: "/showcase/fonts.webp",
-            width: 1440,
-            height: 900,
-            alt: "Font tinder compares an anonymous font in a chat and a long reading sample, with swipe controls below",
-            caption: "judge the font in the places you'll actually read it",
-        },
-        links: [{ href: "https://fonts.thatmike1.dev/", label: "find your font" }],
-    },
-    {
-        id: "diskzokej",
-        name: "diskzokej",
-        purpose: "something good in the background",
-        summary: "i made myself a dj. now there's a radio dial for everyone.",
-        detail: "tell it what you're doing and it finds music that fits. my own version drives spotify; the public one is a dial of stations from quiet drones to very unquiet things. tuning, favorites, now-playing and the player all belong to the same little instrument.",
-        use: "i listen all day · public radio needs no account",
-        stack: "react · node · spotify · streaming audio · ai routing",
-        image: {
-            src: "/showcase/diskzokej.webp",
-            width: 1440,
-            height: 900,
-            alt: "Diskzokej's public radio dial with stations arranged from drift to loud, and a quiet player",
-            caption: "the public dial · it stays quiet until you press play",
-        },
-        links: [{ href: "https://diskzokej.thatmike1.dev/", label: "turn the dial" }],
     },
     {
         id: "tally",
@@ -118,18 +84,38 @@ export const SHOWCASE: ShowcaseProject[] = [
             { href: "https://github.com/thatmike1/t3code", label: "the fork" },
         ],
     },
+    {
+        id: "font-tinder",
+        name: "font tinder",
+        purpose: "find the font you stop noticing",
+        summary: "a font picker that learns what my eyes like.",
+        detail: "swipe on fonts inside a chat, a long read or a bit of ui. names stay hidden, x-height and stroke darkness stay matched, and the next pick learns from the last one. duel the shortlist, explore the shape map, then take the css home. passkeys keep your picks across devices.",
+        use: "public app · i use it to choose type",
+        stack: "react · typescript · font analysis · umap · passkeys",
+        image: {
+            src: "/showcase/fonts.webp",
+            width: 1440,
+            height: 900,
+            alt: "Font tinder compares an anonymous font in a chat and a long reading sample, with swipe controls below",
+            caption: "judge the font in the places you'll actually read it",
+        },
+        links: [{ href: "https://fonts.thatmike1.dev/", label: "find your font" }],
+    },
+    {
+        id: "diskzokej",
+        name: "diskzokej",
+        purpose: "something good in the background",
+        summary: "i made myself a dj. now there's a radio dial for everyone.",
+        detail: "tell it what you're doing and it finds music that fits. my own version drives spotify; the public one is a dial of stations from quiet drones to very unquiet things. tuning, favorites, now-playing and the player all belong to the same little instrument.",
+        use: "i listen all day · public radio needs no account",
+        stack: "react · node · spotify · streaming audio · ai routing",
+        image: {
+            src: "/showcase/diskzokej.webp",
+            width: 1440,
+            height: 900,
+            alt: "Diskzokej's public radio dial with stations arranged from drift to loud, and a quiet player",
+            caption: "the public dial · it stays quiet until you press play",
+        },
+        links: [{ href: "https://diskzokej.thatmike1.dev/", label: "turn the dial" }],
+    },
 ];
-
-/** a fragment names a project only when it belongs to this collection */
-export function projectIndex(hash: string): number {
-    return SHOWCASE.findIndex((project) => `#${project.id}` === hash);
-}
-
-/** roving tabs wrap at the ends, including the up/down aliases */
-export function nextProjectIndex(key: string, current: number, length: number): number | null {
-    if (key === "Home") return 0;
-    if (key === "End") return length - 1;
-    if (key === "ArrowRight" || key === "ArrowDown") return (current + 1) % length;
-    if (key === "ArrowLeft" || key === "ArrowUp") return (current + length - 1) % length;
-    return null;
-}

@@ -1,0 +1,161 @@
+.mm-mini {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* the readout keeps its height whichever dot is lit, so the chart never hops */
+.mm-readout {
+  min-height: 6.6rem;
+  display: grid;
+  align-content: start;
+  gap: 0.2rem;
+}
+
+.mm-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.mm-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  flex: none;
+}
+
+.mm-effort {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 0.72rem;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+.mm-figures {
+  font-size: 0.92rem;
+}
+
+.mm-figures strong {
+  font-weight: 750;
+}
+
+.mm-verdict {
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--muted);
+  max-width: 58ch;
+}
+
+.mm-chart {
+  position: relative;
+  min-width: 0;
+  touch-action: pan-y;
+  cursor: crosshair;
+}
+
+.mm-chart:focus-visible {
+  outline-offset: 4px;
+}
+
+.mm-chart svg {
+  display: block;
+  overflow: visible;
+}
+
+.mm-grid line {
+  stroke: var(--hairline);
+  stroke-width: 1;
+}
+
+.mm-axis text {
+  fill: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+}
+
+.mm-frontier {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.25;
+  stroke-dasharray: 4 4;
+  opacity: 0.55;
+}
+
+/* the page's own background rings each dot, so a cluster stays a cluster of dots in
+   every look rather than one coloured smear */
+.mm-pt {
+  stroke: var(--bg);
+  stroke-width: 1.25;
+}
+
+.mm-pt.is-kin {
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+
+.mm-ladder {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.mm-ladder-label {
+  fill: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.mm-ladder-label.is-active {
+  font-weight: 700;
+}
+
+.mm-active {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.mm-foot {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.mm-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--muted);
+}
+
+.mm-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.mm-legend i {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+}
+
+.mm-source {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  line-height: 1.7;
+  color: var(--muted);
+}

@@ -1,0 +1,399 @@
+/* beadside in miniature: its index on the left, the open bead on the right, the
+   composer at the foot. the page's own tokens, so it sits in every look; the agent
+   gets beadside's blue, lifted on the dark looks so it still reads */
+.bs-mini {
+  --agent: oklch(0.47 0.14 262);
+  --flag-bg: color-mix(in oklch, var(--rasp) 13%, var(--bg));
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr);
+  min-height: 30rem;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  background: var(--bg);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--hairline);
+}
+
+:root:is([data-theme='dark'], [data-theme='dusk']) .bs-mini {
+  --agent: oklch(0.78 0.1 262);
+  --flag-bg: color-mix(in oklch, var(--rasp) 26%, var(--bg));
+}
+
+.bs-index {
+  background: var(--surface);
+  padding: 0.9rem 0.9rem 1rem;
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+}
+
+.bs-brand {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.bs-brand span {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.bs-counts {
+  margin-top: -0.55rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.bs-counts b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.bs-counts em {
+  font-style: normal;
+}
+
+.bs-counts em.is-on {
+  color: var(--rasp-deep);
+}
+
+.bs-section ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bs-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--hairline);
+  font-weight: 650;
+  font-size: 0.74rem;
+}
+
+.bs-section-head small {
+  font-weight: 400;
+  font-size: 0.62rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bs-section.is-hot .bs-section-head span {
+  color: var(--rasp-deep);
+}
+
+.bs-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.32rem 0.3rem;
+  margin-inline: -0.3rem;
+  font-size: 0.76rem;
+  border-radius: 0.2rem;
+}
+
+.bs-row.is-open {
+  background: color-mix(in oklch, var(--ink) 8%, transparent);
+}
+
+.bs-row-id {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--muted);
+}
+
+.bs-row-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bs-row.is-open .bs-row-title {
+  font-weight: 650;
+}
+
+.bs-row-label,
+.bs-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  padding: 0.05rem 0.35rem;
+  border-radius: 0.2rem;
+  background: var(--flag-bg);
+  color: var(--rasp-deep);
+  white-space: nowrap;
+}
+
+.bs-row-label.is-quiet {
+  background: color-mix(in oklch, var(--ink) 8%, transparent);
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* the open bead */
+.bs-detail {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  padding: 0.9rem 1rem 0;
+  min-width: 0;
+}
+
+.bs-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.6rem;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.bs-id {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--ink);
+}
+
+.bs-lane {
+  color: oklch(0.55 0.11 60);
+  font-weight: 600;
+}
+
+:root:is([data-theme='dark'], [data-theme='dusk']) .bs-lane {
+  color: oklch(0.8 0.11 70);
+}
+
+.bs-label {
+  transition: opacity 220ms var(--ease-out);
+}
+
+.bs-label.is-gone {
+  opacity: 0;
+}
+
+.bs-reset {
+  margin-left: auto;
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.7rem;
+  color: var(--rasp-deep);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, currentColor 45%, transparent);
+  text-underline-offset: 0.18em;
+  cursor: pointer;
+}
+
+.bs-title {
+  margin: 0.45rem 0 0.7rem;
+  font-size: 1.15rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 750;
+}
+
+.bs-thread {
+  display: grid;
+  align-content: start;
+  gap: 0.8rem;
+}
+
+.bs-block h5 {
+  margin: 0 0 0.35rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 0.68rem;
+  font-weight: 650;
+  color: var(--muted);
+  letter-spacing: 0;
+}
+
+.bs-comment {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.45rem;
+  padding: 0.3rem 0;
+}
+
+.bs-comment + .bs-comment {
+  border-top: 1px solid var(--hairline);
+}
+
+.bs-who {
+  font-weight: 650;
+  color: var(--agent);
+}
+
+.bs-who--you {
+  color: var(--rasp-deep);
+}
+
+.bs-tag {
+  font-size: 0.6rem;
+  padding: 0 0.3rem;
+  border-radius: 0.2rem;
+  background: color-mix(in oklch, var(--ink) 8%, transparent);
+  color: var(--muted);
+}
+
+.bs-when {
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+.bs-text {
+  flex-basis: 100%;
+}
+
+.bs-session {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--agent);
+}
+
+/* a small square that breathes while the agent reads: opacity only, on a 6px element */
+.bs-pulse {
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+  animation: bs-breathe 900ms ease-in-out infinite alternate;
+}
+
+@keyframes bs-breathe {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bs-pulse {
+    animation: none;
+  }
+}
+
+.bs-composer {
+  margin: 0.8rem -1rem 0;
+  padding: 0.75rem 1rem 0.9rem;
+  border-top: 1px solid var(--hairline);
+  background: var(--bg);
+  display: grid;
+  gap: 0.55rem;
+}
+
+.bs-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.bs-quick button {
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.74rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 160ms var(--ease-out), border-color 160ms var(--ease-out);
+}
+
+.bs-quick button:hover {
+  border-color: var(--rasp);
+  background: var(--flag-bg);
+}
+
+.bs-write {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+.bs-write textarea {
+  resize: none;
+  width: 100%;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid transparent;
+  border-radius: 0.3rem;
+  padding: 0.45rem 0.6rem;
+}
+
+.bs-write textarea::placeholder {
+  color: var(--muted);
+}
+
+.bs-write textarea:focus-visible {
+  outline: none;
+  border-color: var(--rasp);
+}
+
+.bs-send {
+  border: 0;
+  border-radius: 0.3rem;
+  padding: 0.45rem 0.75rem;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 650;
+  background: var(--ink);
+  color: var(--bg);
+  cursor: pointer;
+}
+
+.bs-send:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.bs-hint {
+  font-size: 0.74rem;
+  color: var(--muted);
+  min-height: 2.6rem;
+}
+
+.bs-hint code {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--ink);
+}
+
+/* too narrow for two panes: the index folds to its count line */
+@container (max-width: 34rem) {
+  .bs-mini {
+    grid-template-columns: 1fr;
+  }
+
+  .bs-index {
+    padding-bottom: 0.7rem;
+  }
+
+  .bs-index .bs-section {
+    display: none;
+  }
+
+  .bs-counts {
+    margin-top: -0.6rem;
+  }
+}
+
+@container (max-width: 44rem) {
+  .bs-section-head small {
+    display: none;
+  }
+}
