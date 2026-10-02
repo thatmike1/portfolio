@@ -94,7 +94,7 @@ export const SHOWCASE: ShowcaseProject[] = [
         fact: `${FACTS.tally.commits} commits between ${day(FACTS.tally.from, false)} and ${day(FACTS.tally.to, false)}, ${FACTS.tally.authors === 1 ? "every one of them mine" : "most of them mine"}: the parser, the index, the sampler and the screen.`,
         reach: "source",
         when: `since ${day(FACTS.tally.from)} · counted ${day(FACTS.tally.readOn)}`,
-        use: "runs on my machine all day · source on github",
+        use: "runs on my machine all day · open source",
         stack: "react · typescript · hono · node:sqlite · python",
         shots: [
             {

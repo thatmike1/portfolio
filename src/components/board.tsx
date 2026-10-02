@@ -382,7 +382,7 @@ export function Board() {
                         on my screen every day.
                     </>
                 }
-                sub="beadside is open source, tally's source is on github, and the t3 fork has a showcase you can click through before you download it."
+                sub="beadside and tally are open source, and the t3 fork has a showcase you can click through before you download it."
             >
                 <div className="board-row">
                     <Tile project={byId("beadside")} variant="wide" priority />
