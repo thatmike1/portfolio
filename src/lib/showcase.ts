@@ -31,40 +31,6 @@ export const SHOWCASE: ShowcaseProject[] = [
         links: [{ href: "https://github.com/thatmike1/beadside", label: "get beadside" }],
     },
     {
-        id: "font-tinder",
-        name: "font tinder",
-        purpose: "find the font you stop noticing",
-        summary: "a font picker that learns what my eyes like.",
-        detail: "swipe on fonts inside a chat, a long read or a bit of ui. names stay hidden, x-height and stroke darkness stay matched, and the next pick learns from the last one. duel the shortlist, explore the shape map, then take the css home. passkeys keep your picks across devices.",
-        use: "public app · i use it to choose type",
-        stack: "react · typescript · font analysis · umap · passkeys",
-        image: {
-            src: "/showcase/fonts.webp",
-            width: 1440,
-            height: 900,
-            alt: "Font tinder compares an anonymous font in a chat and a long reading sample, with swipe controls below",
-            caption: "judge the font in the places you'll actually read it",
-        },
-        links: [{ href: "https://fonts.thatmike1.dev/", label: "find your font" }],
-    },
-    {
-        id: "diskzokej",
-        name: "diskzokej",
-        purpose: "something good in the background",
-        summary: "i made myself a dj. now there's a radio dial for everyone.",
-        detail: "tell it what you're doing and it finds music that fits. my own version drives spotify; the public one is a dial of stations from quiet drones to very unquiet things. tuning, favorites, now-playing and the player all belong to the same little instrument.",
-        use: "i listen all day · public radio needs no account",
-        stack: "react · node · spotify · streaming audio · ai routing",
-        image: {
-            src: "/showcase/diskzokej.webp",
-            width: 1440,
-            height: 900,
-            alt: "Diskzokej's public radio dial with stations arranged from drift to loud, and a quiet player",
-            caption: "the public dial · it stays quiet until you press play",
-        },
-        links: [{ href: "https://diskzokej.thatmike1.dev/", label: "turn the dial" }],
-    },
-    {
         id: "tally",
         name: "tally",
         purpose: "what ate my five-hour limit?",
@@ -118,18 +84,84 @@ export const SHOWCASE: ShowcaseProject[] = [
             { href: "https://github.com/thatmike1/t3code", label: "the fork" },
         ],
     },
+    {
+        id: "font-tinder",
+        name: "font tinder",
+        purpose: "find the font you stop noticing",
+        summary: "a font picker that learns what my eyes like.",
+        detail: "swipe on fonts inside a chat, a long read or a bit of ui. names stay hidden, x-height and stroke darkness stay matched, and the next pick learns from the last one. duel the shortlist, explore the shape map, then take the css home. passkeys keep your picks across devices.",
+        use: "public app · i use it to choose type",
+        stack: "react · typescript · font analysis · umap · passkeys",
+        image: {
+            src: "/showcase/fonts.webp",
+            width: 1440,
+            height: 900,
+            alt: "Font tinder compares an anonymous font in a chat and a long reading sample, with swipe controls below",
+            caption: "judge the font in the places you'll actually read it",
+        },
+        links: [{ href: "https://fonts.thatmike1.dev/", label: "find your font" }],
+    },
+    {
+        id: "diskzokej",
+        name: "diskzokej",
+        purpose: "something good in the background",
+        summary: "i made myself a dj. now there's a radio dial for everyone.",
+        detail: "tell it what you're doing and it finds music that fits. my own version drives spotify; the public one is a dial of stations from quiet drones to very unquiet things. tuning, favorites, now-playing and the player all belong to the same little instrument.",
+        use: "i listen all day · public radio needs no account",
+        stack: "react · node · spotify · streaming audio · ai routing",
+        image: {
+            src: "/showcase/diskzokej.webp",
+            width: 1440,
+            height: 900,
+            alt: "Diskzokej's public radio dial with stations arranged from drift to loud, and a quiet player",
+            caption: "the public dial · it stays quiet until you press play",
+        },
+        links: [{ href: "https://diskzokej.thatmike1.dev/", label: "turn the dial" }],
+    },
+];
+
+/**
+ * the two that scratch a different itch: one is a small business, one lives on two
+ * phones in one household. same facts shape as the collection so /hire could reuse them
+ */
+export const ITCHES: ShowcaseProject[] = [
+    {
+        id: "good-cookie",
+        name: "Good Cookie",
+        purpose: "a small business, one payment",
+        summary: "privacy pages and a cookie banner you own, for $29 once.",
+        detail: "a short wizard turns a site's answers into privacy pages and a self-hosted consent banner, english or czech, previewed before you pay. i built the product, the stripe checkout and the zip delivery. shipped and open for business; whether it is a business is the experiment.",
+        use: "live at goodcookie.app · no subscription",
+        stack: "node · express · stripe · file generation",
+        image: {
+            src: "/showcase/good-cookie.webp",
+            width: 1440,
+            height: 900,
+            alt: "Good Cookie's live demo shows its consent banner blocking a tracking script on an invented shop",
+            caption: "a working banner demo on a made-up shop",
+        },
+        links: [{ href: "https://goodcookie.app/", label: "try the banner" }],
+    },
+    {
+        id: "nakup",
+        name: "nákup",
+        purpose: "a grocery list for two",
+        summary: "one list, two people, one ink each.",
+        detail: "it works in the supermarket basement, syncs when the signal comes back, and remembers which aisle a thing belongs in. small on purpose: optimistic operations, retry-safe sync and a list that gets easier to use the more you use it.",
+        use: "in real household use · private app",
+        stack: "react · typescript · node · sse · offline replay",
+        image: {
+            src: "/showcase/nakup.webp",
+            width: 440,
+            height: 850,
+            alt: "Nákup with invented groceries and anonymous people, in blue and yellow inks",
+            caption: "the actual app · invented groceries and people",
+        },
+        links: [],
+    },
 ];
 
 /** a fragment names a project only when it belongs to this collection */
 export function projectIndex(hash: string): number {
     return SHOWCASE.findIndex((project) => `#${project.id}` === hash);
-}
-
-/** roving tabs wrap at the ends, including the up/down aliases */
-export function nextProjectIndex(key: string, current: number, length: number): number | null {
-    if (key === "Home") return 0;
-    if (key === "End") return length - 1;
-    if (key === "ArrowRight" || key === "ArrowDown") return (current + 1) % length;
-    if (key === "ArrowLeft" || key === "ArrowUp") return (current + length - 1) % length;
-    return null;
 }

@@ -1,54 +1,73 @@
 // @vitest-environment jsdom
-import { act, createElement } from "react";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { act, createElement, Fragment } from "react";
+import { render, screen, cleanup } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ProjectCollection } from "./project-collection";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { INDEX, ProjectEntry, RoomRail } from "./project-collection";
+import { ITCHES, SHOWCASE } from "../lib/showcase";
 
-beforeEach(() => window.history.replaceState(null, "", "/"));
-afterEach(cleanup);
+afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+});
+
+const ALL = [...SHOWCASE, ...ITCHES];
+
+/** the rail and every entry, the way the homepage lays them side by side */
+const room = () =>
+    createElement(
+        Fragment,
+        null,
+        createElement(RoomRail),
+        ...ALL.map((project, i) =>
+            createElement(ProjectEntry, { key: project.id, project, number: i + 1 }),
+        ),
+    );
 
 describe("project collection", () => {
-    it("moves keyboard focus and selection together, wraps, and leaves the preview reachable", () => {
-        render(createElement(ProjectCollection));
-        const tabs = screen.getAllByRole("tab");
-        tabs[0].focus();
-        fireEvent.keyDown(tabs[0], { key: "ArrowLeft" });
-        expect(document.activeElement).toBe(tabs.at(-1));
-        expect(tabs.at(-1)?.getAttribute("aria-selected")).toBe("true");
-        expect(screen.getAllByRole("tabpanel")).toHaveLength(1);
-        fireEvent.keyDown(document.activeElement ?? tabs[0], { key: "Home" });
-        expect(document.activeElement).toBe(tabs[0]);
-        fireEvent.keyDown(tabs[0], { key: "ArrowRight" });
-        expect(window.location.hash).toBe("#font-tinder");
-        expect(screen.getByRole("tabpanel").id).toBe("font-tinder");
-        expect(tabs.filter((tab) => tab.tabIndex === 0)).toEqual([tabs[1]]);
-    });
-
-    it("opens a project permalink and follows browser history without stealing focus", () => {
-        window.history.replaceState(null, "", "/#model-map");
-        render(createElement(ProjectCollection));
-        expect(screen.getByRole("tabpanel").id).toBe("model-map");
-        fireEvent.click(screen.getByRole("tab", { name: /tally/ }));
-        expect(window.location.hash).toBe("#tally");
-        act(() => {
-            window.history.replaceState(null, "", "/#model-map");
-            window.dispatchEvent(new PopStateEvent("popstate"));
-        });
-        expect(screen.getByRole("tabpanel").id).toBe("model-map");
-        act(() => {
-            window.history.replaceState(null, "", "/#say-hi");
-            window.dispatchEvent(new HashChangeEvent("hashchange"));
-        });
-        expect(screen.getByRole("tabpanel").id).toBe("model-map");
-    });
-
-    it("keeps the full collection and outbound links available without javascript", () => {
-        const html = renderToString(createElement(ProjectCollection));
-        expect(html).toContain('id="beadside"');
-        expect(html).toContain('id="model-map"');
-        expect(html).toContain('id="t3-code"');
-        expect(html).toContain('href="https://models.thatmike1.dev/"');
+    it("renders every project, its shot and its outbound links without javascript", () => {
+        const html = renderToString(room());
+        for (const project of ALL) {
+            expect(html).toContain(`id="${project.id}"`);
+            expect(html).toContain(`src="${project.image.src}"`);
+            for (const link of project.links) expect(html).toContain(`href="${link.href}"`);
+        }
         expect(html).not.toContain(' hidden=""');
+    });
+
+    it("indexes every featured project and itch, numbered in page order", () => {
+        const numbered = INDEX.flatMap((chapter) => chapter.entries).filter((e) => e.number);
+        expect(numbered.map((e) => e.id)).toEqual(ALL.map((p) => p.id));
+        expect(numbered.map((e) => e.number)).toEqual(ALL.map((_, i) => i + 1));
+    });
+
+    it("never draws a shot past its own pixels", () => {
+        const { container } = render(room());
+        const figure = container.querySelector("#tally .shot") as HTMLElement;
+        expect(figure.style.getPropertyValue("--native")).toBe("1440px");
+    });
+
+    it("marks the entry being read in the rail", () => {
+        let report: IntersectionObserverCallback = () => {};
+        vi.stubGlobal(
+            "IntersectionObserver",
+            class {
+                constructor(callback: IntersectionObserverCallback) {
+                    report = callback;
+                }
+                observe() {}
+                disconnect() {}
+            },
+        );
+        render(room());
+        const tally = document.getElementById("tally") as HTMLElement;
+        act(() =>
+            report(
+                [{ target: tally, isIntersecting: true } as unknown as IntersectionObserverEntry],
+                {} as IntersectionObserver,
+            ),
+        );
+        const current = screen.getByRole("link", { current: "location" });
+        expect(current.getAttribute("href")).toBe("#tally");
     });
 });

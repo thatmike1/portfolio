@@ -1,73 +1,809 @@
-.collection { padding-block: clamp(3.5rem, 7vw, 6rem); }
-.collection-intro { display: flex; justify-content: space-between; gap: 2rem; align-items: end; margin-bottom: 2.5rem; }
-.collection-intro h2 { font-size: clamp(2rem, 4vw, 3.35rem); line-height: 1.15; margin: 0; }
-.collection-intro h2 span { color: var(--muted); }
-.collection-intro > p { color: var(--muted); font-size: .95rem; margin: 0 0 .2rem; max-width: 23rem; }
-.collection-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--hairline); margin-bottom: 3rem; }
-.collection-tabs button { font: inherit; color: var(--muted); background: transparent; border: 0; border-bottom: 1px solid var(--hairline); padding: 1rem .9rem 1rem 0; text-align: left; cursor: pointer; position: relative; }
-.collection-tabs button > span:first-child { font-weight: 700; font-size: 1.1rem; display: block; color: var(--ink); }
-.collection-tab-purpose { display: block; font-size: .8rem; margin-top: .2rem; }
-.collection-tabs button[aria-selected="true"] { color: var(--rasp-deep); }
-.collection-tabs button[aria-selected="true"] > span:first-child { color: var(--rasp-deep); }
-.collection-tabs button[aria-selected="true"]::after { content: ""; position: absolute; bottom: -1px; height: 2px; background: var(--rasp-deep); width: calc(100% - 1.25rem); left: 0; }
-.collection-tabs button:hover > span:first-child { color: var(--rasp-deep); }
-.collection-project { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.5fr); align-items: start; gap: 2.5rem; scroll-margin-top: 3rem; }
-.collection-project[hidden] { display: none; }
-.collection-story h3 { font-size: clamp(1.65rem, 3vw, 2.4rem); line-height: 1.12; margin: 0 0 1rem; }
-.collection-summary { font-size: 1.15rem; line-height: 1.5; margin: 0 0 1rem; }
-.collection-detail { font-size: .95rem; margin: 0 0 1.4rem; }
-.collection-use { font-size: .8rem; color: var(--rasp-deep); margin: 0 0 .5rem; }
-.collection-stack { font-family: var(--font-mono); font-size: .7rem; line-height: 1.8; color: var(--muted); margin: 0; }
-.collection-links { display: flex; flex-wrap: wrap; gap: 1rem; list-style: none; margin: 1.4rem 0 0; padding: 0; font-size: .9rem; }
-.collection-figure { margin: 0; min-width: 0; }
-.collection-image { display: block; position: relative; color: var(--ink); }
-.collection-image img { display: block; width: 100%; height: auto; border-radius: .35rem; box-shadow: 0 12px 32px oklch(.18 .015 357 / .1); }
-.collection-enlarge { position: absolute; right: .65rem; bottom: .65rem; background: var(--bg); color: var(--ink); border: 1px solid var(--hairline); padding: .25rem .55rem; font-size: .7rem; border-radius: .2rem; }
-.collection-figure figcaption { font-size: .72rem; color: var(--muted); line-height: 1.5; margin-top: .8rem; }
-.further { padding-block: clamp(3rem, 6vw, 5rem); background: var(--surface); }
-.further h2 { font-size: clamp(1.8rem, 3vw, 2.6rem); margin: 0 0 .5rem; }
-.further-lede { margin: 0 0 3rem; color: var(--muted); }
-.further-pair { display: grid; grid-template-columns: 1.4fr 1fr; gap: 4rem; }
-.further-product h3 { font-size: 1.65rem; margin: 1.7rem 0 .4rem; }
-.further-product > p { font-size: .95rem; max-width: 31rem; }
-.further-product--nakup { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
-.further-product--nakup .collection-image { max-width: 220px; }
-.further-product--nakup h3 { margin-top: 0; }
-.further-product--nakup .collection-figure figcaption { max-width: 15rem; }
-.further-small { margin: 3.5rem 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; border-top: 1px solid var(--hairline); padding-top: 1.5rem; }
-.further-small h3 { font-size: 1.1rem; margin: 0 0 .5rem; }
-.further-small p { font-size: .85rem; color: var(--muted); margin: 0; }
-.collection-archive { margin-top: 2rem; border-top: 1px solid var(--hairline); padding-top: 1rem; }
-.collection-archive summary { cursor: pointer; font-size: .9rem; color: var(--muted); }
-.collection-archive ul { padding-left: 1.2rem; font-size: .85rem; }
+/*
+ * the room: everything under the sand. a letter on the left that holds still (what
+ * this is, everything in it, a way to reach me) and a field on the right that takes
+ * the rest of the width. the width goes to placement and to drawing the screenshots
+ * at their own pixels; prose keeps its measure inside every group.
+ */
+
+:root {
+  --pad: clamp(1.25rem, 2.8vw, 3.5rem);
+  --rail: clamp(15rem, 15vw, 21rem);
+  --rail-gap: clamp(2.5rem, 3.6vw, 5.5rem);
+  /* the space between two projects: a screen's worth of breath, never a screen */
+  --beat: clamp(5rem, 11vh, 9.5rem);
+  /* the rail's own top and bottom room, and the field starts level with it */
+  --sheet-pad: clamp(1.75rem, 4.5vh, 3.25rem);
+  --story: 22rem;
+  --story-gap: clamp(2.5rem, 3.2vw, 4.5rem);
+}
+
+.room {
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 1fr);
+  column-gap: var(--rail-gap);
+  max-width: 2600px;
+  margin-inline: auto;
+  padding-inline: var(--pad);
+}
+
+/* ------------------------------------------------------------------ */
+/* the rail                                                            */
+/* ------------------------------------------------------------------ */
+
+.rail {
+  position: relative;
+  min-width: 0;
+}
+
+/* the letter's edge: one hairline the height of the room, halfway across the gap */
+.rail::after {
+  content: '';
+  position: absolute;
+  top: var(--sheet-pad);
+  bottom: var(--sheet-pad);
+  right: calc(var(--rail-gap) / -2);
+  width: 1px;
+  background: var(--hairline);
+}
+
+.rail-sheet {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.25rem, 3.4vh, 2.5rem);
+  padding-block: var(--sheet-pad);
+}
+
+.rail-letter h2 {
+  font-size: clamp(1.8rem, 1.75vw, 2.45rem);
+  line-height: 1.04;
+}
+
+.rail-letter h2 span {
+  display: block;
+  color: var(--muted);
+}
+
+.rail-lede {
+  margin-top: 1rem;
+  max-width: 30ch;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.rail-index {
+  display: grid;
+  gap: clamp(1rem, 2.4vh, 1.6rem);
+}
+
+.rail-chapter-label {
+  margin-bottom: 0.35rem;
+  padding-left: 2.1rem;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.rail-index ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rail-index a {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.1rem minmax(0, 1fr);
+  align-items: baseline;
+  padding-block: 0.2rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.rail-num {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  transition: color 180ms var(--ease-out);
+}
+
+.rail-num .grain {
+  width: 4px;
+  height: 4px;
+  margin-bottom: 0.12em;
+  background: var(--muted);
+  opacity: 0.6;
+}
+
+.rail-name {
+  font-size: 0.98rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  transition: color 180ms var(--ease-out);
+}
+
+.rail-note {
+  grid-column: 2;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.rail-index a:hover .rail-name {
+  color: var(--rasp-deep);
+}
+
+/* where you are: the name and its number turn raspberry and the page's grain drops
+   in beside them, the same square the h1's full stop is */
+.rail-index a::before {
+  content: '';
+  position: absolute;
+  left: -1rem;
+  top: 0.72em;
+  width: 6px;
+  height: 6px;
+  background: var(--rasp);
+  opacity: 0;
+  transform: translateY(-0.6rem);
+  transition:
+    opacity 160ms var(--ease-out),
+    transform 160ms var(--ease-out);
+}
+
+.rail-index a.is-active::before {
+  opacity: 1;
+  transform: none;
+  transition-duration: 380ms;
+}
+
+.rail-index a.is-active :is(.rail-name, .rail-num) {
+  color: var(--rasp-deep);
+}
+
+.rail-index a.is-active .rail-num .grain {
+  opacity: 0;
+}
+
+.rail-foot {
+  margin-top: auto;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.rail-foot a {
+  font-weight: 600;
+}
+
+.rail-foot-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.2rem;
+  font-size: 0.8rem;
+}
+
+.rail-foot-row a {
+  font-weight: 400;
+}
+
+.rail-foot .rail-up {
+  color: var(--muted);
+}
+
+/* the notes under the names cost a line each. a tall screen has the room for all of
+   them; a shorter one keeps only the note of what you are reading */
+@media (max-height: 1199px) and (min-width: 1100px) {
+  .rail-note {
+    display: none;
+  }
+
+  .rail-index a.is-active .rail-note {
+    display: block;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* the field                                                           */
+/* ------------------------------------------------------------------ */
+
+.field {
+  container: field / inline-size;
+  min-width: 0;
+  padding-block: var(--sheet-pad) var(--beat);
+}
+
+.chapter + .chapter,
+.field > .day-job {
+  margin-top: calc(var(--beat) * 1.15);
+  padding-top: clamp(2.5rem, 5vh, 4rem);
+  border-top: 1px solid var(--hairline);
+}
+
+/* the day job is one line; a whole beat above it would make it a chapter */
+.field > .day-job {
+  margin-top: calc(var(--beat) * 0.6);
+}
+
+.chapter-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem clamp(1.5rem, 3vw, 3.5rem);
+  margin-bottom: clamp(2.5rem, 5vh, 4rem);
+}
+
+.chapter-head h2 {
+  font-size: clamp(1.9rem, 2.6vw, 3.1rem);
+}
+
+.chapter-head p {
+  max-width: 46ch;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* one project                                                         */
+/* ------------------------------------------------------------------ */
+
+/* every entry measures itself: the same markup reads as a spread, a header over a
+   shot, or a column, depending on the room it was given rather than the window */
+.entry {
+  container: entry / inline-size;
+  --glow: oklch(0.62 0.17 var(--glow-h, 357));
+  --glow-near: color-mix(in oklch, var(--glow) 55%, transparent);
+  --glow-far: color-mix(in oklch, var(--glow) 34%, transparent);
+  scroll-margin-top: 1.5rem;
+}
+
+:root:is([data-theme='dark'], [data-theme='dusk']) .entry {
+  --glow-near: color-mix(in oklch, var(--glow) 62%, transparent);
+  --glow-far: color-mix(in oklch, var(--glow) 40%, transparent);
+}
+
+.chapter--kept > .entry + .entry,
+.chapter--kept > .entry + .pair {
+  margin-top: var(--beat);
+}
+
+.entry-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(1.5rem, 3vw, 2.25rem);
+  align-items: start;
+}
+
+.entry-num {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--rasp-deep);
+  font-variant-numeric: tabular-nums;
+}
+
+.grain {
+  display: inline-block;
+  flex: none;
+  width: 6px;
+  height: 6px;
+  background: var(--rasp);
+}
+
+.entry h3 {
+  font-size: clamp(1.9rem, 2.5vw, 3.1rem);
+  line-height: 1.02;
+}
+
+.entry-purpose {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--rasp-deep);
+}
+
+.entry-summary {
+  margin-top: 1.2rem;
+  max-width: 30ch;
+  font-size: clamp(1.15rem, 1.15vw, 1.35rem);
+  font-weight: 500;
+  line-height: 1.42;
+  letter-spacing: -0.008em;
+}
+
+.entry-body {
+  margin-top: 1.1rem;
+}
+
+.entry-detail {
+  max-width: 58ch;
+  font-size: 0.98rem;
+  line-height: 1.68;
+  color: color-mix(in oklch, var(--ink) 84%, var(--bg));
+}
+
+.entry-use {
+  margin-top: 1.3rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.entry-stack {
+  margin-top: 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  line-height: 1.8;
+  color: var(--muted);
+}
+
+.entry-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1.4rem;
+  list-style: none;
+  margin: 1.4rem 0 0;
+  padding: 0;
+  font-size: 0.92rem;
+}
+
+.entry-link--lead {
+  font-size: 1.06rem;
+  font-weight: 700;
+}
+
+/* a header over the shot: who it is on the left, what it does on the right */
+@container entry (min-width: 640px) {
+  .entry:not(.entry--portrait) .entry-story {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    column-gap: clamp(2rem, 4cqi, 3.5rem);
+    align-items: start;
+  }
+
+  .entry:not(.entry--portrait) .entry-body {
+    margin-top: 0;
+    padding-top: 1.6rem;
+  }
+}
+
+/* the spread: the story holds still beside a shot drawn at its own pixels. the
+   group stays packed against one edge and the rest of the row is air */
+@container entry (min-width: 1300px) {
+  .entry:not(.entry--portrait) .entry-grid {
+    grid-template-columns: var(--story) minmax(0, var(--native, 1440px));
+    column-gap: var(--story-gap);
+    justify-content: start;
+  }
+
+  .entry:not(.entry--portrait)[data-side='right'] .entry-grid {
+    grid-template-columns: minmax(0, var(--native, 1440px)) var(--story);
+  }
+
+  .entry:not(.entry--portrait)[data-side='right'] .entry-story {
+    order: 2;
+  }
+
+  .entry:not(.entry--portrait) .entry-story {
+    display: block;
+    position: sticky;
+    top: var(--sheet-pad);
+    padding-top: 0.25rem;
+  }
+
+  .entry:not(.entry--portrait) .entry-body {
+    padding-top: 0;
+    margin-top: 1.25rem;
+  }
+
+  .entry:not(.entry--portrait) .entry-detail {
+    max-width: 40ch;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* the shot                                                            */
+/* ------------------------------------------------------------------ */
+
+.shot {
+  margin: 0;
+  min-width: 0;
+  width: min(100%, var(--native, 100%));
+}
+
+.shot-frame {
+  position: relative;
+  display: block;
+  border-radius: 12px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.shot-frame:focus-visible {
+  outline-offset: 6px;
+  border-radius: 14px;
+}
+
+.shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  box-shadow:
+    0 1px 2px color-mix(in oklch, var(--ink) 8%, transparent),
+    0 38px 70px -46px var(--glow-near),
+    0 26px 150px -36px var(--glow-far);
+}
+
+.shot-enlarge {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  opacity: 0;
+  transform: translateY(3px);
+  transition:
+    opacity 180ms var(--ease-out),
+    transform 180ms var(--ease-out);
+}
+
+.shot-frame:is(:hover, :focus-visible) .shot-enlarge {
+  opacity: 1;
+  transform: none;
+}
+
+@media (hover: none) {
+  .shot-enlarge {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.shot figcaption {
+  margin-top: 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* the pair and the itches                                             */
+/* ------------------------------------------------------------------ */
+
+.pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr));
+  gap: var(--beat) var(--story-gap);
+  align-items: start;
+}
+
+/* the itches share a row. on a wide field the phone gets its own pixels and its
+   story beside it, and the shop takes what is left; on a laptop they split the row */
+.itches {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: var(--beat) var(--story-gap);
+  align-items: start;
+}
+
+@container field (min-width: 1500px) {
+  .itches {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 48rem);
+  }
+}
+
+@container field (max-width: 860px) {
+  .itches {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* a phone-shaped app stands beside its story; on a narrow column it goes under it,
+   no wider than a phone would be */
+.entry--portrait .shot {
+  width: min(100%, 17rem);
+}
+
+@container entry (min-width: 520px) {
+  .entry--portrait .entry-grid {
+    grid-template-columns: minmax(0, var(--native, 20rem)) minmax(15rem, 1fr);
+    column-gap: clamp(2rem, 6cqi, 3rem);
+  }
+
+  .entry--portrait .shot {
+    order: -1;
+    width: 100%;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* the shelf                                                           */
+/* ------------------------------------------------------------------ */
+
+.shelf {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 2.5rem var(--story-gap);
+}
+
+.shelf > li {
+  max-width: 40ch;
+  scroll-margin-top: 1.5rem;
+}
+
+.shelf h3 {
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.55rem;
+}
+
+.shelf h3 a {
+  color: var(--ink);
+}
+
+.shelf h3 a:hover {
+  color: var(--rasp-deep);
+}
+
+.shelf p {
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.shelf-archive summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--ink);
+  list-style-position: outside;
+}
+
+.shelf-archive summary:hover {
+  color: var(--rasp-deep);
+}
+
+.shelf-archive ul {
+  margin: 0.8rem 0 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.55rem;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* the day job                                                         */
+/* ------------------------------------------------------------------ */
+
+/* the base rules are the hire page's too */
 .day-job { padding-block: 3rem; }
 .day-job .container { display: flex; gap: 2rem; align-items: baseline; justify-content: space-between; }
 .day-job h2 { font-size: 1.2rem; margin: 0; }
 .day-job p { margin: 0; }
-.collection-project:focus-visible { outline-offset: 1rem; }
-@media (max-width: 900px) {
-    .collection-project { grid-template-columns: 1fr; gap: 2rem; }
-    .collection-story { display: grid; grid-template-columns: 1fr 1fr; column-gap: 2rem; }
-    .collection-story h3, .collection-summary { grid-column: 1; }
-    .collection-detail { grid-column: 2; grid-row: 1 / span 3; }
-    .collection-use, .collection-stack, .collection-links { grid-column: 1; }
-    .further-pair { gap: 2rem; grid-template-columns: 1fr 1fr; }
-    .further-product--nakup { grid-template-columns: 1fr; }
-    .further-product--nakup .collection-figure { max-width: 220px; }
+
+.field > .day-job {
+  padding-bottom: 0;
 }
-@media (max-width: 600px) {
-    .collection-intro { display: block; }
-    .collection-intro > p { margin-top: 1rem; }
-    .collection-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 2rem; }
-    .collection-tabs button > span:first-child { font-size: .95rem; }
-    .collection-tab-purpose { font-size: .72rem; }
-    .collection-story { display: block; }
-    .collection-detail { font-size: .95rem; }
-    .collection-summary { font-size: 1.08rem; }
-    .further-pair { grid-template-columns: 1fr; gap: 3rem; }
-    .further-product--nakup { grid-template-columns: 1fr; gap: 1.5rem; }
-    .further-product--nakup .collection-figure { max-width: 240px; }
-    .further-small { grid-template-columns: 1fr; gap: 1.4rem; margin-top: 2.5rem; }
-    .day-job .container { display: block; }
-    .day-job h2 { margin-bottom: .6rem; }
+
+.field > .day-job .container {
+  width: auto;
+  margin: 0;
+  justify-content: flex-start;
+  gap: clamp(1.5rem, 3vw, 3.5rem);
+}
+
+.field > .day-job h2 {
+  font-size: clamp(1.4rem, 1.6vw, 1.8rem);
+}
+
+.field > .day-job p {
+  font-size: 1.05rem;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* the footer, on the room's axes                                      */
+/* ------------------------------------------------------------------ */
+
+.footer--room .footer-grid {
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 1fr) minmax(0, 26rem);
+  column-gap: var(--rail-gap);
+  row-gap: 2.5rem;
+  align-items: end;
+  max-width: 2600px;
+  margin-inline: auto;
+  padding-inline: var(--pad);
+}
+
+.footer--room .footer-links {
+  margin: 0;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.footer--room .footer-links a {
+  font-size: clamp(1.25rem, 1.8vw, 2rem);
+  letter-spacing: -0.015em;
+}
+
+.footer--room .footer-links .footer-hire {
+  margin-top: 0.8rem;
+}
+
+.footer--room .footer-links .footer-hire a {
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+.footer--room .colophon {
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* narrower rooms                                                      */
+/* ------------------------------------------------------------------ */
+
+/* the letter stops holding still: it opens the room instead, and its index lays
+   out across the width like a contents page */
+@media (max-width: 1099px) {
+  .room {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rail::after {
+    display: none;
+  }
+
+  .rail-sheet {
+    position: static;
+    height: auto;
+    padding-block: clamp(3.5rem, 8vw, 5rem) 0;
+  }
+
+  .rail-index {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: 1.5rem 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .rail-foot {
+    display: none;
+  }
+
+  /* a contents page that scrolls away has no "you are here" to show */
+  .rail-index a::before {
+    display: none;
+  }
+
+  .rail-index a.is-active :is(.rail-name, .rail-num) {
+    color: inherit;
+  }
+
+  .rail-index a.is-active .rail-num {
+    color: var(--muted);
+  }
+
+  .field {
+    padding-top: var(--beat);
+  }
+
+  .footer--room .footer-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .footer--room .colophon {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .rail-chapter-label {
+    padding-left: 0;
+  }
+
+  .rail-index a {
+    grid-template-columns: 1.9rem minmax(0, 1fr);
+  }
+
+  .rail-note {
+    display: none;
+  }
+
+  .rail-index ol {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1rem;
+  }
+
+  .chapter-head {
+    display: block;
+  }
+
+  .chapter-head p {
+    margin-top: 0.6rem;
+  }
+
+  .field > .day-job .container {
+    display: block;
+  }
+
+  .field > .day-job p {
+    margin-top: 0.5rem;
+  }
+
+  .footer--room .footer-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .footer--room .footer-links a {
+    font-size: 1.1rem;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* the hero, across the island                                         */
+/* ------------------------------------------------------------------ */
+
+/* the stacked intro keeps its lede to a reading measure rather than the island's width */
+.weather-hero .hero-copy--wide .lede {
+  max-width: min(100%, 50ch);
+}
+
+/* on a wide screen the island is most of the window, so the heading and the words
+   beside it share one row under the word instead of stacking down a narrow column */
+@media (min-width: 1500px) {
+  .weather-hero .hero-copy--wide {
+    width: calc(100% - 2 * (var(--shaft, 0px) + 2.5rem));
+    display: grid;
+    grid-template-columns: auto minmax(0, 44rem);
+    justify-content: center;
+    align-items: start;
+    column-gap: clamp(3rem, 5vw, 7rem);
+    padding-block: clamp(3.5rem, 6vh, 5rem) clamp(3rem, 6vh, 4.5rem);
+  }
+
+  .hero-copy--wide h1 {
+    font-size: clamp(5rem, 5.6vw, 7.25rem);
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    padding-bottom: 0.08em;
+  }
+
+  .hero-copy--wide .lede {
+    max-width: 44ch;
+    margin-top: 0.35rem;
+    font-size: clamp(1.25rem, 1.15vw, 1.45rem);
+  }
+
+  .hero-copy--wide .hero-doors {
+    margin-block: 1.25rem 0;
+  }
+
+  .hero-copy--wide .hero-note {
+    margin-top: 1rem;
+    max-width: 52ch;
+    font-size: 0.88rem;
+  }
 }
