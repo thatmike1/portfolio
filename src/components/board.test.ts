@@ -47,6 +47,7 @@ describe("the board", () => {
         expect(html).toContain(`${FACTS.tally.commits} commits`);
         expect(html).toContain(`${FACTS.radio.stations} stations`);
         expect(html).toContain(`${FACTS.models.points} operating points`);
+        expect(html).toContain(`${FACTS.breakbeat.combinations} combinations a feel`);
     });
 });
 

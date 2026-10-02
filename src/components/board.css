@@ -868,6 +868,21 @@
   max-width: 300px;
 }
 
+.chart--groove .chart-axis {
+  gap: 6px;
+  margin-top: 0.35rem;
+}
+
+/* each bar's label starts over its own bar */
+.chart--groove .chart-axis > span {
+  flex: 1;
+}
+
+.chart--groove .chart-axis--under {
+  display: block;
+  margin-top: 0.1rem;
+}
+
 .chart-key {
   display: inline-block;
   width: 6px;
@@ -1412,7 +1427,7 @@
   }
 
   /* on a laptop the index is a footnote under the letter and the sky: its legend on
-     one line and the eleven names flowing on the next, so the first shelf's headline
+     one line and the twelve names flowing on the next, so the first shelf's headline
      still lands within a screen and a half */
   .mast-index .mast-take {
     max-width: none;

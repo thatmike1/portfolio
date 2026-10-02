@@ -209,8 +209,38 @@ export const SHOWCASE: ShowcaseProject[] = [
     },
 ];
 
-/** products off the main path: one for sale, one for the household */
+/** products off the main path: one for making noise, one for the household, one for sale */
 export const SUPPORTING: ShowcaseProject[] = [
+    {
+        id: "breakbeat",
+        name: "breakbeat loom",
+        purpose: "chopped, swung drums to play with",
+        summary: "finished breakbeats you can pull apart without losing the groove.",
+        line: {
+            lead: "a drum loom i built for chopped, swung breaks: swap the hats, the clicks or the kick, and ",
+            mark: "the snare stays put",
+            tail: ".",
+        },
+        detail: "a browser instrument for uk garage swing, jungle and the odd idm stutter. pick a feel, swap one written part at a time, cut the end of the loop into 2× and 3× repeats, keep the version you like. the bit i like: nothing is scheduled hit by hit. every change renders the whole two-bar loop to samples and swaps it in at the next loop boundary behind a 4 ms fade, so a busy tab can't make it stumble, and the wav export runs the same renderer the speakers do.",
+        fact: `${FACTS.breakbeat.feels.length} feels, each with ${FACTS.breakbeat.partsPerLane} written kick parts, ${FACTS.breakbeat.partsPerLane} hat parts and ${FACTS.breakbeat.partsPerLane} rim-and-ghost parts: ${FACTS.breakbeat.combinations} combinations a feel, played on ${FACTS.breakbeat.recordings} recordings of one acoustic kit, avl drumkits' black pearl.`,
+        reach: "live",
+        when: `built in a day, 2 oct 2026 · counted ${day(FACTS.breakbeat.readOn)}`,
+        use: "public, no account · sound starts only when you press play",
+        stack: "vanilla js modules · web audio · no runtime dependencies",
+        shots: [
+            {
+                image: SHOWCASE_IMAGES.breakbeat,
+                alt: "breakbeat loom playing its fast jungle feel after a build-up and a cut-up: four feel cards, a five-lane preview of kick, snare, hat, rim and ghost with the playhead mid-loop, and the swap buttons under it",
+                caption: "a preset, built up and cut up, caught mid-loop",
+            },
+            {
+                image: SHOWCASE_IMAGES["breakbeat-editor"],
+                alt: "breakbeat loom's beat editor: five lanes across two bars of sixteenths, open hats marked o, 2× and 3× cuts on the ghost notes, and the playhead's column lit",
+                caption: "the editor: every hit, the open hats and the cuts",
+            },
+        ],
+        links: [{ href: "https://breakbeat.thatmike1.dev/", label: "make a beat" }],
+    },
     {
         id: "good-cookie",
         name: "good cookie",
