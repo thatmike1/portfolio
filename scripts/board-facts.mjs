@@ -8,16 +8,16 @@
  *   npm run facts -- tally radio  # only some sources
  *
  * sources: the public endpoints a visitor can open (the model map page, diskzokej's
- * /api/radio, font tinder's catalog, github's api for beadside's first issue) and
- * the local repos for git history (tally, the t3 fork). a source that can't be read
+ * /api/radio, font tinder's catalog, github's api for beadside's first issue, the
+ * breakbeat loom's own modules as the site serves them) and the local repos for git history (tally, the t3 fork). a source that can't be read
  * keeps its last value and says so, so a run on a machine without the repos still
  * refreshes the rest. every section carries the date it was read.
  */
 import { execFileSync } from "node:child_process";
-import { readFile, writeFile } from "node:fs/promises";
-import { homedir } from "node:os";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { homedir, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../..");
 const OUT = join(ROOT, "src/lib/board-facts.json");
@@ -187,6 +187,64 @@ async function fonts() {
     };
 }
 
+/** the breakbeat loom's feel the board draws: fast jungle, the one in its screenshot */
+const BREAKBEAT_FEEL = 1;
+
+/**
+ * the breakbeat loom: its feels, how many written parts each lane family has, and one
+ * feel's groove as written. the site serves its own es modules, so this fetches them,
+ * imports them from a scratch folder and reads the numbers off the code that plays
+ */
+async function breakbeat() {
+    const base = "https://breakbeat.thatmike1.dev/src/";
+    const dir = await mkdtemp(join(tmpdir(), "breakbeat-facts-"));
+    try {
+        const files = ["pattern.js", "groove-parts.js", "playground.js", "recorded-kit.js"];
+        for (const file of files) {
+            const res = await fetch(base + file);
+            if (!res.ok) throw new Error(`${base + file}: ${res.status}`);
+            await writeFile(join(dir, file), await res.text());
+        }
+        const load = (file) => import(pathToFileURL(join(dir, file)).href);
+        const { PRESETS, STEPS, TRACKS } = await load("pattern.js");
+        const { PARTS } = await load("groove-parts.js");
+        const { FEELS } = await load("playground.js");
+        // the kit's file list is private to its module, so read it off the source
+        const kitSource = await readFile(join(dir, "recorded-kit.js"), "utf8");
+        const list = kitSource.match(/const FILES = \[([^\]]*)\]/);
+        if (!list) throw new Error("recorded-kit.js: no FILES list");
+        const recordings = [...list[1].matchAll(/"([^"]+)"/g)].length;
+        // a feel's combinations are its written kick, hat and rim+ghost parts, crossed
+        const combos = PARTS.map((bank) => {
+            const seen = new Set();
+            for (const kick of bank)
+                for (const hat of bank)
+                    for (const clicks of bank)
+                        seen.add(JSON.stringify([kick.kick, hat.hat, clicks.perc, clicks.ghost]));
+            return seen.size;
+        });
+        const preset = PRESETS[BREAKBEAT_FEEL];
+        return {
+            readOn: today(),
+            feels: FEELS.map((feel, i) => ({ name: feel.name.toLowerCase(), bpm: PRESETS[i].bpm })),
+            partsPerLane: Math.min(...PARTS.map((bank) => bank.length)),
+            combinations: Math.min(...combos),
+            recordings,
+            steps: STEPS,
+            groove: {
+                feel: FEELS[BREAKBEAT_FEEL].name.toLowerCase(),
+                bpm: preset.bpm,
+                lanes: preset.tracks.map((track) => ({
+                    lane: TRACKS.find((t) => t.id === track.id).name.toLowerCase(),
+                    steps: track.steps.map((v) => Math.round(v * 100) / 100),
+                })),
+            },
+        };
+    } finally {
+        await rm(dir, { recursive: true, force: true });
+    }
+}
+
 /** beadside's first outside issue, as github shows it */
 async function beadsideIssue() {
     const issue = await json("https://api.github.com/repos/thatmike1/beadside/issues/1");
@@ -200,7 +258,7 @@ async function beadsideIssue() {
     };
 }
 
-const SOURCES = { tally, t3, radio, models, fonts, beadsideIssue };
+const SOURCES = { tally, t3, radio, models, fonts, beadsideIssue, breakbeat };
 
 async function main() {
     const wanted = process.argv.slice(2);
