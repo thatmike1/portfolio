@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { DAY_JOB } from "../components/day-job";
+import { DAY_JOB } from "../lib/day-job";
 import { LightboxProvider } from "../components/lightbox";
 import { ShowcaseImage } from "../components/showcase-image";
 import { HIRE_PICKS, SHELF, SUPPORTING } from "../lib/showcase";

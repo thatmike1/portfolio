@@ -8,17 +8,33 @@
 :root {
   color-scheme: light;
 
-  --bg: oklch(1 0 0);
-  --surface: oklch(0.955 0.008 357);
-  --ink: oklch(0.18 0.015 357);
-  --muted: oklch(0.45 0.02 357);
+  /* noon. the page is the white under a noon sky: a hair cool, so the field of
+     sky, moss and sand on the board below reads as the same daylight */
+  --bg: oklch(0.993 0.003 230);
+  --surface: oklch(0.955 0.01 230);
+  --ink: oklch(0.2 0.02 250);
+  --ink-2: color-mix(in oklch, var(--ink) 76%, var(--bg));
+  --muted: oklch(0.47 0.025 245);
+  --faint: color-mix(in oklch, var(--ink) 32%, var(--bg));
   --rasp: oklch(0.55 0.21 357);
   --rasp-deep: oklch(0.49 0.2 357);
+  --amber: oklch(0.74 0.15 68);
+  --mark: color-mix(in oklch, var(--rasp) 24%, transparent);
   --accent: oklch(0.42 0.15 265);
-  --hairline: oklch(0.18 0.015 357 / 0.14);
+  --hairline: color-mix(in oklch, var(--ink) 13%, transparent);
   --footer-bg: oklch(0.18 0.015 357);
   --footer-ink: oklch(0.97 0.004 357);
   --footer-link-hover: oklch(0.78 0.16 357);
+
+  /* the board's field: four soft lights under a film of grain, home base's mesh
+     held still. noon is moss, sky, sand and a blush of the raspberry. the grain's
+     strength per look is baked into its png, so the field is one element's
+     backgrounds and never a translucent layer of its own */
+  --field-1: oklch(0.93 0.07 155 / 0.6);
+  --field-2: oklch(0.89 0.07 240 / 0.65);
+  --field-3: oklch(0.95 0.07 78 / 0.6);
+  --field-4: oklch(0.93 0.06 357 / 0.38);
+  --grain: url('/grain-light.png');
 
   --font-sans: 'Sora Variable', system-ui, sans-serif;
   --font-mono: 'Martian Mono Variable', monospace;
@@ -26,36 +42,54 @@
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* night: home base's own ground, a green-black that the navy sky sits over, with
+   moss and night-sky light pooling in the field. ink is home base's warm white */
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: oklch(0.13 0.01 357);
-  --surface: oklch(0.18 0.012 357);
-  --ink: oklch(0.93 0.006 357);
-  --muted: oklch(0.7 0.015 357);
-  --rasp: oklch(0.6 0.22 357);
-  --rasp-deep: oklch(0.74 0.17 357);
-  --hairline: oklch(0.93 0.006 357 / 0.16);
+  --bg: oklch(0.178 0.018 200);
+  --surface: oklch(0.22 0.02 200);
+  --ink: oklch(0.945 0.012 110);
+  --muted: oklch(0.76 0.02 170);
+  --faint: color-mix(in oklch, var(--ink) 34%, var(--bg));
+  --rasp: oklch(0.62 0.22 357);
+  --rasp-deep: oklch(0.78 0.16 357);
+  --amber: oklch(0.8 0.13 72);
+  --hairline: color-mix(in oklch, var(--ink) 14%, transparent);
   --footer-bg: oklch(0.17 0.012 357);
   --footer-ink: oklch(0.93 0.006 357);
+
+  --field-1: oklch(0.4 0.1 148 / 0.55);
+  --field-2: oklch(0.34 0.1 262 / 0.7);
+  --field-3: oklch(0.38 0.08 192 / 0.45);
+  --field-4: oklch(0.36 0.11 330 / 0.32);
+  --grain: url('/grain-dark.png');
 }
 
 /* dusk: the ground after the sun has gone but before the sky has. a warm dark
-   plum rather than black, cream ink rather than white, and the raspberry lifted
-   toward peach so links hold 6.7:1 on it. it only exists because the visitor
-   asked for it; no system setting lands here */
+   plum, cream ink, and the field lit from the sky's own peach and indigo. the
+   raspberry is lifted toward peach so links hold 6.7:1 on it. it only exists
+   because the visitor asked for it; no system setting lands here */
 :root[data-theme='dusk'] {
   color-scheme: dark;
 
-  --bg: oklch(0.31 0.04 25);
-  --surface: oklch(0.36 0.04 25);
+  --bg: oklch(0.3 0.042 22);
+  --surface: oklch(0.35 0.045 22);
   --ink: oklch(0.95 0.018 70);
-  --muted: oklch(0.78 0.03 55);
+  --muted: oklch(0.81 0.03 55);
+  --faint: color-mix(in oklch, var(--ink) 36%, var(--bg));
   --rasp: oklch(0.64 0.21 357);
-  --rasp-deep: oklch(0.8 0.15 5);
-  --hairline: oklch(0.95 0.018 70 / 0.16);
+  --rasp-deep: oklch(0.82 0.14 5);
+  --amber: oklch(0.83 0.12 70);
+  --hairline: color-mix(in oklch, var(--ink) 15%, transparent);
   --footer-bg: oklch(0.22 0.03 25);
   --footer-ink: oklch(0.95 0.018 70);
+
+  --field-1: oklch(0.52 0.1 45 / 0.5);
+  --field-2: oklch(0.38 0.1 285 / 0.65);
+  --field-3: oklch(0.45 0.09 15 / 0.42);
+  --field-4: oklch(0.42 0.12 345 / 0.4);
+  --grain: url('/grain-dark.png');
 }
 
 /* ------------------------------------------------------------------ */
@@ -917,3 +951,13 @@ figcaption {
 
 /* direct doors into the collection and the quiet recruiter route */
 .hero-doors { display: flex; flex-wrap: wrap; gap: .7rem 1.8rem; font-size: .9rem; margin: 1.5rem 0; }
+
+/* read by screen readers, not drawn */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
