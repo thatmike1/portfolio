@@ -21,6 +21,24 @@ export const SHOWCASE_IMAGES = {
         placeholder: "data:image/webp;base64,UklGRkIAAABXRUJQVlA4IDYAAAAwAwCdASoYAA4APu1iqk4ppaQiMAgBMB2JaQAAidpPhhAAAP7vuNnf3FopURdumWySaf0swAA=",
         color: "#f4f3f0",
     },
+    // breakbeat-extra-editor-1920x1080-2x.png
+    "breakbeat-editor": {
+        src: "/showcase/breakbeat-editor-2560.webp",
+        width: 2560,
+        height: 1440,
+        srcSet: "/showcase/breakbeat-editor-480.webp 480w, /showcase/breakbeat-editor-800.webp 800w, /showcase/breakbeat-editor-1200.webp 1200w, /showcase/breakbeat-editor-1600.webp 1600w, /showcase/breakbeat-editor-2000.webp 2000w, /showcase/breakbeat-editor-2560.webp 2560w",
+        placeholder: "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAADQAwCdASoYAA4APu1kqk2ppaQiMAgBMB2JZwC/OB5vMhBrDpjHgAAA/uBlBtHq04zLyFNirKo/Nq4U3qn7HeLZyIt81r0zQ2/3+5tl+XXFgAAA",
+        color: "#988e9f",
+    },
+    // breakbeat-playground-1920x1080-2x.png
+    breakbeat: {
+        src: "/showcase/breakbeat-2560.webp",
+        width: 2560,
+        height: 1440,
+        srcSet: "/showcase/breakbeat-480.webp 480w, /showcase/breakbeat-800.webp 800w, /showcase/breakbeat-1200.webp 1200w, /showcase/breakbeat-1600.webp 1600w, /showcase/breakbeat-2000.webp 2000w, /showcase/breakbeat-2560.webp 2560w",
+        placeholder: "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAQBACdASoYAA4APu1mqk2ppaQiMAgBMB2JZwC7AB6XIY0/dKAD3JYgAAD+5z7AWCmz6K7o48aB3yM09gBo+MhG5FVrrFJTJrBxH8E+mIh0v2QoAAA=",
+        color: "#9e94a3",
+    },
     // diskzokej-dial-2560x1440.png
     diskzokej: {
         src: "/showcase/diskzokej-2560.webp",
