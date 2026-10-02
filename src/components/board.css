@@ -253,12 +253,6 @@
   transform: translateX(3px);
 }
 
-.mast-reach {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  color: var(--muted);
-}
-
 /* reach, in grains: lit means you can open it, a ring means a repo to run,
    a faint ring means it stays at home */
 .dot {
@@ -471,9 +465,9 @@
 /* tile layouts                                                        */
 /* ------------------------------------------------------------------ */
 
-/* every piece of a tile has a grid area; each width below places them. the
-   default is a phone's single column: the line, the screen right after it, the
-   words, the toy, the fact */
+/* a phone's tile is one column, the line, then the screen right after it, then the
+   words, the toy and the fact. the story and main stacks dissolve into it so the
+   pieces can interleave; from a laptop up they become two real columns */
 .tile {
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
@@ -484,6 +478,11 @@
     'fact'
     'meta'
     'spec';
+}
+
+.tile-story,
+.tile-main {
+  display: contents;
 }
 
 .tile-head { grid-area: head; }
@@ -508,7 +507,7 @@
   display: none;
 }
 
-/* the frame of every screen on the board: square-ish corners and a soft drop */
+/* the frame of every screen on the board, and its mono caption */
 .tile .shot-frame {
   border-radius: 10px;
 }
@@ -517,6 +516,11 @@
   font-family: var(--font-mono);
   font-size: 0.64rem;
   line-height: 1.7;
+}
+
+/* the fact sits under its own hairline, so a number never reads as part of the story */
+.tile-fact {
+  border-top: 1px solid var(--hairline);
 }
 
 /* nákup's phones keep a phone's corners, and never draw past their own 390 css px */
@@ -543,32 +547,15 @@
 }
 
 /* the pair rows stack until a wide screen has room for both side by side */
-.board-row--two {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.board-row--two > * + * {
-  border-left: 0;
-  border-top: 1px solid var(--hairline);
-}
-
-/* the cookie row: good cookie and the smaller rooms, one above the other until
-   there is room for both */
+.board-row--two,
 .board-row--cookie {
   grid-template-columns: minmax(0, 1fr);
 }
 
+.board-row--two > * + *,
 .board-row--cookie > * + * {
   border-left: 0;
   border-top: 1px solid var(--hairline);
-}
-
-/* the paddings every layout shares: hairline columns, generous tops, tight groups */
-.tile--wide > *,
-.tile--full > *,
-.tile--half > *,
-.tile--nakup > * {
-  padding-inline: var(--col);
 }
 
 .room-list {
@@ -644,10 +631,6 @@
   fill: var(--rasp);
 }
 
-.chart-grain--dim {
-  fill: var(--faint);
-}
-
 .chart-grain--soft {
   fill: color-mix(in oklch, var(--rasp) 50%, transparent);
 }
@@ -655,10 +638,6 @@
 /* the other sand: the word up top is raspberry and amber, so is the dial */
 .chart-grain--alt {
   fill: var(--amber);
-}
-
-.chart-grain--cloud {
-  fill: color-mix(in oklch, var(--ink) 30%, transparent);
 }
 
 /* the lake's own blue, the one colour on the board that is not the sand's */
@@ -679,13 +658,6 @@
   fill: color-mix(in oklch, var(--ink) 4%, transparent);
 }
 
-.chart-step {
-  fill: none;
-  stroke: var(--rasp);
-  stroke-width: 1;
-  opacity: 0.55;
-}
-
 .chart-axis {
   display: flex;
   justify-content: space-between;
@@ -699,8 +671,7 @@
 }
 
 .chart--piles .chart-axis,
-.chart--dial .chart-axis,
-.chart--scatter .chart-axis {
+.chart--dial .chart-axis {
   max-width: 300px;
 }
 
@@ -831,12 +802,6 @@
   letter-spacing: -0.02em;
 }
 
-.signoff-note {
-  margin-top: 0.7rem;
-  font-size: 0.9rem;
-  color: var(--muted);
-}
-
 .signoff-sora {
   display: block;
   width: 96px;
@@ -859,71 +824,58 @@
 /* ------------------------------------------------------------------ */
 
 @media (min-width: 900px) {
-  /* a heavyweight: the story in a column, the screen beside it as big as the row
-     allows, and under the screen the toy. the fact sits under the story */
+  /* two stacks side by side that don't share rows, so a long story never leaves a
+     hole under a short screen, or the other way round */
   .tile--wide,
   .tile--full,
   .tile--half {
     grid-template-columns: minmax(300px, 1fr) minmax(0, 2.15fr);
-    grid-template-areas:
-      'head shot'
-      'detail shot'
-      'meta shot'
-      'fact after'
-      'spec after';
-    grid-template-rows: auto auto 1fr auto 1fr;
+    grid-template-areas: none;
+    align-items: start;
   }
 
-  .tile--half.tile--mirror {
-    grid-template-columns: minmax(0, 2.15fr) minmax(300px, 1fr);
-    grid-template-areas:
-      'shot head'
-      'shot detail'
-      'shot meta'
-      'after fact'
-      'after spec';
+  .tile--wide .tile-story,
+  .tile--full .tile-story,
+  .tile--half .tile-story,
+  .tile--wide .tile-main,
+  .tile--full .tile-main,
+  .tile--half .tile-main {
+    display: block;
+    min-width: 0;
+    padding: var(--top) var(--col) var(--bottom);
   }
 
-  .tile-head {
-    padding-top: var(--top);
-  }
-
-  .tile-detail {
-    padding-top: 1.1rem;
-  }
-
-  .tile-meta {
-    padding-top: 1.1rem;
-    padding-bottom: var(--bottom);
-  }
-
-  .tile-shot {
-    padding-block: var(--top) var(--bottom);
+  .tile-main {
+    align-self: stretch;
     border-left: 1px solid var(--hairline);
   }
 
-  .tile--mirror .tile-shot {
+  .tile--mirror .tile-story {
+    order: 2;
+  }
+
+  .tile--mirror .tile-main {
+    order: 1;
     border-left: 0;
     border-right: 1px solid var(--hairline);
   }
 
-  .tile-after {
-    padding-bottom: var(--bottom);
-    border-left: 1px solid var(--hairline);
+  .tile-story .tile-detail,
+  .tile-story .tile-meta {
+    margin-top: 1.1rem;
   }
 
-  .tile--mirror .tile-after {
-    border-left: 0;
-    border-right: 1px solid var(--hairline);
+  .tile-story .tile-fact {
+    margin-top: 1.8rem;
+    padding-top: 1.2rem;
   }
 
-  .tile-fact {
-    padding-top: 0;
+  .tile-story .tile-spec {
+    margin-top: 0.8rem;
   }
 
-  .tile-spec {
-    padding-top: 0.6rem;
-    padding-bottom: var(--bottom);
+  .tile-main .tile-after {
+    margin-top: var(--top);
   }
 
   /* nákup: the line across, the three phones under it, then the words beside the toy */
@@ -938,6 +890,10 @@
     grid-template-rows: auto auto auto auto 1fr;
   }
 
+  .tile--nakup > * {
+    padding-inline: var(--col);
+  }
+
   .tile--nakup .tile-head {
     padding-top: var(--top);
   }
@@ -947,8 +903,13 @@
     padding-block: 1.6rem 2rem;
   }
 
-  .tile--nakup .tile-detail {
-    padding-top: 0;
+  .tile--nakup .tile-meta {
+    padding-top: 1.1rem;
+  }
+
+  .tile--nakup .tile-spec {
+    padding-top: 0.6rem;
+    padding-bottom: var(--bottom);
   }
 
   .tile--nakup > .tile-toy {
@@ -982,29 +943,48 @@
     grid-template-columns: minmax(380px, 0.9fr) minmax(0, 2.65fr);
   }
 
-  /* tally's capture is 2560px of layout, so it takes the whole row: the story
-     runs across the top in three columns and the screen spans under it */
+  /* tally's capture is 2560px of layout, so it takes the whole row: the story runs
+     across the top in three hairline columns and the screen spans under it */
   .tile--full {
-    grid-template-columns: minmax(380px, 0.9fr) minmax(0, 1.35fr) minmax(0, 1.3fr);
-    grid-template-areas:
-      'head detail meta'
-      'shot shot shot'
-      'fact after after'
-      'spec after after';
-    grid-template-rows: auto auto auto 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .tile--full .tile-detail {
-    padding-top: var(--top);
+  .tile--full .tile-story {
+    display: grid;
+    grid-template-columns: minmax(380px, 0.9fr) minmax(0, 1.35fr) minmax(0, 1.3fr);
+    grid-template-areas:
+      'head detail fact'
+      'head detail spec'
+      'head detail meta';
+    grid-template-rows: auto auto 1fr;
+    padding: 0;
+  }
+
+  .tile--full .tile-story > * {
+    margin: 0;
+    padding: var(--top) var(--col) 0;
+  }
+
+  .tile--full .tile-detail,
+  .tile--full .tile-fact,
+  .tile--full .tile-spec,
+  .tile--full .tile-meta {
     border-left: 1px solid var(--hairline);
+  }
+
+  .tile--full .tile-fact {
+    border-top: 0;
+  }
+
+  .tile--full .tile-spec {
+    padding-top: 0.8rem;
   }
 
   .tile--full .tile-meta {
-    padding-top: var(--top);
-    border-left: 1px solid var(--hairline);
+    padding-bottom: 1.2rem;
   }
 
-  .tile--full .tile-shot {
+  .tile--full .tile-main {
     border-left: 0;
     padding-top: 1.4rem;
   }
@@ -1022,34 +1002,43 @@
     grid-template-rows: auto auto auto 1fr;
   }
 
-  .tile--half .tile-shot,
-  .tile--half.tile--mirror .tile-shot {
-    border: 0;
+  .tile--half .tile-story,
+  .tile--half .tile-main {
+    display: contents;
+  }
+
+  .tile--half .tile-story > *,
+  .tile--half .tile-shot {
+    margin: 0;
+    padding-inline: var(--col);
+  }
+
+  .tile--half .tile-head {
+    padding-top: var(--top);
+  }
+
+  .tile--half .tile-shot {
     padding-block: 1.3rem 1.6rem;
   }
 
   .tile--half .tile-detail {
-    padding-top: 0;
     padding-bottom: var(--bottom);
   }
 
   .tile--half .tile-fact,
   .tile--half .tile-spec,
   .tile--half .tile-meta {
+    border-top: 0;
     border-left: 1px solid var(--hairline);
   }
 
   .tile--half .tile-fact {
-    padding-bottom: var(--bottom);
-  }
-
-  .tile--half .tile-spec {
-    padding-top: 0;
-    padding-bottom: 0;
+    padding-block: 0 var(--bottom);
   }
 
   .tile--half .tile-meta {
     padding-top: 0.9rem;
+    padding-bottom: var(--bottom);
   }
 
   /* the second screen appears beside the toy, or alone at half the row */
@@ -1069,9 +1058,22 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .board-row--two > * + * {
+  .board-row--cookie {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+
+  .board-row--two > * + *,
+  .board-row--cookie > * + * {
     border-left: 1px solid var(--hairline);
     border-top: 0;
+  }
+
+  .board-row--cookie .room-list {
+    display: block;
+  }
+
+  .board-row--cookie .room-list li:first-child {
+    padding-top: 0.2rem;
   }
 
   /* nákup's evening in one row: the words, three phones, the list to play with */
@@ -1097,23 +1099,6 @@
 
   .tile--nakup > .tile-toy {
     padding-top: var(--top);
-  }
-
-  .board-row--cookie {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  }
-
-  .board-row--cookie > * + * {
-    border-left: 1px solid var(--hairline);
-    border-top: 0;
-  }
-
-  .board-row--cookie .room-list {
-    display: block;
-  }
-
-  .board-row--cookie .room-list li:first-child {
-    padding-top: 0.2rem;
   }
 }
 
@@ -1235,11 +1220,15 @@
   }
 
   .tile-after {
-    padding-block: 0.4rem 1.6rem;
+    padding-bottom: 1.6rem;
   }
 
   .tile-detail {
     padding-bottom: 1.2rem;
+  }
+
+  .tile-fact {
+    padding-top: 1.2rem;
   }
 
   .tile-meta {

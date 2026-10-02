@@ -158,7 +158,9 @@ type Variant = "wide" | "full" | "half";
 /**
  * one project on the board: its name and its story in a sentence, the real screen as
  * big as the width allows, then the toy and a second screen where there is room, and
- * one true fact with its date
+ * one true fact with its date. the story and the screen are two stacks that sit side
+ * by side from a laptop up; on a phone both dissolve into one column, ordered so the
+ * screen comes right after the line
  */
 function Tile({
     project,
@@ -184,51 +186,55 @@ function Tile({
             id={project.id}
             aria-labelledby={`name-${project.id}`}
         >
-            <header className="tile-head">
-                <Name project={project} />
-                <p className="tile-line">
-                    <Marked line={project.line} />
-                </p>
-            </header>
-            <ShowcaseImage
-                className="tile-shot"
-                shots={project.shots}
-                sizes={SIZES[variant]}
-                priority={priority}
-            />
-            <p className="tile-detail">{project.detail}</p>
-            {toy || more ? (
-                <div className="tile-after">
-                    {toy ? (
-                        <LazyMini
-                            className="tile-toy"
-                            toy={toy.toy}
-                            label={toy.label}
-                            minHeight={toy.minHeight}
-                            caption={toy.caption}
-                        />
-                    ) : null}
-                    {more ? (
-                        <ShowcaseImage
-                            className="tile-more"
-                            shots={project.shots}
-                            index={1}
-                            sizes={SIZES.more}
-                        />
-                    ) : null}
+            <div className="tile-story">
+                <header className="tile-head">
+                    <Name project={project} />
+                    <p className="tile-line">
+                        <Marked line={project.line} />
+                    </p>
+                </header>
+                <p className="tile-detail">{project.detail}</p>
+                <div className="tile-meta">
+                    <p className="tile-use">{project.use}</p>
+                    <Links project={project} />
                 </div>
-            ) : null}
-            <div className="tile-fact">
-                {chart}
-                {project.fact ? <p>{project.fact}</p> : null}
+                <div className="tile-fact">
+                    {chart}
+                    {project.fact ? <p>{project.fact}</p> : null}
+                </div>
+                <div className="tile-spec">
+                    <p className="tile-stack">{project.stack}</p>
+                    <p className="tile-when">{project.when}</p>
+                </div>
             </div>
-            <div className="tile-spec">
-                <p className="tile-stack">{project.stack}</p>
-                <p className="tile-when">{project.when}</p>
-            </div>
-            <div className="tile-meta">
-                <p className="tile-use">{project.use}</p>
-                <Links project={project} />
+            <div className="tile-main">
+                <ShowcaseImage
+                    className="tile-shot"
+                    shots={project.shots}
+                    sizes={SIZES[variant]}
+                    priority={priority}
+                />
+                {toy || more ? (
+                    <div className="tile-after">
+                        {toy ? (
+                            <LazyMini
+                                className="tile-toy"
+                                toy={toy.toy}
+                                label={toy.label}
+                                minHeight={toy.minHeight}
+                                caption={toy.caption}
+                            />
+                        ) : null}
+                        {more ? (
+                            <ShowcaseImage
+                                className="tile-more"
+                                shots={project.shots}
+                                index={1}
+                                sizes={SIZES.more}
+                            />
+                        ) : null}
+                    </div>
+                ) : null}
             </div>
         </article>
     );

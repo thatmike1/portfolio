@@ -607,26 +607,6 @@ a:focus-visible {
   outline-color: var(--footer-ink);
 }
 
-/* the recruiter door. deliberately quiet next to the two big contact links:
-   whoever needs it is already looking for it, everyone else is here for the sand */
-.footer-hire {
-  margin-top: 1.6rem;
-  font-size: 0.95rem;
-}
-
-.footer-hire a {
-  color: var(--footer-ink);
-  text-decoration-color: color-mix(in oklch, currentColor 35%, transparent);
-  transition:
-    color 160ms var(--ease-out),
-    text-underline-offset 180ms var(--ease-out),
-    text-decoration-color 180ms var(--ease-out);
-}
-
-.footer-hire a:hover {
-  color: var(--footer-link-hover);
-}
-
 .colophon {
   margin-top: clamp(2.5rem, 6vw, 4rem);
   font-family: var(--font-mono);
@@ -791,97 +771,6 @@ a:focus-visible {
   }
 }
 
-/* ------------------------------------------------------------------ */
-/* section nav                                                         */
-/* ------------------------------------------------------------------ */
-
-/* the table of contents lives in the page's outer margin and is hidden until that
-   margin is genuinely wide enough to hold it. the container caps at 68rem, so the
-   gutter only clears the nav's width past ~1400px — below that there is nothing to
-   sit in and covering the text would be worse than having no nav at all */
-.section-nav {
-  display: none;
-}
-
-@media (min-width: 1400px) {
-  .section-nav {
-    display: block;
-    position: fixed;
-    z-index: 30;
-    top: 50%;
-    right: 1.25rem;
-    width: 7rem;
-    transform: translateY(-50%);
-    /* the hero owns this margin first — its sand hint pins to the same corner and the
-       canvas wants to be touched — so the nav waits offstage until the hero is gone.
-       visibility rides the same duration as the fade so it flips only once the nav has
-       finished going, and under reduced motion the global duration reset makes both
-       instant */
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition:
-      opacity 260ms var(--ease-out),
-      visibility 260ms var(--ease-out);
-  }
-
-  .section-nav.is-visible {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-  }
-
-  .section-nav ul {
-    display: grid;
-    gap: 0.6rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  /* the marker is the page's own square grain, so the nav reads as part of the
-     same object rather than a widget bolted to the side */
-  .section-nav-link {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    align-items: start;
-    gap: 0.55rem;
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    line-height: 1.35;
-    color: var(--muted);
-    text-decoration: none;
-    transition:
-      color 180ms var(--ease-out),
-      opacity 180ms var(--ease-out);
-  }
-
-  .section-nav-mark {
-    width: 6px;
-    height: 6px;
-    margin-top: 0.42em;
-    border: 1px solid currentColor;
-    opacity: 0.55;
-    transition:
-      background 180ms var(--ease-out),
-      opacity 180ms var(--ease-out);
-  }
-
-  .section-nav-link:hover {
-    color: var(--ink);
-  }
-
-  .section-nav-link.is-active {
-    color: var(--rasp-deep);
-  }
-
-  .section-nav-link.is-active .section-nav-mark {
-    background: var(--rasp);
-    border-color: var(--rasp);
-    opacity: 1;
-  }
-}
-
 /* anchor jumps glide only for readers who did not ask for stillness; under reduced
    motion the same link lands instantly */
 @media (prefers-reduced-motion: no-preference) {
@@ -891,9 +780,6 @@ a:focus-visible {
 }
 
 .hero,
-.collection,
-.further,
-.day-job,
 .footer {
   scroll-margin-top: 1.5rem;
 }
