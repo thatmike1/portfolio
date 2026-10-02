@@ -34,7 +34,7 @@ export function ProjectImage({ image }: { image: ShowcaseProject["image"] }) {
                     loading="lazy"
                 />
                 <span className="collection-enlarge">
-                    enlarge <span aria-hidden="true">↗</span>
+                    enlarge
                 </span>
             </a>
             <figcaption>{image.caption}</figcaption>
@@ -138,7 +138,7 @@ export function ProjectCollection() {
                                 {project.links.map((link) => (
                                     <li key={link.href}>
                                         <a href={link.href}>
-                                            {link.label} <span aria-hidden="true">↗</span>
+                                            {link.label}
                                         </a>
                                     </li>
                                 ))}

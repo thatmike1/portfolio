@@ -175,7 +175,7 @@ function Scene() {
                     <li className="fragile-row" key={row.name}>
                         <div className="fragile-row-head">
                             {row.href ? (
-                                <a className="fragile-row-name" href={row.href}>
+                                <a className="fragile-row-name no-arrow" href={row.href}>
                                     {row.name}
                                     <span className="fragile-arrow" aria-hidden="true">
                                         {"↗"}

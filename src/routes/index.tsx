@@ -50,7 +50,7 @@ function Home() {
                                 </p>
                                 <p>
                                     <a href="https://goodcookie.app/">
-                                        try the banner <span aria-hidden="true">↗</span>
+                                        try the banner
                                     </a>
                                 </p>
                             </article>
@@ -87,7 +87,7 @@ function Home() {
                         <ul className="further-small">
                             <li id="powder-lab">
                                 <h3>
-                                    <a href="https://powder.ssscribe.app/">powder lab ↗</a>
+                                    <a href="https://powder.ssscribe.app/">powder lab</a>
                                 </h3>
                                 <p>
                                     falling sand, reactive materials and deterministic multiplayer.
@@ -107,7 +107,7 @@ function Home() {
                             </li>
                             <li id="reader">
                                 <h3>
-                                    <a href="https://read.thatmike1.dev/">Reader ↗</a>
+                                    <a href="https://read.thatmike1.dev/">Reader</a>
                                 </h3>
                                 <p>
                                     a finite edition instead of an endless feed. exact reading

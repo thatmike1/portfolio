@@ -1580,12 +1580,14 @@ a:focus-visible {
 /* text details                                                        */
 /* ------------------------------------------------------------------ */
 
-/* every link that leaves the site carries the mark the project names already
-   use: a small arrow that leans out under the pointer. the empty alt text
-   after the slash keeps the glyph out of the accessibility tree, and a parser
-   that doesn't understand that syntax drops the arrow rather than announcing
-   it. currentColor, so the footer's near-white links stay near-white */
-main a[href^='http']:not(.project-name):not(.preview-frame)::after {
+/* every link that leaves the site gets its arrow here and only here: markup
+   never types one, so a link can't end up with two. it leans out under the
+   pointer. the empty alt text after the slash keeps the glyph out of the
+   accessibility tree, and a parser that doesn't understand that syntax drops
+   the arrow rather than announcing it. currentColor, so the footer's
+   near-white links stay near-white. a link that is a picture or a pill of its
+   own opts out with .no-arrow */
+main a[href^='http']:not(.no-arrow)::after {
   content: '↗' / '';
   display: inline-block;
   margin-left: 0.14em;
@@ -1595,7 +1597,7 @@ main a[href^='http']:not(.project-name):not(.preview-frame)::after {
   transition: transform 180ms var(--ease-out);
 }
 
-main a[href^='http']:not(.project-name):not(.preview-frame):hover::after {
+main a[href^='http']:not(.no-arrow):hover::after {
   transform: translate(0.15em, -0.15em);
 }
 

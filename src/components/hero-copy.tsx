@@ -39,7 +39,7 @@ export function HeroCopy() {
             </p>
             <p className="hero-doors">
                 <a href="#things-i-made">explore the things i made ↓</a>
-                <a href="/hire">hiring? the short version ↗</a>
+                <a href="/hire">hiring? the short version →</a>
             </p>
             <p className="hero-note">
                 the sand up there is real, go make a mess. it's a tiny cousin of{" "}
