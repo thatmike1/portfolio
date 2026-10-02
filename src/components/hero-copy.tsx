@@ -1,11 +1,8 @@
 import { useState } from "react";
 import type { AnimationEvent } from "react";
 
-/**
- * the intro block under the sky. shared by the front page and the weather lab,
- * so the falls are always measured against the words they actually run past.
- */
-export function HeroCopy() {
+/** the headline and its full stop, which is a grain: it drops in once and hops on hover */
+export function HeroTitle({ children = "i make stuff" }: { children?: string }) {
     // the hop owns itself once it starts: hovering again mid-flight is ignored, so the
     // grain always finishes the arc it is on instead of snapping back to the start
     const [hopping, setHopping] = useState(false);
@@ -19,18 +16,24 @@ export function HeroCopy() {
         if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
         setHopping(true);
     };
+    return (
+        <h1 onMouseEnter={startHop}>
+            {children}
+            <span className={`hero-stop${hopping ? " is-hopping" : ""}`} onAnimationEnd={endHop}>
+                .
+            </span>
+        </h1>
+    );
+}
 
+/**
+ * the intro block under the sky. shared by the front page and the weather lab,
+ * so the falls are always measured against the words they actually run past.
+ */
+export function HeroCopy() {
     return (
         <div className="container hero-copy">
-            <h1 onMouseEnter={startHop}>
-                i make stuff
-                <span
-                    className={`hero-stop${hopping ? " is-hopping" : ""}`}
-                    onAnimationEnd={endHop}
-                >
-                    .
-                </span>
-            </h1>
+            <HeroTitle />
             <p className="lede">
                 i'm mike, a full-stack product engineer in czechia. react and typescript on top,
                 node underneath, and i'd rather own the whole slice than half of it. i do stuff,

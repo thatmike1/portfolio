@@ -1,0 +1,1201 @@
+/*
+ * the board: home base's language under the portfolio's sky. hairline columns
+ * instead of cards, a sentence that states the fact with one phrase lit, mono for
+ * the small print, and charts made of the same square grains as the sand up top.
+ * the page fills the width by putting things side by side and making screens big;
+ * a group (a shot and its caption, a story and its links) stays tight.
+ */
+
+.fusion {
+  --pad: clamp(14px, 1.6vw, 40px);
+  --col: clamp(18px, 1.9vw, 44px);
+  --top: clamp(26px, 3.4vh, 48px);
+  --bottom: clamp(28px, 4vh, 56px);
+}
+
+/* the sky's band runs a little shorter than the old hero's, so on a 1400px
+   screen the board's first shelf is already in view under the masthead */
+@media (min-width: 641px) {
+  .fusion .weather-band {
+    height: clamp(360px, 48vh, 600px);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* the lit phrase                                                      */
+/* ------------------------------------------------------------------ */
+
+/* at noon it is a highlighter stroke through the lower half of the words, the
+   way home base marks its number; after dark the words themselves take the
+   raspberry, since a pale band on a dark ground reads as a selection */
+.fusion :is(.tile-line, .shelf-lede, .mast-take, .signoff-take) em {
+  font-style: normal;
+  background: linear-gradient(transparent 58%, var(--mark) 58%, var(--mark) 92%, transparent 92%);
+  padding-inline: 0.06em;
+  margin-inline: -0.06em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+:root:is([data-theme='dark'], [data-theme='dusk']) .fusion :is(.tile-line, .shelf-lede, .mast-take, .signoff-take) em {
+  background: none;
+  color: var(--rasp-deep);
+}
+
+/* a label with its hairline run out to the edge: home base's section head */
+.board-label,
+.mast-label,
+.tile-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.board-label::after,
+.mast-label::after,
+.tile-name::after {
+  content: '';
+  order: 1;
+  flex: 1;
+  height: 1px;
+  background: var(--hairline);
+}
+
+.mast-label > :nth-child(2),
+.tile-name > :nth-child(2),
+.board-label > :nth-child(2) {
+  order: 2;
+}
+
+.board-count {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.board-label,
+.mast-label {
+  font-size: 0.9rem;
+  font-weight: 650;
+  letter-spacing: 0.005em;
+  line-height: 1.2;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* masthead: three columns between the falls                           */
+/* ------------------------------------------------------------------ */
+
+/* the copy block of the hero. it keeps clear of the shafts the falls run down
+   (the sim writes --shaft), so the water passes beside the columns, not under them */
+.weather-hero .hero-copy.masthead {
+  width: calc(100% - 2 * (var(--shaft, 0px) + clamp(10px, 1.2vw, 28px)));
+  max-width: 132rem;
+  margin-inline: auto;
+  padding-block: clamp(20px, 3vh, 44px) clamp(28px, 4vh, 56px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) minmax(0, 0.95fr);
+  align-items: start;
+}
+
+.masthead .mast-col {
+  pointer-events: auto;
+  cursor: auto;
+  min-width: 0;
+  padding-inline: var(--col);
+}
+
+.masthead .mast-col + .mast-col {
+  border-left: 1px solid var(--hairline);
+}
+
+.masthead .mast-letter {
+  padding-left: 0;
+}
+
+.masthead h1 {
+  margin-top: 0.7rem;
+}
+
+.masthead .lede {
+  max-width: 34ch;
+  font-size: clamp(1.1rem, 1.15vw, 1.42rem);
+}
+
+.masthead .hero-doors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.6rem;
+  margin: 1.5rem 0 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.mast-take {
+  margin-top: 0.75rem;
+  font-size: clamp(1.05rem, 1vw, 1.3rem);
+  line-height: 1.42;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  max-width: 34ch;
+}
+
+.mast-live,
+.mast-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* a grain, not a dot: square, raspberry while the sky is reporting */
+.mast-live::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: var(--faint);
+}
+
+.mast-live.is-on::before {
+  background: var(--rasp);
+}
+
+.sky-reading {
+  margin-top: 1.1rem;
+}
+
+.sky-strip {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.sky-numbers {
+  margin-top: 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.mast-note {
+  margin-top: 1rem;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 40ch;
+}
+
+/* sora reads the same sky. a cutout, so no frame: the shadow follows her */
+.sora-line {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 1.1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--hairline);
+}
+
+.sora-line img {
+  flex: none;
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 8px oklch(0.2 0.05 270 / 0.35));
+}
+
+.sora-line p {
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.mast-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  border-top: 1px solid var(--hairline);
+}
+
+.mast-index .mast-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.4rem;
+}
+
+.mast-list a {
+  display: grid;
+  grid-template-columns: 6px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 0.34rem 0;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink);
+  font-size: 0.92rem;
+  text-decoration: none;
+  transition: color 160ms var(--ease-out);
+}
+
+.mast-list a span:nth-child(2) {
+  transition: transform 220ms var(--ease-out);
+}
+
+.mast-list a:hover {
+  color: var(--rasp-deep);
+}
+
+.mast-list a:hover span:nth-child(2) {
+  transform: translateX(3px);
+}
+
+.mast-reach {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--muted);
+}
+
+/* reach, in grains: lit means you can open it, a ring means a repo to run,
+   a faint ring means it stays at home */
+.dot {
+  display: block;
+  width: 6px;
+  height: 6px;
+}
+
+/* the same grains inside the sentence, so the sentence is the legend */
+.dot--inline {
+  display: inline-block;
+  width: 0.36em;
+  height: 0.36em;
+  vertical-align: 0.14em;
+}
+
+.dot--live {
+  background: var(--rasp);
+}
+
+.dot--source {
+  box-shadow: inset 0 0 0 1.5px var(--rasp);
+}
+
+.dot--private {
+  box-shadow: inset 0 0 0 1.5px var(--faint);
+}
+
+/* ------------------------------------------------------------------ */
+/* the field                                                           */
+/* ------------------------------------------------------------------ */
+
+/* the ground under the sky. it starts as the hero's own flat page colour, so the
+   seam under the masthead is invisible, then four lights come up through it.
+   held still on purpose: nothing here repaints while you scroll */
+.field {
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(to bottom, var(--bg), color-mix(in oklch, var(--bg) 0%, transparent) 360px),
+    radial-gradient(70vw 60vw at -6% 14%, var(--field-1), transparent 70%),
+    radial-gradient(80vw 64vw at 106% 32%, var(--field-2), transparent 70%),
+    radial-gradient(70vw 60vw at -4% 62%, var(--field-3), transparent 70%),
+    radial-gradient(84vw 64vw at 104% 88%, var(--field-4), transparent 70%),
+    var(--bg);
+}
+
+.field::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: url('/grain.png');
+  opacity: var(--grain-alpha);
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(transparent, #000 420px);
+  mask-image: linear-gradient(transparent, #000 420px);
+}
+
+.board {
+  padding-inline: var(--pad);
+}
+
+/* ------------------------------------------------------------------ */
+/* shelves and rows                                                    */
+/* ------------------------------------------------------------------ */
+
+.shelf {
+  scroll-margin-top: 0.5rem;
+}
+
+.shelf + .shelf {
+  border-top: 1px solid var(--hairline);
+}
+
+.shelf-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
+  column-gap: var(--col);
+  align-items: end;
+  padding: clamp(30px, 4vh, 56px) var(--col) clamp(20px, 2.6vh, 36px);
+}
+
+.shelf-head .board-label {
+  grid-column: 1 / -1;
+  margin-bottom: 0.9rem;
+}
+
+.shelf-lede {
+  font-size: clamp(1.7rem, 2.1vw, 2.9rem);
+  font-weight: 640;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  max-width: 30ch;
+  text-wrap: balance;
+}
+
+.shelf-sub {
+  max-width: 44ch;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.board-row {
+  display: grid;
+  border-top: 1px solid var(--hairline);
+}
+
+.board-row--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.board-row--three {
+  grid-template-columns: minmax(0, 2.15fr) minmax(0, 0.9fr) minmax(0, 0.95fr);
+}
+
+.board-row > * + * {
+  border-left: 1px solid var(--hairline);
+}
+
+/* ------------------------------------------------------------------ */
+/* a tile: one project                                                 */
+/* ------------------------------------------------------------------ */
+
+.tile {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  scroll-margin-top: 0.5rem;
+}
+
+.tile > * {
+  min-width: 0;
+}
+
+.tile-name {
+  /* the brand voice is lowercase; the shared facts keep the names /hire prints */
+  text-transform: lowercase;
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.tile-reach {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.tile-reach::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+}
+
+.tile-reach--live::before {
+  background: var(--rasp);
+}
+
+.tile-reach--source::before {
+  box-shadow: inset 0 0 0 1.5px var(--rasp);
+}
+
+.tile-reach--private::before {
+  box-shadow: inset 0 0 0 1.5px var(--faint);
+}
+
+.tile-line {
+  margin-top: 0.85rem;
+  font-size: clamp(1.4rem, 1.5vw, 2.1rem);
+  font-weight: 600;
+  line-height: 1.17;
+  letter-spacing: -0.025em;
+  max-width: 28ch;
+  text-wrap: balance;
+}
+
+.tile-detail {
+  font-size: 0.96rem;
+  line-height: 1.62;
+  color: var(--ink-2);
+  max-width: 58ch;
+}
+
+.tile-fact > p {
+  margin-top: 0.85rem;
+  font-size: 0.92rem;
+  line-height: 1.52;
+  max-width: 44ch;
+}
+
+.tile-fact > :first-child:is(p) {
+  margin-top: 0;
+}
+
+.tile-use {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--rasp-deep);
+}
+
+.tile-stack,
+.tile-when {
+  margin-top: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  line-height: 1.8;
+  color: var(--muted);
+}
+
+.tile-links {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.4rem;
+  margin: 0.9rem 0 0;
+  padding: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+/* wide: the story, the screen, the fact, side by side. the screen takes the
+   room; the hairlines either side of it run the tile's whole height. the small
+   print (stack, dates) sits at the foot of the fact column, level with the
+   bottom of the screen */
+.tile--wide {
+  grid-template-columns: minmax(330px, 0.92fr) minmax(0, 2.75fr) minmax(290px, 0.88fr);
+  grid-template-areas:
+    'head shot fact'
+    'detail shot fact'
+    'meta shot spec';
+  grid-template-rows: auto auto 1fr;
+}
+
+.tile--wide .tile-head {
+  grid-area: head;
+  padding: var(--top) var(--col) 0;
+}
+
+.tile--wide .tile-detail {
+  grid-area: detail;
+  padding: 1.1rem var(--col) 0;
+}
+
+.tile--wide .tile-meta {
+  grid-area: meta;
+  padding: 1.1rem var(--col) var(--bottom);
+}
+
+.tile--wide .tile-shot {
+  grid-area: shot;
+  padding: var(--top) var(--col) var(--bottom);
+  border-inline: 1px solid var(--hairline);
+}
+
+.tile--wide .tile-fact {
+  grid-area: fact;
+  padding: var(--top) var(--col) 0;
+}
+
+.tile--wide .tile-spec {
+  grid-area: spec;
+  align-self: end;
+  padding: 1.1rem var(--col) calc(var(--bottom) + 1.6rem);
+}
+
+/* half: the name and the line on top, the screen as wide as the tile, then a
+   strip of three small columns under it, the way home base splits its today */
+.tile--half {
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 0.9fr);
+  grid-template-areas:
+    'head head head'
+    'shot shot shot'
+    'detail fact spec'
+    'detail fact meta';
+  grid-template-rows: auto auto auto 1fr;
+}
+
+.tile--half .tile-head {
+  grid-area: head;
+  padding: var(--top) var(--col) 0;
+}
+
+.tile--half .tile-shot {
+  grid-area: shot;
+  padding: 1.3rem var(--col) 1.6rem;
+}
+
+.tile--half .tile-detail {
+  grid-area: detail;
+  padding: 0 var(--col) var(--bottom);
+}
+
+.tile--half .tile-fact {
+  grid-area: fact;
+  padding: 0 var(--col) var(--bottom);
+  border-left: 1px solid var(--hairline);
+}
+
+.tile--half .tile-spec {
+  grid-area: spec;
+  padding: 0 var(--col);
+  border-left: 1px solid var(--hairline);
+}
+
+.tile--half .tile-meta {
+  grid-area: meta;
+  padding: 0.9rem var(--col) var(--bottom);
+  border-left: 1px solid var(--hairline);
+}
+
+/* the phone: a portrait shot at about its own pixels, story under it */
+.tile--phone,
+.tile--list {
+  padding: var(--top) var(--col) var(--bottom);
+  row-gap: 1.2rem;
+}
+
+.tile--phone .tile-head .tile-line {
+  font-size: clamp(1.3rem, 1.3vw, 1.8rem);
+}
+
+.tile--phone .tile-shot {
+  max-width: 340px;
+}
+
+.tile--phone .tile-shot img {
+  border-radius: 22px;
+}
+
+.tile--phone .tile-detail {
+  font-size: 0.9rem;
+}
+
+.room-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.room-list li {
+  padding: 1rem 0 1.1rem;
+  border-bottom: 1px solid var(--hairline);
+  scroll-margin-top: 0.5rem;
+}
+
+.room-list li:first-child {
+  padding-top: 0.2rem;
+}
+
+.room-list h4 {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.room-list p {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+.room-list p.tile-when {
+  margin-top: 0.4rem;
+  font-size: 0.64rem;
+  color: var(--muted);
+}
+
+.room-archive {
+  margin-top: 1rem;
+  font-size: 0.86rem;
+}
+
+.room-archive summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.room-archive ul {
+  margin: 0.7rem 0 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.5rem;
+  color: var(--ink-2);
+}
+
+/* ------------------------------------------------------------------ */
+/* screenshots                                                         */
+/* ------------------------------------------------------------------ */
+
+.shot {
+  margin: 0;
+}
+
+.shot-frame {
+  position: relative;
+  display: block;
+  text-decoration: none;
+  border-radius: 10px;
+}
+
+.shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow:
+    0 0 0 1px var(--hairline),
+    0 24px 50px -30px oklch(0.15 0.03 250 / 0.45);
+}
+
+:root:is([data-theme='dark'], [data-theme='dusk']) .shot img {
+  box-shadow:
+    0 0 0 1px var(--hairline),
+    0 30px 70px -34px oklch(0.05 0.02 250 / 0.9);
+}
+
+.shot figcaption {
+  margin-top: 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.shot-enlarge {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--bg) 88%, transparent);
+  box-shadow: 0 0 0 1px var(--hairline);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--ink);
+  opacity: 0;
+  transition: opacity 180ms var(--ease-out);
+}
+
+.shot-frame:hover .shot-enlarge,
+.shot-frame:focus-visible .shot-enlarge {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .shot-enlarge {
+    opacity: 1;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* charts                                                              */
+/* ------------------------------------------------------------------ */
+
+.chart {
+  margin: 0;
+  max-width: 100%;
+}
+
+.chart svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.chart-grain {
+  fill: var(--rasp);
+}
+
+.chart-grain--dim {
+  fill: var(--faint);
+}
+
+.chart-grain--soft {
+  fill: color-mix(in oklch, var(--rasp) 50%, transparent);
+}
+
+/* the other sand: the word up top is raspberry and amber, so is the dial */
+.chart-grain--alt {
+  fill: var(--amber);
+}
+
+.chart-grain--cloud {
+  fill: color-mix(in oklch, var(--ink) 30%, transparent);
+}
+
+/* the lake's own blue, the one colour on the board that is not the sand's */
+.chart-grain--water {
+  fill: oklch(0.62 0.13 250 / 0.8);
+}
+
+.chart-grain--out {
+  fill: var(--muted);
+}
+
+.chart-floor,
+.chart-rule {
+  fill: var(--hairline);
+}
+
+.chart-plate {
+  fill: color-mix(in oklch, var(--ink) 4%, transparent);
+}
+
+.chart-step {
+  fill: none;
+  stroke: var(--rasp);
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+.chart-axis {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  line-height: 1.5;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart--piles .chart-axis,
+.chart--dial .chart-axis,
+.chart--scatter .chart-axis {
+  max-width: 300px;
+}
+
+.chart-key {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 0.3em;
+  background: var(--rasp);
+}
+
+.chart-key--out {
+  background: var(--muted);
+}
+
+.chart--diff .chart-axis {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  column-gap: 1rem;
+}
+
+.chart-maps {
+  display: flex;
+  gap: 8px;
+}
+
+.chart-map .chart-axis {
+  white-space: nowrap;
+}
+
+/* a quoted issue: the one fact on the board that is a thing rather than a number */
+.issue {
+  margin: 0;
+  padding: 0.8rem 0 0.9rem;
+  border-block: 1px solid var(--hairline);
+}
+
+.issue-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--muted);
+}
+
+.issue-meta span::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 0.5em;
+  background: var(--faint);
+}
+
+.issue-title {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.issue-title code {
+  font-family: var(--font-mono);
+  font-size: 0.78em;
+  font-weight: 400;
+  padding: 0.05em 0.3em;
+  border-radius: 4px;
+  background: color-mix(in oklch, var(--ink) 7%, transparent);
+}
+
+/* ------------------------------------------------------------------ */
+/* sign-off                                                            */
+/* ------------------------------------------------------------------ */
+
+.signoff {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) minmax(0, 1fr);
+  margin-inline: var(--pad);
+  border-top: 1px solid var(--hairline);
+  scroll-margin-top: 0.5rem;
+}
+
+.signoff-col {
+  padding: clamp(40px, 6vh, 88px) var(--col) clamp(48px, 7vh, 96px);
+  min-width: 0;
+}
+
+.signoff-col + .signoff-col {
+  border-left: 1px solid var(--hairline);
+}
+
+.signoff-hi h2 {
+  font-size: clamp(2.6rem, 4.4vw, 5rem);
+}
+
+.signoff-lede {
+  margin-top: 1rem;
+  max-width: 40ch;
+  font-size: 1.1rem;
+}
+
+.signoff-links {
+  list-style: none;
+  margin: 1.8rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 2.4rem;
+}
+
+.signoff-links a {
+  font-size: clamp(1.1rem, 1.5vw, 1.5rem);
+  font-weight: 700;
+}
+
+.signoff-hire {
+  margin-top: 1.4rem;
+  font-size: 0.95rem;
+}
+
+.signoff-take {
+  margin-top: 0.9rem;
+  font-size: clamp(1.2rem, 1.3vw, 1.6rem);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.signoff-note {
+  margin-top: 0.7rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.signoff-sora {
+  display: block;
+  width: 96px;
+  height: auto;
+  margin-top: 1.6rem;
+  filter: drop-shadow(0 6px 8px oklch(0.2 0.05 270 / 0.3));
+}
+
+.signoff .colophon {
+  margin-top: 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  line-height: 1.9;
+  color: var(--muted);
+  max-width: 52ch;
+}
+
+/* ------------------------------------------------------------------ */
+/* narrower: a laptop gets one project a row, the story beside its screen */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 1839px) {
+  .weather-hero .hero-copy.masthead {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  }
+
+  .masthead .mast-col.mast-index {
+    grid-column: 1 / -1;
+    border-left: 0;
+    padding-inline: 0;
+    margin-top: clamp(26px, 3.5vh, 40px);
+  }
+
+  .mast-index .mast-take {
+    max-width: none;
+  }
+
+  .mast-index .mast-list {
+    grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+    column-gap: var(--col);
+  }
+
+  .board-row--two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .board-row--two > * + * {
+    border-left: 0;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .tile--wide,
+  .tile--half {
+    grid-template-columns: minmax(300px, 1fr) minmax(0, 2.15fr);
+    grid-template-areas:
+      'head shot'
+      'detail shot'
+      'fact shot'
+      'meta shot'
+      'spec shot';
+    grid-template-rows: auto auto auto auto 1fr;
+  }
+
+  .tile--half.tile--mirror {
+    grid-template-columns: minmax(0, 2.15fr) minmax(300px, 1fr);
+    grid-template-areas:
+      'shot head'
+      'shot detail'
+      'shot fact'
+      'shot meta'
+      'shot spec';
+  }
+
+  .tile--wide .tile-spec,
+  .tile--half .tile-spec {
+    align-self: start;
+    padding: 0.4rem var(--col) var(--bottom);
+    border-left: 0;
+  }
+
+  .tile--wide .tile-head,
+  .tile--half .tile-head {
+    padding: var(--top) var(--col) 0 var(--col);
+  }
+
+  .tile--wide .tile-detail,
+  .tile--half .tile-detail {
+    padding: 1rem var(--col) 0;
+  }
+
+  .tile--wide .tile-fact,
+  .tile--half .tile-fact {
+    padding: 1.3rem var(--col) 0;
+    border-left: 0;
+  }
+
+  .tile--wide .tile-meta,
+  .tile--half .tile-meta {
+    padding: 1.1rem var(--col) 0;
+    border-left: 0;
+  }
+
+  .tile--wide .tile-shot,
+  .tile--half .tile-shot {
+    padding: var(--top) var(--col) var(--bottom);
+    border-inline: 0;
+    border-left: 1px solid var(--hairline);
+  }
+
+  .tile--half.tile--mirror .tile-shot {
+    border-left: 0;
+    border-right: 1px solid var(--hairline);
+  }
+
+  .board-row--three {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .board-row--three > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  .board-row--three > :nth-child(2) {
+    border-left: 0;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .board-row--three > :nth-child(3) {
+    border-top: 1px solid var(--hairline);
+  }
+
+  .tile--phone {
+    grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+    grid-template-areas:
+      'head head'
+      'shot detail'
+      'shot meta';
+    column-gap: var(--col);
+    align-content: start;
+  }
+
+  .tile--phone .tile-head { grid-area: head; }
+  .tile--phone .tile-shot { grid-area: shot; }
+  .tile--phone .tile-detail { grid-area: detail; }
+  .tile--phone .tile-meta { grid-area: meta; }
+
+  .signoff {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+
+  .signoff-col:last-child {
+    grid-column: 1 / -1;
+    border-left: 0;
+    border-top: 1px solid var(--hairline);
+    padding-block: 1.6rem 2.4rem;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* small screens: one column, the screen right after the line          */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 899px) {
+  .fusion {
+    --col: 0px;
+    --pad: 1.25rem;
+    --top: 2rem;
+    --bottom: 2.25rem;
+  }
+
+  .weather-hero .hero-copy.masthead {
+    grid-template-columns: minmax(0, 1fr);
+    width: calc(100% - 2 * (var(--shaft, 0px) + 0.5rem));
+  }
+
+  /* the material pill hangs off the band's foot on a phone (see .sand-dock), so
+     the masthead starts below where it can reach */
+  @media (max-width: 720px) {
+    .weather-hero .hero-copy.masthead {
+      padding-top: 3.4rem;
+    }
+  }
+
+  .masthead .mast-col + .mast-col {
+    border-left: 0;
+    border-top: 1px solid var(--hairline);
+    margin-top: 1.8rem;
+    padding-top: 1.4rem;
+  }
+
+  .masthead .mast-index {
+    margin-top: 1.8rem;
+  }
+
+  .mast-index .mast-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1rem;
+  }
+
+  .mast-index .mast-reach {
+    display: none;
+  }
+
+  .shelf-head {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.9rem;
+  }
+
+  .tile--wide,
+  .tile--half,
+  .tile--half.tile--mirror,
+  .tile--phone {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'head'
+      'shot'
+      'detail'
+      'fact'
+      'meta'
+      'spec';
+    grid-template-rows: none;
+  }
+
+  .tile--wide .tile-shot,
+  .tile--half .tile-shot,
+  .tile--half.tile--mirror .tile-shot {
+    border: 0;
+    padding: 1.2rem 0 1.2rem;
+  }
+
+  .tile--wide .tile-head,
+  .tile--half .tile-head {
+    padding-top: var(--top);
+  }
+
+  .tile--wide .tile-detail,
+  .tile--half .tile-detail {
+    padding-top: 0;
+  }
+
+  .tile--phone .tile-shot {
+    max-width: 260px;
+  }
+
+  .board-row--three {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .board-row--three > * + * {
+    border-left: 0;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .signoff {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .signoff-col + .signoff-col {
+    border-left: 0;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .signoff-col {
+    padding-block: 2.2rem;
+  }
+}
