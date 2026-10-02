@@ -63,17 +63,23 @@ function soraMood(theme: Theme, raining: boolean): Mood {
     return { src: "/sora/sit.webp", alt: "sora sitting, watching", line: "watching the sand, as usual." };
 }
 
-/** the hero's readings, kept for the masthead: the latest, and a short history of the water */
+/**
+ * the hero's readings, kept for the masthead: the latest, a short history of the
+ * water, and how many readings have come in all told, so a column of the strip
+ * keeps its identity as it moves left
+ */
 export function useSky() {
     const [hud, setHud] = useState<Hud | null>(null);
     const [drops, setDrops] = useState<number[]>([]);
+    const [readings, setReadings] = useState(0);
     const keep = (list: number[], value: number) =>
         list.length >= KEEP ? [...list.slice(1), value] : [...list, value];
     const onWeather = (next: Hud) => {
         setHud(next);
         setDrops((d) => keep(d, next.drops));
+        setReadings((n) => n + 1);
     };
-    return { hud, drops, onWeather };
+    return { hud, drops, readings, onWeather };
 }
 
 function useTheme(): Theme {
@@ -106,14 +112,18 @@ function useReduced(): boolean {
 /**
  * the water in the picture over the last half minute, a column of grains per
  * reading and newest on the right. scaled to the window's own peak, so a shower
- * shows as the columns climbing and a dry spell as them settling
+ * shows as the columns climbing and a dry spell as them settling. each column is
+ * keyed by its reading, not its place, so a new reading's grains are new elements
+ * that fall into the right edge, and the column before it turns from raspberry to
+ * water where it stands
  */
-function DropStrip({ drops }: { drops: number[] }) {
+function DropStrip({ drops, readings = drops.length }: { drops: number[]; readings?: number }) {
     const S = 5;
     const rows = 8;
     const width = KEEP * S - 1;
     const height = rows * S - 1;
     const offset = KEEP - drops.length;
+    const base = readings - drops.length;
     const peak = Math.max(1, ...drops);
     return (
         <svg
@@ -131,8 +141,9 @@ function DropStrip({ drops }: { drops: number[] }) {
                 const n = Math.max(1, Math.round((d / peak) * rows));
                 return Array.from({ length: n }, (_, k) => (
                     <rect
-                        key={`${i}-${k}`}
+                        key={`${base + i}-${k}`}
                         className={i === drops.length - 1 ? "chart-grain" : "chart-grain chart-grain--water"}
+                        style={{ "--d": k * 28 } as React.CSSProperties}
                         x={(offset + i) * S}
                         y={height - (k + 1) * S + 1}
                         width={S - 1}
@@ -150,7 +161,50 @@ function DropStrip({ drops }: { drops: number[] }) {
  * readings up through onWeather; under reduced motion the sky never moves, and the
  * column says so instead of pretending
  */
-export function SkyColumn({ hud, drops }: { hud: Hud | null; drops: number[] }) {
+/**
+ * sora's portrait and her line. when her mood changes the new picture settles in
+ * over the old one instead of replacing it in a frame, and the words fade through;
+ * the first render shows her plainly, so the page lands complete
+ */
+function Sora({ mood, age }: { mood: Mood; age: string | null }) {
+    const [shown, setShown] = useState<{ cur: Mood; prev: Mood | null }>({ cur: mood, prev: null });
+    const { cur, prev } = shown;
+    useEffect(() => {
+        if (mood.src === cur.src && mood.line === cur.line) return;
+        setShown((s) => ({ cur: mood, prev: s.cur }));
+    }, [mood, cur]);
+    // the old picture leaves once its fade is over; a separate effect, so the swap
+    // above re-running cannot cancel the timer
+    useEffect(() => {
+        if (!prev) return;
+        const id = window.setTimeout(() => setShown((s) => ({ cur: s.cur, prev: null })), 400);
+        return () => window.clearTimeout(id);
+    }, [prev]);
+    return (
+        <div className={`sora-line${prev ? " is-changing" : ""}`}>
+            <span className="sora-pic">
+                {prev && prev.src !== cur.src ? (
+                    <img key={`out-${prev.src}`} className="sora-out" src={prev.src} alt="" width={76} height={76} aria-hidden="true" />
+                ) : null}
+                <img key={cur.src} className="sora-in" src={cur.src} alt={cur.alt} width={76} height={76} />
+            </span>
+            <p key={cur.line} className="sora-say">
+                {age ? <>sora is {age} old, and </> : <>sora is </>}
+                {cur.line}
+            </p>
+        </div>
+    );
+}
+
+export function SkyColumn({
+    hud,
+    drops,
+    readings,
+}: {
+    hud: Hud | null;
+    drops: number[];
+    readings?: number;
+}) {
     const theme = useTheme();
     const reduced = useReduced();
     const [age, setAge] = useState<string | null>(null);
@@ -195,7 +249,7 @@ export function SkyColumn({ hud, drops }: { hud: Hud | null; drops: number[] }) 
             </p>
             {!reduced ? (
                 <div className="sky-reading">
-                    <DropStrip drops={drops} />
+                    <DropStrip drops={drops} readings={readings} />
                     <p className="sky-numbers">
                         water, last 30s · cover {hud ? Math.round(hud.cover * 100) : "–"}% · in the
                         air {hud ? Math.round(hud.humidity * 100) : "–"}%
@@ -207,13 +261,7 @@ export function SkyColumn({ hud, drops }: { hud: Hud | null; drops: number[] }) 
                 <a href="https://github.com/thatmike1/powder-lab">powder-lab</a>. the clouds
                 rain, the lake fills, the falls carry it back.
             </p>
-            <div className="sora-line">
-                <img src={mood.src} alt={mood.alt} width={76} height={76} />
-                <p>
-                    {age ? <>sora is {age} old, and </> : <>sora is </>}
-                    {mood.line}
-                </p>
-            </div>
+            <Sora mood={mood} age={age} />
         </section>
     );
 }

@@ -198,6 +198,21 @@
   height: auto;
 }
 
+/* the strip is live: a reading arrives about three times a second. its grains are
+   new elements, so they fall into the right edge (the same pour as the charts,
+   grain by grain from the floor), and the column before them turns from the
+   raspberry to water where it stands. a few five-pixel squares each time; the
+   rest of the strip steps left without ceremony */
+.sky-strip .chart-grain {
+  animation: grain-pour 220ms cubic-bezier(0.5, 0, 0.85, 0.55) both;
+  animation-delay: calc(var(--d, 0) * 1ms);
+  transition: fill 600ms var(--ease-out);
+}
+
+.sky-strip .chart-grain--water {
+  animation: none;
+}
+
 .sky-numbers {
   margin-top: 0.45rem;
   font-family: var(--font-mono);
@@ -224,12 +239,68 @@
   border-top: 1px solid var(--hairline);
 }
 
-.sora-line img {
+.sora-pic {
+  position: relative;
   flex: none;
+  width: 76px;
+  height: 76px;
+}
+
+.sora-line img {
+  display: block;
   width: 76px;
   height: 76px;
   object-fit: contain;
   filter: drop-shadow(0 6px 8px oklch(0.2 0.05 270 / 0.35));
+}
+
+/* when her mood changes (rain starts, the look turns to night) the new picture
+   settles in over the old one and the words fade through. only while a change is
+   under way: the first render, and every render for a reader who asked for less
+   motion, shows her plainly */
+.sora-out {
+  position: absolute;
+  inset: 0;
+}
+
+.sora-line.is-changing .sora-out {
+  animation: sora-out 300ms cubic-bezier(0.33, 0, 0.2, 1) both;
+}
+
+.sora-line.is-changing .sora-in {
+  animation: sora-in 420ms cubic-bezier(0.33, 0, 0.2, 1) both;
+}
+
+.sora-line.is-changing .sora-say {
+  animation: sora-say 220ms var(--ease-out) 60ms both;
+}
+
+@keyframes sora-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes sora-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sora-say {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .sora-line p {
@@ -1382,6 +1453,7 @@
     border: 0;
   }
 
+  .mast-sky .sora-pic,
   .mast-sky .sora-line img {
     width: 56px;
     height: 56px;

@@ -45,7 +45,7 @@ function Home() {
                                     <a href="#say-hi">say hi ↓</a>
                                 </p>
                             </section>
-                            <SkyColumn hud={sky.hud} drops={sky.drops} />
+                            <SkyColumn hud={sky.hud} drops={sky.drops} readings={sky.readings} />
                             <nav className="mast-col mast-index" aria-labelledby="index-heading">
                                 <h2 className="mast-label" id="index-heading">
                                     <span>on the board</span>
