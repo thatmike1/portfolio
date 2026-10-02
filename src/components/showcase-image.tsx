@@ -20,6 +20,8 @@ type Props = {
     priority?: boolean;
     /** the caption under the figure; the viewer shows it either way */
     showCaption?: boolean;
+    /** the enlarge chip's words, where the default would not fit beside the caption */
+    hint?: string;
     className?: string;
 };
 
@@ -36,6 +38,7 @@ export function ShowcaseImage({
     sizes,
     priority = false,
     showCaption = true,
+    hint,
     className,
 }: Props) {
     const openShot = useLightbox();
@@ -79,7 +82,7 @@ export function ShowcaseImage({
                     decoding="async"
                 />
                 <span className="shot-hint">
-                    {shots.length > 1 ? `enlarge · ${shots.length} shots` : "enlarge"}
+                    {hint ?? (shots.length > 1 ? `enlarge · ${shots.length} shots` : "enlarge")}
                 </span>
             </a>
             {showCaption && shot.caption ? <figcaption>{shot.caption}</figcaption> : null}

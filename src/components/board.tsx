@@ -96,8 +96,9 @@ const TOYS: Record<string, Toy> = {
         minHeight: "40rem",
         caption: (
             <>
-                <b>try it:</b> pick whose phone you're holding, tick what the other one added, add
-                something. the real list is private, so this one is made up.
+                <b>try it:</b> the real app is czech; this one speaks english so you can play.
+                pick whose phone you're holding, tick what the other one added, add something.
+                the people and the groceries are made up.
             </>
         ),
     },
@@ -259,6 +260,7 @@ function NakupTile() {
                             className="tile-phone"
                             shots={project.shots}
                             index={index}
+                            hint="enlarge"
                             sizes="(min-width: 900px) 330px, 240px"
                         />
                     </li>

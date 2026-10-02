@@ -549,8 +549,29 @@
   border-radius: 22px;
 }
 
+/* a phone's screen is busy edge to edge: its greeting and avatar along the top, the
+   input bar along the bottom. so its enlarge chip steps out of the screen and sits
+   under the phone's bottom right corner, beside the caption, which keeps clear of
+   it. the frame clips, so the chip hangs off the figure instead: it keeps its place
+   in the flow, right under the screen, and only its right edge is set */
+.tile-phone {
+  position: relative;
+}
+
+.tile-phone .shot-frame {
+  position: static;
+}
+
+.tile-phone .shot-hint {
+  top: auto;
+  right: 0;
+  bottom: auto;
+  margin-top: 0.6rem;
+}
+
 .tile-phone figcaption {
-  max-width: 28ch;
+  max-width: calc(28ch + 5.4rem);
+  padding-right: 5.4rem;
 }
 
 .tile--nakup > .tile-toy {
