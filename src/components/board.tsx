@@ -162,7 +162,8 @@ function Links({ project }: { project: ShowcaseProject }) {
  * what each tile's screenshot takes on screen, for its srcset. a wide tile's shot is
  * about 2.65 of 3.55 shares of the board from 1840px and 2.15 of 3.15 on a laptop; a
  * full spread runs the board's width; a half tile is half of it on a wide screen and
- * spreads across the board on a laptop
+ * spreads across the board on a laptop. good cookie is a half tile in a row of its
+ * own, two of three shares beside the rooms, so it draws at about 61vw from 1840px
  */
 const SIZES = {
     wide: "(min-width: 1840px) 70vw, (min-width: 900px) 64vw, calc(100vw - 2.5rem)",
@@ -170,6 +171,7 @@ const SIZES = {
     half: "(min-width: 1840px) 46vw, (min-width: 900px) 94vw, calc(100vw - 2.5rem)",
     /** a heavyweight without a toy: beside its story from 1840px, spread across a laptop */
     plain: "(min-width: 1840px) 70vw, (min-width: 900px) 94vw, calc(100vw - 2.5rem)",
+    cookie: "(min-width: 1840px) 62vw, (min-width: 900px) 94vw, calc(100vw - 2.5rem)",
 } as const;
 
 type Variant = "wide" | "full" | "half";
@@ -185,10 +187,13 @@ function Tile({
     project,
     variant,
     priority = false,
+    sizes,
 }: {
     project: ShowcaseProject;
     variant: Variant;
     priority?: boolean;
+    /** the shot's `sizes` when the tile sits somewhere its variant's default does not describe */
+    sizes?: string;
 }) {
     const chart = CHARTS[project.id];
     const toy = TOYS[project.id];
@@ -227,7 +232,7 @@ function Tile({
                 <ShowcaseImage
                     className="tile-shot"
                     shots={project.shots}
-                    sizes={variant === "wide" && !toy ? SIZES.plain : SIZES[variant]}
+                    sizes={sizes ?? (variant === "wide" && !toy ? SIZES.plain : SIZES[variant])}
                     priority={priority}
                 />
                 {toy ? (
@@ -264,7 +269,7 @@ function NakupTile() {
                             shots={project.shots}
                             index={index}
                             hint="enlarge"
-                            sizes="(min-width: 900px) 330px, 240px"
+                            sizes="(min-width: 1840px) 360px, (min-width: 900px) 300px, 240px"
                         />
                     </li>
                 ))}
@@ -426,7 +431,7 @@ export function Board() {
                     <NakupTile />
                 </div>
                 <div className="board-row board-row--cookie">
-                    <Tile project={byId("good-cookie")} variant="half" />
+                    <Tile project={byId("good-cookie")} variant="half" sizes={SIZES.cookie} />
                     <Rooms />
                 </div>
             </Shelf>
