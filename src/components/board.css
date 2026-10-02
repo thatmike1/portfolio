@@ -421,14 +421,27 @@
    page: no fixed attachment, no translucent overlay, nothing that asks a browser
    without gpu layers to repaint a full-screen layer while you scroll */
 .field {
+  /* the field's own copies of the look, so a change of look eases here without
+     restyling the page under it (see the @property block in styles.css) */
+  --field-ground: var(--bg);
+  --field-light-1: var(--field-1);
+  --field-light-2: var(--field-2);
+  --field-light-3: var(--field-3);
+  --field-light-4: var(--field-4);
+  transition:
+    --field-ground 250ms var(--ease-out),
+    --field-light-1 650ms var(--ease-out),
+    --field-light-2 650ms var(--ease-out),
+    --field-light-3 650ms var(--ease-out),
+    --field-light-4 650ms var(--ease-out);
   background:
-    linear-gradient(to bottom, var(--bg) 0, color-mix(in oklch, var(--bg) 0%, transparent) 420px),
+    linear-gradient(to bottom, var(--field-ground) 0, color-mix(in oklch, var(--field-ground) 0%, transparent) 420px),
     var(--grain) 0 0 / 192px 192px repeat,
-    radial-gradient(70vw 60vw at -6% 14%, var(--field-1), transparent 70%),
-    radial-gradient(80vw 64vw at 106% 32%, var(--field-2), transparent 70%),
-    radial-gradient(70vw 60vw at -4% 62%, var(--field-3), transparent 70%),
-    radial-gradient(84vw 64vw at 104% 88%, var(--field-4), transparent 70%),
-    var(--bg);
+    radial-gradient(70vw 60vw at -6% 14%, var(--field-light-1), transparent 70%),
+    radial-gradient(80vw 64vw at 106% 32%, var(--field-light-2), transparent 70%),
+    radial-gradient(70vw 60vw at -4% 62%, var(--field-light-3), transparent 70%),
+    radial-gradient(84vw 64vw at 104% 88%, var(--field-light-4), transparent 70%),
+    var(--field-ground);
 }
 
 .board {

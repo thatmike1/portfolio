@@ -116,48 +116,20 @@
 /* the look changes as one                                             */
 /* ------------------------------------------------------------------ */
 
-/* the tokens are registered as colours so a change of look can be transitioned
-   instead of flipped. the transitions sit on body, not on :root: the hero reads
-   --bg and --surface off the root the moment the look changes and needs the final
-   value, while everything under body inherits the change and eases through it.
-   the ground keeps pace with the canvas's own ground (about 250ms); ink and the
-   accents take a little longer; the field's four lights come last, the way the
-   sky above takes its time. one repaint per frame for well under a second, set
-   off by the visitor, and nothing here is a layer that repaints on scroll */
-@property --bg { syntax: '<color>'; inherits: true; initial-value: #fff; }
-@property --surface { syntax: '<color>'; inherits: true; initial-value: #eee; }
-@property --ink { syntax: '<color>'; inherits: true; initial-value: #000; }
-@property --muted { syntax: '<color>'; inherits: true; initial-value: #666; }
-@property --rasp { syntax: '<color>'; inherits: true; initial-value: #c2185b; }
-@property --rasp-deep { syntax: '<color>'; inherits: true; initial-value: #ad1457; }
-@property --amber { syntax: '<color>'; inherits: true; initial-value: #e0a040; }
-@property --mark { syntax: '<color>'; inherits: true; initial-value: transparent; }
-@property --lit { syntax: '<color>'; inherits: true; initial-value: #000; }
-@property --footer-bg { syntax: '<color>'; inherits: true; initial-value: #222; }
-@property --footer-ink { syntax: '<color>'; inherits: true; initial-value: #eee; }
-@property --field-1 { syntax: '<color>'; inherits: true; initial-value: transparent; }
-@property --field-2 { syntax: '<color>'; inherits: true; initial-value: transparent; }
-@property --field-3 { syntax: '<color>'; inherits: true; initial-value: transparent; }
-@property --field-4 { syntax: '<color>'; inherits: true; initial-value: transparent; }
-
-body {
-  transition:
-    --bg 250ms var(--ease-out),
-    --surface 250ms var(--ease-out),
-    --ink 420ms var(--ease-out),
-    --muted 420ms var(--ease-out),
-    --rasp 420ms var(--ease-out),
-    --rasp-deep 420ms var(--ease-out),
-    --amber 420ms var(--ease-out),
-    --mark 420ms var(--ease-out),
-    --lit 420ms var(--ease-out),
-    --footer-bg 420ms var(--ease-out),
-    --footer-ink 420ms var(--ease-out),
-    --field-1 650ms var(--ease-out),
-    --field-2 650ms var(--ease-out),
-    --field-3 650ms var(--ease-out),
-    --field-4 650ms var(--ease-out);
-}
+/* a change of look eases across the board, but only where it is one element's
+   paint: the field's ground and its four lights. those are copied into
+   properties the field keeps to itself (inherits: false), so a frame of the ease
+   restyles the field alone. easing the shared tokens on body instead made every
+   element on the page restyle every frame, and with the sim running at the top
+   of the page that cost a third of the frames in firefox without gpu layers.
+   text, rules and accents take the new look at once, the same moment the hero's
+   chrome does; the ground under them keeps pace with the canvas's own ground
+   (250ms) and the lights come last (650ms), the way the sky above takes its time */
+@property --field-ground { syntax: '<color>'; inherits: false; initial-value: transparent; }
+@property --field-light-1 { syntax: '<color>'; inherits: false; initial-value: transparent; }
+@property --field-light-2 { syntax: '<color>'; inherits: false; initial-value: transparent; }
+@property --field-light-3 { syntax: '<color>'; inherits: false; initial-value: transparent; }
+@property --field-light-4 { syntax: '<color>'; inherits: false; initial-value: transparent; }
 
 /* ------------------------------------------------------------------ */
 /* base                                                                */
@@ -181,7 +153,6 @@ body {
   font-size: 1.0625rem;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
-  /* background and colour follow the tokens above, which do the easing */
 }
 
 ::selection {
