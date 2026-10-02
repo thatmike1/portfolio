@@ -46,7 +46,8 @@ export function shotSizes(
 ) {
     const actual = image.width / dpr;
     const fit = Math.min(stage.width, actual, (stage.height * image.width) / image.height);
-    return { actual, fit, canZoom: actual - fit > 8 };
+    // a zoom that only gains a few percent reads as a jitter, not a closer look
+    return { actual, fit, canZoom: actual > fit * 1.12 };
 }
 
 /**

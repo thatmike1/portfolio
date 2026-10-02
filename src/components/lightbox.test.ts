@@ -56,6 +56,10 @@ describe("shot sizes", () => {
         const roomy = shotSizes({ width: 1600, height: 900 }, { width: 2300, height: 1300 }, 1);
         expect(roomy).toEqual({ actual: 1600, fit: 1600, canZoom: false });
 
+        // a 2560 capture on a 2336px screen at dpr 1.1 already fits at ~98%: nothing to zoom to
+        const nearly = shotSizes({ width: 2560, height: 1440 }, { width: 2290, height: 1300 }, 1.1);
+        expect(nearly.canZoom).toBe(false);
+
         const laptop = shotSizes({ width: 2560, height: 1440 }, { width: 1400, height: 760 }, 1);
         expect(laptop.fit).toBeCloseTo((760 * 2560) / 1440);
         expect(laptop.canZoom).toBe(true);
