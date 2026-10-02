@@ -120,11 +120,14 @@
   font-weight: 700;
 }
 
+/* the ring glides from dot to dot instead of jumping, so a sweep across the chart
+   reads as one thing being carried; a transform on one small circle */
 .mm-active {
   fill: none;
   stroke: var(--ink);
   stroke-width: 1.5;
   pointer-events: none;
+  transition: transform 160ms var(--ease-out);
 }
 
 .mm-foot {

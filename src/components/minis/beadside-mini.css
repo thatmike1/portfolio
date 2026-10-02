@@ -308,7 +308,16 @@
   padding: 0.3rem 0.6rem;
   border-radius: 999px;
   cursor: pointer;
-  transition: background 160ms var(--ease-out), border-color 160ms var(--ease-out);
+  transition:
+    background 160ms var(--ease-out),
+    border-color 160ms var(--ease-out),
+    transform 120ms var(--ease-out);
+}
+
+/* a press sits down a pixel and comes back: the one bit of weight the toy has */
+.bs-quick button:active,
+.bs-send:active:not(:disabled) {
+  transform: translateY(1px) scale(0.97);
 }
 
 .bs-quick button:hover {
@@ -354,6 +363,7 @@
   background: var(--ink);
   color: var(--bg);
   cursor: pointer;
+  transition: transform 120ms var(--ease-out);
 }
 
 .bs-send:disabled {

@@ -187,6 +187,11 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
+  transition: transform 120ms var(--ease-out);
+}
+
+.tally-session:active {
+  transform: translateY(1px);
 }
 
 .tally-session:focus-visible {

@@ -252,11 +252,13 @@ export default function ModelMapMini() {
                             {p.effort || shortName(p.model)}
                         </text>
                     ))}
+                    {/* positioned by transform rather than cx/cy so css can glide it between dots */}
                     <circle
                         className="mm-active"
-                        cx={X(active.cost)}
-                        cy={Y(active.intel)}
+                        cx={0}
+                        cy={0}
                         r={8.5}
+                        style={{ transform: `translate(${X(active.cost).toFixed(1)}px, ${Y(active.intel).toFixed(1)}px)` }}
                     />
                 </svg>
             </div>

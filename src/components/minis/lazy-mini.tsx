@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import type { ComponentType, LazyExoticComponent, ReactNode } from "react";
+import { useArrival } from "../../lib/arrival";
 import "./lazy-mini.css";
 
 type LazyMiniProps = {
@@ -22,6 +23,8 @@ type LazyMiniProps = {
 export function LazyMini({ toy: Toy, label, minHeight, caption, className }: LazyMiniProps) {
     const slot = useRef<HTMLDivElement>(null);
     const [near, setNear] = useState(false);
+    // the grain before "try it" drops in once when the caption scrolls into view
+    const [mark, markArrival] = useArrival<HTMLSpanElement>(1);
 
     useEffect(() => {
         const node = slot.current;
@@ -53,7 +56,7 @@ export function LazyMini({ toy: Toy, label, minHeight, caption, className }: Laz
         <figure className={`mini${className ? ` ${className}` : ""}`} aria-label={label}>
             {/* the instruction comes first: a reader should know it is a toy before touching it */}
             <figcaption className="mini-caption">
-                <span className="toy-mark" aria-hidden="true" />
+                <span className="toy-mark" ref={mark} data-arrival={markArrival} aria-hidden="true" />
                 <span>{caption}</span>
             </figcaption>
             <div className="mini-stage" ref={slot} style={{ minHeight }}>
