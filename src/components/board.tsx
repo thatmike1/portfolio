@@ -5,7 +5,7 @@ import { FACTS } from "../lib/facts";
 import { ARCHIVE, SHELF, SHOWCASE, SUPPORTING } from "../lib/showcase";
 import type { Line, Reach, ShelfItem, ShowcaseProject } from "../lib/showcase";
 import { LazyMini } from "./minis/lazy-mini";
-import { CommitPiles, DiffGrains, FontMaps, RadioDial } from "./pixel-charts";
+import { CommitPiles, DiffGrains, FontMaps, GrooveGrains, RadioDial } from "./pixel-charts";
 import { ShowcaseImage } from "./showcase-image";
 import "./board.css";
 
@@ -47,6 +47,7 @@ const CHARTS: Record<string, ReactNode> = {
     "t3-code": <DiffGrains />,
     "font-tinder": <FontMaps />,
     diskzokej: <RadioDial />,
+    breakbeat: <GrooveGrains />,
 };
 
 type Toy = {
@@ -418,15 +419,18 @@ export function Board() {
             <Shelf
                 id="different-itches"
                 label="different itches"
-                count="5 · plus the archive"
+                count="6 · plus the archive"
                 lede={
                     <>
-                        one lives on <Lit>two phones at home</Lit>, one sells for $29, and three are
-                        smaller things i keep around.
+                        one plays drums, one lives on <Lit>two phones at home</Lit>, one sells for
+                        $29, and three are smaller things i keep around.
                     </>
                 }
                 sub="the older experiments are folded away at the end, still standing."
             >
+                <div className="board-row">
+                    <Tile project={byId("breakbeat")} variant="wide" />
+                </div>
                 <div className="board-row">
                     <NakupTile />
                 </div>
@@ -442,6 +446,7 @@ export function Board() {
 /** every project on the board in page order, with how a visitor can reach it, for the masthead */
 export const BOARD_INDEX: Array<{ id: string; name: string; reach: Reach }> = [
     ...SHOWCASE,
+    byId("breakbeat"),
     byId("nakup"),
     byId("good-cookie"),
     ...SHELF,
