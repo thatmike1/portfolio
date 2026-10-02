@@ -1,0 +1,236 @@
+/* tally in miniature. three session inks that hold up in every look: the page's
+   raspberry, the hero's amber sand, and a grey mixed from the page itself */
+.tally-mini {
+  --s-a: var(--rasp);
+  --s-b: oklch(0.76 0.14 72);
+  --s-c: color-mix(in oklch, var(--ink) 42%, var(--bg));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tally-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: end;
+  gap: 0.4rem 1.2rem;
+}
+
+/* sized for "100%" so the sentence beside it never shifts as the number grows */
+.tally-big {
+  display: flex;
+  align-items: flex-start;
+  margin: 0;
+  font-size: clamp(3.6rem, 16cqi, 5.4rem);
+  width: 2.45em;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 0.82;
+}
+
+.tally-pct {
+  font-size: 0.48em;
+  margin-top: 0.15em;
+  margin-left: 0.04em;
+}
+
+.tally-say {
+  min-height: 4.2em;
+  display: grid;
+  align-content: end;
+  gap: 0.25rem;
+}
+
+.tally-when {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.tally-forecast {
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.tally-forecast strong {
+  color: var(--rasp-deep);
+  font-weight: 700;
+}
+
+/* the chart: an svg stretched to the box, lines kept crisp with non-scaling strokes,
+   and every label html so nothing in it ever stretches */
+.tally-chart {
+  position: relative;
+  margin-top: 1.1rem;
+  height: clamp(9rem, 34cqi, 12.5rem);
+  touch-action: pan-y;
+  cursor: ew-resize;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.tally-chart:focus-visible {
+  outline-offset: 6px;
+}
+
+.tally-chart svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.tally-grid {
+  stroke: var(--hairline);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.tally-ceiling {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.tally-band {
+  transition: opacity 180ms var(--ease-out);
+}
+
+.tally-band--a {
+  fill: var(--s-a);
+}
+
+.tally-band--b {
+  fill: var(--s-b);
+}
+
+.tally-band--c {
+  fill: var(--s-c);
+}
+
+.tally-mini[data-focus] .tally-band {
+  opacity: 0.22;
+}
+
+.tally-mini[data-focus='a'] .tally-band--a,
+.tally-mini[data-focus='b'] .tally-band--b,
+.tally-mini[data-focus='c'] .tally-band--c {
+  opacity: 1;
+}
+
+.tally-line {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.tally-forecast-line {
+  stroke: var(--rasp-deep);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.tally-now,
+.tally-full {
+  position: absolute;
+  top: -1.45rem;
+  translate: -50% 0;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--muted);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.tally-full {
+  color: var(--rasp-deep);
+}
+
+.tally-cursor {
+  position: absolute;
+  top: -0.3rem;
+  bottom: 0;
+  width: 0;
+  border-left: 1.5px solid var(--ink);
+  pointer-events: none;
+}
+
+.tally-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -0.55rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--muted);
+}
+
+.tally-sessions {
+  list-style: none;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  display: grid;
+}
+
+.tally-session {
+  display: grid;
+  grid-template-columns: 0.7rem minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 0.65rem;
+  width: 100%;
+  padding: 0.5rem 0;
+  border: 0;
+  border-top: 1px solid var(--hairline);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tally-session:focus-visible {
+  outline-offset: 2px;
+}
+
+.tally-swatch {
+  width: 0.62rem;
+  height: 0.62rem;
+  align-self: center;
+}
+
+.tally-session--a .tally-swatch {
+  background: var(--s-a);
+}
+
+.tally-session--b .tally-swatch {
+  background: var(--s-b);
+}
+
+.tally-session--c .tally-swatch {
+  background: var(--s-c);
+}
+
+.tally-session-title {
+  font-weight: 650;
+  font-size: 0.92rem;
+}
+
+.tally-session-share {
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
+
+.tally-session-meta {
+  grid-column: 2 / -1;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.tally-session[aria-pressed='true'] .tally-session-title,
+.tally-session:hover .tally-session-title {
+  color: var(--rasp-deep);
+}
