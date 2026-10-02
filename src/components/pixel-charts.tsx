@@ -235,3 +235,57 @@ export function RadioDial() {
         </figure>
     );
 }
+
+/**
+ * one of the breakbeat loom's feels as it is written: a row of grains per lane, a
+ * column per sixteenth, two bars with a gap between them. a loud hit is a full
+ * grain, a light one (the ghosts, the soft hats) is half there, and a rest is a
+ * speck on the floor of its lane. it pours a step at a time, left to right, the
+ * way the loop plays, and it makes no sound
+ */
+export function GrooveGrains() {
+    const { groove, steps } = FACTS.breakbeat;
+    const half = steps / 2;
+    const gap = 6; // the bar line
+    const x = (step: number) => step * S + (step >= half ? gap : 0);
+    const width = x(steps - 1) + G;
+    const height = groove.lanes.length * S - 1;
+    const [ref, arrival] = useArrival<HTMLElement>();
+    return (
+        <figure className="chart chart--groove" ref={ref} data-arrival={arrival}>
+            <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} shapeRendering="crispEdges" aria-hidden="true">
+                {groove.lanes.map((lane, row) => (
+                    <g key={lane.lane}>
+                        <title>{lane.lane}</title>
+                        {lane.steps.map((v, step) =>
+                            v ? (
+                                <rect
+                                    key={step}
+                                    className={v >= 0.5 ? "chart-grain" : "chart-grain chart-grain--soft"}
+                                    x={x(step)}
+                                    y={row * S}
+                                    width={G}
+                                    height={G}
+                                    // the loop plays left to right, and so does the pour
+                                    style={pour(step * 24 + (groove.lanes.length - 1 - row) * 14)}
+                                />
+                            ) : (
+                                <rect key={step} className="chart-floor" x={x(step) + 2} y={row * S + 2} width={1} height={1} />
+                            ),
+                        )}
+                    </g>
+                ))}
+            </svg>
+            <figcaption>
+                <span className="chart-axis" style={{ maxWidth: width }}>
+                    <span>bar 1</span>
+                    <span>bar 2</span>
+                </span>
+                <span className="chart-axis chart-axis--under">
+                    {groove.feel} as written, {groove.bpm} bpm · lanes:{" "}
+                    {groove.lanes.map((lane) => lane.lane).join(", ")}
+                </span>
+            </figcaption>
+        </figure>
+    );
+}

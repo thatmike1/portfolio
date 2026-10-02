@@ -868,6 +868,21 @@
   max-width: 300px;
 }
 
+.chart--groove .chart-axis {
+  gap: 6px;
+  margin-top: 0.35rem;
+}
+
+/* each bar's label starts over its own bar */
+.chart--groove .chart-axis > span {
+  flex: 1;
+}
+
+.chart--groove .chart-axis--under {
+  display: block;
+  margin-top: 0.1rem;
+}
+
 .chart-key {
   display: inline-block;
   width: 6px;
