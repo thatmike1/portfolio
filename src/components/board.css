@@ -1,0 +1,1594 @@
+/*
+ * the board: home base's language under the portfolio's sky. hairline columns
+ * instead of cards, a sentence that states the fact with one phrase lit, mono for
+ * the small print, and charts made of the same square grains as the sand up top.
+ * the page fills the width by putting things side by side and making screens big;
+ * a group (a shot and its caption, a story and its links) stays tight.
+ */
+
+.fusion {
+  --pad: clamp(14px, 1.6vw, 40px);
+  --col: clamp(18px, 1.9vw, 44px);
+  --top: clamp(26px, 3.4vh, 48px);
+  --bottom: clamp(28px, 4vh, 56px);
+}
+
+/* the sky's band runs a little shorter than the old hero's, so on a 1400px
+   screen the board's first shelf is already in view under the masthead */
+@media (min-width: 641px) {
+  .fusion .weather-band {
+    height: clamp(360px, 48vh, 600px);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* the lit phrase                                                      */
+/* ------------------------------------------------------------------ */
+
+/* at noon it is a highlighter stroke through the lower half of the words, the
+   way home base marks its number; after dark the words themselves take the
+   raspberry, since a pale band on a dark ground reads as a selection. one rule
+   for all three looks: --mark is the stroke (transparent after dark) and --lit is
+   the words' colour (the ink at noon), both tokens in styles.css */
+.fusion :is(.tile-line, .shelf-lede, .mast-take, .signoff-take) em {
+  font-style: normal;
+  color: var(--lit);
+  background: linear-gradient(transparent 58%, var(--mark) 58%, var(--mark) 92%, transparent 92%) no-repeat 0 0 / 100% 100%;
+  padding-inline: 0.06em;
+  margin-inline: -0.06em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* the phrase lights the first time its line scrolls in: the stroke sweeps through
+   the words left to right, and after dark the words warm from the ink to the
+   raspberry. a beat after the line lands, so the eye is on it; the words never
+   move, only their paint */
+.fusion em[data-arrival='waiting'] {
+  color: var(--ink);
+  background-size: 0% 100%;
+}
+
+.fusion em[data-arrival='arriving'] {
+  animation: phrase-light 560ms cubic-bezier(0.33, 0, 0.2, 1) 160ms both;
+}
+
+@keyframes phrase-light {
+  from {
+    color: var(--ink);
+    background-size: 0% 100%;
+  }
+
+  to {
+    color: var(--lit);
+    background-size: 100% 100%;
+  }
+}
+
+/* a label with its hairline run out to the edge: home base's section head */
+.board-label,
+.mast-label,
+.tile-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.board-label::after,
+.mast-label::after,
+.tile-name::after {
+  content: '';
+  order: 1;
+  flex: 1;
+  height: 1px;
+  background: var(--hairline);
+}
+
+.mast-label > :nth-child(2),
+.tile-name > :nth-child(2),
+.board-label > :nth-child(2) {
+  order: 2;
+}
+
+.board-count {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.board-label,
+.mast-label {
+  font-size: 0.9rem;
+  font-weight: 650;
+  letter-spacing: 0.005em;
+  line-height: 1.2;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* masthead: three columns between the falls                           */
+/* ------------------------------------------------------------------ */
+
+/* the copy block of the hero. it keeps clear of the shafts the falls run down
+   (the sim writes --shaft, and --shaft-guess stands in for it until then), so the
+   water passes beside the columns, not under them */
+.weather-hero .hero-copy.masthead {
+  width: calc(100% - 2 * (var(--shaft, var(--shaft-guess)) + clamp(10px, 1.2vw, 28px)));
+  max-width: 132rem;
+  margin-inline: auto;
+  padding-block: clamp(20px, 3vh, 44px) clamp(28px, 4vh, 56px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) minmax(0, 0.95fr);
+  align-items: start;
+}
+
+.masthead .mast-col {
+  pointer-events: auto;
+  cursor: auto;
+  min-width: 0;
+  padding-inline: var(--col);
+}
+
+.masthead .mast-col + .mast-col {
+  border-left: 1px solid var(--hairline);
+}
+
+.masthead .mast-letter {
+  padding-left: 0;
+}
+
+.masthead h1 {
+  margin-top: 0.7rem;
+}
+
+.masthead .lede {
+  max-width: 34ch;
+  font-size: clamp(1.1rem, 1.15vw, 1.42rem);
+}
+
+.masthead .hero-doors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.6rem;
+  margin: 1.5rem 0 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.mast-take {
+  margin-top: 0.75rem;
+  font-size: clamp(1.05rem, 1vw, 1.3rem);
+  line-height: 1.42;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  max-width: 34ch;
+}
+
+/* the sky's sentence and the longest one it will say share a cell, so the box is
+   the final one from the first paint. which room is held depends on the motion
+   setting, which css knows before the script does */
+.sky-take {
+  display: grid;
+}
+
+.sky-take > * {
+  grid-area: 1 / 1;
+}
+
+.sky-take-room {
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.sky-take-room--still {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sky-take-room--live {
+    display: none;
+  }
+
+  .sky-take-room--still {
+    display: inline;
+  }
+
+  .mast-sky .sky-reading {
+    display: none;
+  }
+}
+
+.mast-live,
+.mast-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* a grain, not a dot: square, raspberry while the sky is reporting */
+.mast-live::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: var(--faint);
+}
+
+.mast-live.is-on::before {
+  background: var(--rasp);
+}
+
+.sky-reading {
+  margin-top: 1.1rem;
+}
+
+.sky-strip {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* the strip is live: a reading arrives about three times a second. its grains are
+   new elements, so they fall into the right edge (the same pour as the charts,
+   grain by grain from the floor), and the column before them turns from the
+   raspberry to water where it stands. a few five-pixel squares each time; the
+   rest of the strip steps left without ceremony */
+.sky-strip .chart-grain {
+  animation: grain-pour 220ms cubic-bezier(0.5, 0, 0.85, 0.55) both;
+  animation-delay: calc(var(--d, 0) * 1ms);
+  transition: fill 600ms var(--ease-out);
+}
+
+.sky-strip .chart-grain--water {
+  animation: none;
+}
+
+.sky-numbers {
+  margin-top: 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.mast-note {
+  margin-top: 1rem;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 40ch;
+}
+
+/* sora reads the same sky. a cutout, so no frame: the shadow follows her */
+.sora-line {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 1.1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--hairline);
+}
+
+.sora-pic {
+  position: relative;
+  flex: none;
+  width: 76px;
+  height: 76px;
+}
+
+.sora-line img {
+  display: block;
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 8px oklch(0.2 0.05 270 / 0.35));
+}
+
+/* when her mood changes (rain starts, the look turns to night) the new picture
+   settles in over the old one and the words fade through. only while a change is
+   under way: the first render, and every render for a reader who asked for less
+   motion, shows her plainly */
+.sora-out {
+  position: absolute;
+  inset: 0;
+}
+
+.sora-line.is-changing .sora-out {
+  animation: sora-out 300ms cubic-bezier(0.33, 0, 0.2, 1) both;
+}
+
+.sora-line.is-changing .sora-in {
+  animation: sora-in 420ms cubic-bezier(0.33, 0, 0.2, 1) both;
+}
+
+.sora-line.is-changing .sora-say {
+  animation: sora-say 220ms var(--ease-out) 60ms both;
+}
+
+@keyframes sora-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes sora-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sora-say {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.sora-line p {
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.mast-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  border-top: 1px solid var(--hairline);
+}
+
+.mast-index .mast-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.4rem;
+}
+
+.mast-list a {
+  display: grid;
+  grid-template-columns: 6px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 0.34rem 0;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink);
+  font-size: 0.92rem;
+  text-decoration: none;
+  transition: color 160ms var(--ease-out);
+}
+
+.mast-list a span:nth-child(2) {
+  transition: transform 220ms var(--ease-out);
+}
+
+.mast-list a:hover {
+  color: var(--rasp-deep);
+}
+
+.mast-list a:hover span:nth-child(2) {
+  transform: translateX(3px);
+}
+
+/* reach, in grains: lit means you can open it, a ring means a repo to run,
+   a faint ring means it stays at home */
+.dot {
+  display: block;
+  width: 6px;
+  height: 6px;
+}
+
+/* the same grains inside the sentence, so the sentence is the legend */
+.dot--inline {
+  display: inline-block;
+  width: 0.36em;
+  height: 0.36em;
+  vertical-align: 0.14em;
+}
+
+.dot--live {
+  background: var(--rasp);
+}
+
+.dot--source {
+  box-shadow: inset 0 0 0 1.5px var(--rasp);
+}
+
+.dot--private {
+  box-shadow: inset 0 0 0 1.5px var(--faint);
+}
+
+/* ------------------------------------------------------------------ */
+/* the field                                                           */
+/* ------------------------------------------------------------------ */
+
+/* the ground under the sky. it starts as the hero's own flat page colour, so the
+   seam under the masthead is invisible, then four lights and a film of grain come
+   up through it. all of it is this one element's backgrounds, scrolling with the
+   page: no fixed attachment, no translucent overlay, nothing that asks a browser
+   without gpu layers to repaint a full-screen layer while you scroll */
+.field {
+  /* the field's own copies of the look, so a change of look eases here without
+     restyling the page under it (see the @property block in styles.css) */
+  --field-ground: var(--bg);
+  --field-light-1: var(--field-1);
+  --field-light-2: var(--field-2);
+  --field-light-3: var(--field-3);
+  --field-light-4: var(--field-4);
+  transition:
+    --field-ground 250ms var(--ease-out),
+    --field-light-1 650ms var(--ease-out),
+    --field-light-2 650ms var(--ease-out),
+    --field-light-3 650ms var(--ease-out),
+    --field-light-4 650ms var(--ease-out);
+  background:
+    linear-gradient(to bottom, var(--field-ground) 0, color-mix(in oklch, var(--field-ground) 0%, transparent) 420px),
+    var(--grain) 0 0 / 192px 192px repeat,
+    radial-gradient(70vw 60vw at -6% 14%, var(--field-light-1), transparent 70%),
+    radial-gradient(80vw 64vw at 106% 32%, var(--field-light-2), transparent 70%),
+    radial-gradient(70vw 60vw at -4% 62%, var(--field-light-3), transparent 70%),
+    radial-gradient(84vw 64vw at 104% 88%, var(--field-light-4), transparent 70%),
+    var(--field-ground);
+}
+
+.board {
+  padding-inline: var(--pad);
+}
+
+/* ------------------------------------------------------------------ */
+/* shelves and rows                                                    */
+/* ------------------------------------------------------------------ */
+
+.shelf {
+  scroll-margin-top: 0.5rem;
+}
+
+.shelf + .shelf {
+  border-top: 1px solid var(--hairline);
+}
+
+.shelf-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
+  column-gap: var(--col);
+  align-items: end;
+  padding: clamp(30px, 4vh, 56px) var(--col) clamp(20px, 2.6vh, 36px);
+}
+
+.shelf-head .board-label {
+  grid-column: 1 / -1;
+  margin-bottom: 0.9rem;
+}
+
+.shelf-lede {
+  font-size: clamp(1.7rem, 2.1vw, 2.9rem);
+  font-weight: 640;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  max-width: 30ch;
+  text-wrap: balance;
+}
+
+.shelf-sub {
+  max-width: 44ch;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.board-row {
+  display: grid;
+  border-top: 1px solid var(--hairline);
+}
+
+.board-row > * + * {
+  border-left: 1px solid var(--hairline);
+}
+
+/* ------------------------------------------------------------------ */
+/* a tile: one project                                                 */
+/* ------------------------------------------------------------------ */
+
+.tile {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  scroll-margin-top: 0.5rem;
+}
+
+.tile > * {
+  min-width: 0;
+}
+
+.tile-name {
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.tile-reach {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.tile-reach::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+}
+
+.tile-reach--live::before {
+  background: var(--rasp);
+}
+
+.tile-reach--source::before {
+  box-shadow: inset 0 0 0 1.5px var(--rasp);
+}
+
+.tile-reach--private::before {
+  box-shadow: inset 0 0 0 1.5px var(--faint);
+}
+
+.tile-line {
+  margin-top: 0.85rem;
+  font-size: clamp(1.4rem, 1.5vw, 2.1rem);
+  font-weight: 600;
+  line-height: 1.17;
+  letter-spacing: -0.025em;
+  max-width: 28ch;
+  text-wrap: balance;
+}
+
+.tile-detail {
+  font-size: 0.96rem;
+  line-height: 1.62;
+  color: var(--ink-2);
+  max-width: 58ch;
+}
+
+.tile-fact > p {
+  margin-top: 0.85rem;
+  font-size: 0.92rem;
+  line-height: 1.52;
+  max-width: 44ch;
+}
+
+.tile-fact > :first-child:is(p) {
+  margin-top: 0;
+}
+
+.tile-use {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--rasp-deep);
+}
+
+.tile-stack,
+.tile-when {
+  margin-top: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  line-height: 1.8;
+  color: var(--muted);
+}
+
+.tile-links {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.4rem;
+  margin: 0.9rem 0 0;
+  padding: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+/* ------------------------------------------------------------------ */
+/* tile layouts                                                        */
+/* ------------------------------------------------------------------ */
+
+/* a phone's tile is one column: the line, then the screen right after it, then the
+   words, the toy and the fact. the story and main stacks dissolve into it so the
+   pieces can interleave; wider screens place them per variant below */
+.tile {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'head'
+    'shot'
+    'detail'
+    'toy'
+    'fact'
+    'meta'
+    'spec';
+}
+
+/* nákup's phone order: the line, the three phones, the words, then the toy */
+.tile--nakup {
+  grid-template-areas:
+    'head'
+    'phones'
+    'detail'
+    'toy'
+    'meta'
+    'spec';
+}
+
+.tile-story,
+.tile-main,
+.tile-notes {
+  display: contents;
+}
+
+.tile-head { grid-area: head; }
+.tile-shot { grid-area: shot; }
+.tile-detail { grid-area: detail; }
+.tile-toy { grid-area: toy; }
+.tile-fact { grid-area: fact; }
+.tile-meta { grid-area: meta; }
+.tile-spec { grid-area: spec; }
+.tile-phones { grid-area: phones; }
+
+/* the frame of every screen on the board, and its mono caption */
+.tile .shot-frame {
+  border-radius: 10px;
+}
+
+.tile .shot figcaption {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  line-height: 1.7;
+}
+
+/* the fact sits under its own hairline, so a number never reads as part of the story */
+.tile-fact {
+  border-top: 1px solid var(--hairline);
+}
+
+/* nákup's phones keep a phone's corners, and never draw past their own 390 css px */
+.tile-phones {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 330px));
+  gap: clamp(14px, 1.2vw, 28px);
+  align-items: start;
+}
+
+.tile-phone .shot-frame {
+  border-radius: 22px;
+}
+
+/* a phone's screen is busy edge to edge: its greeting and avatar along the top, the
+   input bar along the bottom. so its enlarge chip steps out of the screen and sits
+   under the phone's bottom right corner, beside the caption, which keeps clear of
+   it. the frame clips, so the chip hangs off the figure instead: it keeps its place
+   in the flow, right under the screen, and only its right edge is set */
+.tile-phone {
+  position: relative;
+}
+
+.tile-phone .shot-frame {
+  position: static;
+}
+
+.tile-phone .shot-hint {
+  top: auto;
+  right: 0;
+  bottom: auto;
+  margin-top: 0.6rem;
+}
+
+.tile-phone figcaption {
+  max-width: calc(28ch + 5.4rem);
+  padding-right: 5.4rem;
+}
+
+.tile--nakup > .tile-toy {
+  max-width: 460px;
+}
+
+/* the pair rows stack until a wide screen has room for both side by side */
+.board-row--two,
+.board-row--cookie {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.board-row--two > * + *,
+.board-row--cookie > * + * {
+  border-left: 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.room-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.room-list li {
+  padding: 1rem 0 1.1rem;
+  border-bottom: 1px solid var(--hairline);
+  scroll-margin-top: 0.5rem;
+}
+
+.room-list li:first-child {
+  padding-top: 0.2rem;
+}
+
+.room-list h4 {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.room-list p {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+.room-list p.tile-when {
+  margin-top: 0.4rem;
+  font-size: 0.64rem;
+  color: var(--muted);
+}
+
+.room-archive {
+  margin-top: 1rem;
+  font-size: 0.86rem;
+}
+
+.room-archive summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.room-archive ul {
+  margin: 0.7rem 0 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.5rem;
+  color: var(--ink-2);
+}
+
+/* ------------------------------------------------------------------ */
+/* charts                                                              */
+/* ------------------------------------------------------------------ */
+
+.chart {
+  margin: 0;
+  max-width: 100%;
+}
+
+.chart svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.chart-grain {
+  fill: var(--rasp);
+}
+
+/* the pour. a chart below the fold holds its grains out of sight until it scrolls
+   in, then each one falls from above the frame and lands where it belongs, bottom
+   row first, in the order the chart says with --d. the svg clips the fall, so a
+   grain appears at the top edge already moving; the box itself never changes, and
+   a chart already on screen when the page lands skips all of this. transform only,
+   on grains of a few pixels, and it runs once: nothing here is a layer that
+   repaints on scroll */
+.chart[data-arrival='waiting'] :is(.chart-grain, .chart-row) {
+  opacity: 0;
+}
+
+.chart[data-arrival='arriving'] :is(.chart-grain, .chart-row) {
+  animation: grain-pour 340ms cubic-bezier(0.5, 0, 0.85, 0.55) both;
+  animation-delay: calc(var(--d, 0) * 1ms);
+}
+
+.chart[data-arrival='arriving'] .chart-row .chart-grain {
+  animation: none;
+}
+
+@keyframes grain-pour {
+  from {
+    transform: translateY(calc(-100% - 24px));
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+.chart-grain--soft {
+  fill: color-mix(in oklch, var(--rasp) 50%, transparent);
+}
+
+/* the other sand: the word up top is raspberry and amber, so is the dial */
+.chart-grain--alt {
+  fill: var(--amber);
+}
+
+/* the lake's own blue, the one colour on the board that is not the sand's */
+.chart-grain--water {
+  fill: oklch(0.62 0.13 250 / 0.8);
+}
+
+.chart-grain--out {
+  fill: var(--muted);
+}
+
+.chart-floor,
+.chart-rule {
+  fill: var(--hairline);
+}
+
+.chart-plate {
+  fill: color-mix(in oklch, var(--ink) 4%, transparent);
+}
+
+.chart-axis {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  line-height: 1.5;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart--piles .chart-axis,
+.chart--dial .chart-axis {
+  max-width: 300px;
+}
+
+.chart-key {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 0.3em;
+  background: var(--rasp);
+}
+
+.chart-key--out {
+  background: var(--muted);
+}
+
+.chart--diff .chart-axis {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  column-gap: 1rem;
+}
+
+.chart-maps {
+  display: flex;
+  gap: 8px;
+}
+
+.chart-map .chart-axis {
+  white-space: nowrap;
+}
+
+/* a quoted issue: the one fact on the board that is a thing rather than a number */
+.issue {
+  margin: 0;
+  padding: 0.8rem 0 0.9rem;
+  border-block: 1px solid var(--hairline);
+}
+
+.issue-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--muted);
+}
+
+.issue-meta span::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 0.5em;
+  background: var(--faint);
+}
+
+.issue-title {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.issue-title code {
+  font-family: var(--font-mono);
+  font-size: 0.78em;
+  font-weight: 400;
+  padding: 0.05em 0.3em;
+  border-radius: 4px;
+  background: color-mix(in oklch, var(--ink) 7%, transparent);
+}
+
+/* ------------------------------------------------------------------ */
+/* sign-off                                                            */
+/* ------------------------------------------------------------------ */
+
+.signoff {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) minmax(0, 1fr);
+  margin-inline: var(--pad);
+  border-top: 1px solid var(--hairline);
+  scroll-margin-top: 0.5rem;
+}
+
+.signoff-col {
+  padding: clamp(40px, 6vh, 88px) var(--col) clamp(48px, 7vh, 96px);
+  min-width: 0;
+}
+
+.signoff-col + .signoff-col {
+  border-left: 1px solid var(--hairline);
+}
+
+.signoff-hi h2 {
+  font-size: clamp(2.6rem, 4.4vw, 5rem);
+}
+
+.signoff-lede {
+  margin-top: 1rem;
+  max-width: 40ch;
+  font-size: 1.1rem;
+}
+
+.signoff-links {
+  list-style: none;
+  margin: 1.8rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 2.4rem;
+}
+
+.signoff-links a {
+  font-size: clamp(1.1rem, 1.5vw, 1.5rem);
+  font-weight: 700;
+}
+
+.signoff-hire {
+  margin-top: 1.4rem;
+  font-size: 0.95rem;
+}
+
+.signoff-take {
+  margin-top: 0.9rem;
+  font-size: clamp(1.2rem, 1.3vw, 1.6rem);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.signoff-sora {
+  display: block;
+  width: 96px;
+  height: auto;
+  margin-top: 1.6rem;
+  filter: drop-shadow(0 6px 8px oklch(0.2 0.05 270 / 0.3));
+}
+
+.signoff .colophon {
+  margin-top: 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  line-height: 1.9;
+  color: var(--muted);
+  max-width: 52ch;
+}
+
+/* ------------------------------------------------------------------ */
+/* a laptop and up                                                     */
+/* ------------------------------------------------------------------ */
+
+@media (min-width: 900px) {
+  /* a tile with a toy: the story beside a stack of the screen and the toy under it.
+     the two stacks don't share rows, so the toy fills the space a long story leaves
+     under a short screen */
+  .tile--toy {
+    grid-template-columns: minmax(300px, 1fr) minmax(0, 2.15fr);
+    grid-template-areas: none;
+    align-items: start;
+  }
+
+  .tile--toy .tile-story,
+  .tile--toy .tile-main {
+    display: block;
+    min-width: 0;
+    padding: var(--top) var(--col) var(--bottom);
+  }
+
+  .tile--toy .tile-main {
+    align-self: stretch;
+    border-left: 1px solid var(--hairline);
+  }
+
+  .tile--toy .tile-detail,
+  .tile--toy .tile-meta {
+    margin-top: 1.1rem;
+  }
+
+  .tile--toy .tile-fact {
+    margin-top: 1.8rem;
+    padding-top: 1.2rem;
+  }
+
+  .tile--toy .tile-spec {
+    margin-top: 0.8rem;
+  }
+
+  .tile--toy .tile-toy {
+    margin-top: var(--top);
+  }
+
+  /* a tile without one is a spread: the name and the line, the screen across the
+     board, then a strip of three hairline columns under it, the way home base
+     splits its today. nothing beside the screen to run short, so nothing leaves a
+     hole. (t3, the one plain heavyweight, goes back to story-beside-screen at 1840) */
+  :is(.tile--half, .tile--plain) {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 0.9fr);
+    grid-template-areas:
+      'head head head'
+      'shot shot shot'
+      'detail fact spec'
+      'detail fact meta';
+    grid-template-rows: auto auto auto 1fr;
+  }
+
+  :is(.tile--half, .tile--plain) :is(.tile-head, .tile-detail, .tile-shot, .tile-meta, .tile-fact, .tile-spec) {
+    padding-inline: var(--col);
+  }
+
+  :is(.tile--half, .tile--plain) .tile-head {
+    padding-top: var(--top);
+  }
+
+  :is(.tile--half, .tile--plain) .tile-shot {
+    padding-block: 1.3rem 1.6rem;
+  }
+
+  :is(.tile--half, .tile--plain) .tile-detail {
+    padding-bottom: var(--bottom);
+  }
+
+  :is(.tile--half, .tile--plain) :is(.tile-fact, .tile-spec, .tile-meta) {
+    border-top: 0;
+    border-left: 1px solid var(--hairline);
+  }
+
+  :is(.tile--half, .tile--plain) .tile-fact {
+    padding-bottom: var(--bottom);
+  }
+
+  :is(.tile--half, .tile--plain) .tile-meta {
+    padding-top: 0.9rem;
+    padding-bottom: var(--bottom);
+  }
+
+  /* nákup: the line across, the three phones under it, then the words beside the toy */
+  .tile--nakup {
+    grid-template-columns: minmax(300px, 1fr) minmax(0, 1.25fr);
+    grid-template-areas:
+      'head head'
+      'phones phones'
+      'detail toy'
+      'meta toy'
+      'spec toy';
+    grid-template-rows: auto auto auto auto 1fr;
+  }
+
+  .tile--nakup > * {
+    padding-inline: var(--col);
+  }
+
+  .tile--nakup .tile-head {
+    padding-top: var(--top);
+  }
+
+  .tile--nakup .tile-phones {
+    grid-template-columns: repeat(3, minmax(0, 300px));
+    padding-block: 1.6rem 2rem;
+  }
+
+  .tile--nakup .tile-meta {
+    padding-top: 1.1rem;
+  }
+
+  .tile--nakup .tile-spec {
+    padding-top: 0.6rem;
+    padding-bottom: var(--bottom);
+  }
+
+  .tile--nakup > .tile-toy {
+    padding-bottom: var(--bottom);
+  }
+
+  .room-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--col);
+  }
+
+  .room-list li:first-child {
+    padding-top: 1rem;
+  }
+
+  .tile--list {
+    padding: var(--top) var(--col) var(--bottom);
+  }
+}
+
+/* a laptop wide enough for three phones and the toy in one row: the phones and the
+   list you can play with side by side, so neither leaves the right of the row
+   empty, then the words under the phones and the small print under the toy */
+@media (min-width: 1200px) and (max-width: 1839px) {
+  .tile--nakup {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
+    grid-template-areas:
+      'head head'
+      'phones toy'
+      'detail meta'
+      'detail spec';
+    grid-template-rows: auto auto auto 1fr;
+  }
+
+  .tile--nakup .tile-phones {
+    grid-template-columns: repeat(3, minmax(0, 300px));
+    padding-block: 1.6rem 2rem;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .tile--nakup > .tile-toy {
+    max-width: none;
+    padding-block: 1.6rem 2rem;
+    border-left: 1px solid var(--hairline);
+  }
+
+  .tile--nakup :is(.tile-meta, .tile-spec) {
+    border-left: 1px solid var(--hairline);
+  }
+
+  .tile--nakup .tile-meta {
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .tile--nakup .tile-detail {
+    padding-top: 1.1rem;
+    padding-bottom: var(--bottom);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* a wide screen: the screens get big enough to read                   */
+/* ------------------------------------------------------------------ */
+
+@media (min-width: 1840px) {
+  /* beadside and the model map: the line and the story in a letter-wide column, the
+     screen at ~70% of the row beside it (≈1550px, where its own text reads), then the
+     same split mirrored under it: the toy as wide as the screen, and the notes (use
+     and links, the fact, the small print) in the letter-wide column beside it. each
+     row is one big thing and one column of words, so neither row has a half left
+     empty */
+  .tile--wide.tile--toy {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 0.85fr) minmax(0, 0.9fr) minmax(0, 0.9fr);
+    grid-template-areas:
+      'head shot shot shot'
+      'detail shot shot shot'
+      'toy toy toy notes';
+    grid-template-rows: auto 1fr auto;
+  }
+
+  /* tally's capture is 2560px of layout, so its screen spans the whole row: the line
+     and the story run across the top, then the toy and the notes share the row under
+     the screen the way beadside's do */
+  .tile--full {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 0.85fr) minmax(0, 0.9fr) minmax(0, 0.9fr);
+    grid-template-areas:
+      'head head detail detail'
+      'shot shot shot shot'
+      'toy toy toy notes';
+    grid-template-rows: auto auto auto;
+  }
+
+  :is(.tile--wide.tile--toy, .tile--full) {
+    align-items: stretch;
+  }
+
+  :is(.tile--wide.tile--toy, .tile--full) :is(.tile-story, .tile-main) {
+    display: contents;
+  }
+
+  :is(.tile--wide.tile--toy, .tile--full) :is(.tile-head, .tile-detail, .tile-shot, .tile-toy) {
+    margin: 0;
+    min-width: 0;
+    padding-inline: var(--col);
+  }
+
+  :is(.tile--wide.tile--toy, .tile--full) .tile-head {
+    padding-top: var(--top);
+  }
+
+  .tile--wide.tile--toy .tile-detail {
+    padding-top: 1.1rem;
+    padding-bottom: var(--bottom);
+  }
+
+  .tile--full .tile-detail {
+    padding-top: var(--top);
+    padding-bottom: 1.2rem;
+  }
+
+  .tile--wide.tile--toy .tile-shot {
+    padding-block: var(--top) var(--bottom);
+    border-left: 1px solid var(--hairline);
+  }
+
+  .tile--full .tile-shot {
+    padding-block: 1.4rem var(--bottom);
+  }
+
+  :is(.tile--wide.tile--toy, .tile--full) .tile-toy {
+    padding-block: var(--top) var(--bottom);
+    border-top: 1px solid var(--hairline);
+  }
+
+  /* the notes read top down beside the toy: how i use it and the links, the fact
+     under its own hairline, then the stack and the dates */
+  :is(.tile--wide.tile--toy, .tile--full) .tile-notes {
+    grid-area: notes;
+    display: block;
+    min-width: 0;
+    padding: var(--top) var(--col) var(--bottom);
+    border-top: 1px solid var(--hairline);
+    border-left: 1px solid var(--hairline);
+  }
+
+  :is(.tile--wide.tile--toy, .tile--full) .tile-meta {
+    margin-top: 0;
+  }
+
+  :is(.tile--wide.tile--toy, .tile--full) .tile-fact {
+    margin-top: 1.8rem;
+    padding-top: 1.2rem;
+  }
+
+  :is(.tile--wide.tile--toy, .tile--full) .tile-spec {
+    margin-top: 0.8rem;
+  }
+
+  /* t3, with no toy, keeps the story beside a screen it is about as tall as */
+  .tile--plain {
+    grid-template-columns: minmax(380px, 0.9fr) minmax(0, 2.65fr);
+    grid-template-areas: none;
+    grid-template-rows: none;
+    align-items: start;
+  }
+
+  .tile--plain .tile-story,
+  .tile--plain .tile-main {
+    display: block;
+    min-width: 0;
+    padding: var(--top) var(--col) var(--bottom);
+  }
+
+  .tile--plain :is(.tile-head, .tile-detail, .tile-shot, .tile-meta, .tile-fact, .tile-spec) {
+    padding-inline: 0;
+  }
+
+  .tile--plain .tile-main {
+    align-self: stretch;
+    border-left: 1px solid var(--hairline);
+  }
+
+  .tile--plain .tile-shot {
+    padding: 0;
+  }
+
+  .tile--plain .tile-detail,
+  .tile--plain .tile-meta {
+    margin-top: 1.1rem;
+  }
+
+  .tile--plain .tile-fact {
+    margin-top: 1.8rem;
+    padding: 1.2rem 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .tile--plain .tile-spec {
+    margin-top: 0.8rem;
+    padding: 0;
+    border-left: 0;
+  }
+
+  .tile--plain .tile-meta {
+    padding: 0;
+    border-left: 0;
+  }
+
+  .tile--plain .tile-detail {
+    padding: 0;
+  }
+
+  .board-row--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .board-row--cookie {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+
+  .board-row--two > * + *,
+  .board-row--cookie > * + * {
+    border-left: 1px solid var(--hairline);
+    border-top: 0;
+  }
+
+  .board-row--cookie .room-list {
+    display: block;
+  }
+
+  .board-row--cookie .room-list li:first-child {
+    padding-top: 0.2rem;
+  }
+
+  /* nákup's evening in one row: the words, three phones, the list to play with */
+  .tile--nakup {
+    grid-template-columns: minmax(340px, 0.85fr) minmax(0, 2.15fr) minmax(400px, 1fr);
+    grid-template-areas:
+      'head phones toy'
+      'detail phones toy'
+      'meta phones toy'
+      'spec phones toy';
+    grid-template-rows: auto auto auto 1fr;
+  }
+
+  .tile--nakup .tile-phones {
+    grid-template-columns: repeat(3, minmax(0, 360px));
+    padding-block: var(--top) var(--bottom);
+    border-inline: 1px solid var(--hairline);
+  }
+
+  .tile--nakup .tile-detail {
+    padding-top: 1.1rem;
+  }
+
+  .tile--nakup > .tile-toy {
+    padding-top: var(--top);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* the masthead as the width changes                                   */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 1839px) {
+  .weather-hero .hero-copy.masthead {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  }
+
+  .masthead .mast-col.mast-index {
+    grid-column: 1 / -1;
+    border-left: 0;
+    padding-inline: 0;
+    margin-top: clamp(18px, 2.4vh, 28px);
+  }
+
+  /* on a laptop the index is a footnote under the letter and the sky: its legend on
+     one line and the eleven names flowing on the next, so the first shelf's headline
+     still lands within a screen and a half */
+  .mast-index .mast-take {
+    max-width: none;
+    margin-top: 0.55rem;
+    font-size: 0.95rem;
+  }
+
+  .mast-index .mast-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.1rem 1.1rem;
+    margin-top: 0.45rem;
+    border-top: 0;
+  }
+
+  .mast-index .mast-list a {
+    gap: 8px;
+    padding: 0.12rem 0;
+    border-bottom: 0;
+    font-size: 0.88rem;
+  }
+
+  .signoff {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+
+  .signoff-col:last-child {
+    grid-column: 1 / -1;
+    border-left: 0;
+    border-top: 1px solid var(--hairline);
+    padding-block: 1.6rem 2.4rem;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* small screens: one column, and the board starts in the second screen */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 899px) {
+  .fusion {
+    --col: 0px;
+    --pad: 1.25rem;
+    --top: 2rem;
+    --bottom: 2.25rem;
+  }
+
+  .weather-hero .hero-copy.masthead {
+    grid-template-columns: minmax(0, 1fr);
+    width: calc(100% - 2 * (var(--shaft, var(--shaft-guess)) + 0.5rem));
+  }
+
+  .masthead .mast-col + .mast-col {
+    border-left: 0;
+    border-top: 1px solid var(--hairline);
+    margin-top: 1.4rem;
+    padding-top: 1.1rem;
+  }
+
+  /* the index is a table of contents for a page you can see the whole of on a wide
+     screen; on a phone it is two screens of links before the first project, so it
+     goes, and the doors in the letter do its job */
+  .masthead .mast-index {
+    display: none;
+  }
+
+  /* the sky shrinks to one line and sora: the strip, the numbers and the note are
+     a wide screen's luxury */
+  .mast-sky {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 14px;
+  }
+
+  .mast-sky > .mast-label,
+  .mast-sky .sky-reading,
+  .mast-sky .mast-note,
+  .mast-sky .sora-line p {
+    display: none;
+  }
+
+  .mast-sky .sora-line {
+    grid-row: 1;
+    grid-column: 1;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .mast-sky .sora-pic,
+  .mast-sky .sora-line img {
+    width: 56px;
+    height: 56px;
+  }
+
+  .mast-sky .mast-take {
+    grid-row: 1;
+    grid-column: 2;
+    margin: 0;
+    font-size: 0.98rem;
+  }
+
+  .shelf-head {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.9rem;
+  }
+
+  .tile-head {
+    padding-top: var(--top);
+  }
+
+  .tile-shot {
+    padding-block: 1.2rem;
+  }
+
+  .tile-toy {
+    padding-bottom: 1.6rem;
+  }
+
+  .tile-detail {
+    padding-bottom: 1.2rem;
+  }
+
+  .tile-fact {
+    padding-top: 1.2rem;
+  }
+
+  .tile-meta {
+    padding-block: 1rem 0;
+  }
+
+  .tile-spec {
+    padding-bottom: var(--bottom);
+  }
+
+  /* the three phones become a strip you swipe, each one still big enough to read */
+  .tile-phones {
+    grid-template-columns: repeat(3, 240px);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-block: 1.2rem;
+    margin-inline: calc(var(--pad) * -1);
+    padding-inline: var(--pad);
+    scroll-padding-inline: var(--pad);
+  }
+
+  .tile-phones > li {
+    scroll-snap-align: start;
+  }
+
+  .tile--nakup > .tile-toy {
+    padding-bottom: 1.6rem;
+  }
+
+  .tile--list {
+    padding-block: var(--top) var(--bottom);
+  }
+
+  .signoff {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .signoff-col + .signoff-col {
+    border-left: 0;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .signoff-col {
+    padding-block: 2.2rem;
+  }
+}
+
+/* the material pill hangs off the band's foot on a phone (see .sand-dock), so the
+   masthead starts below where it can reach */
+@media (max-width: 720px) {
+  .weather-hero .hero-copy.masthead {
+    padding-top: 3.4rem;
+  }
+}

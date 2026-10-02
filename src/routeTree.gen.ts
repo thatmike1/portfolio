@@ -9,24 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as HireRouteImport } from './routes/hire'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as HireRouteImport } from './routes/hire'
 import { Route as LabIndexRouteImport } from './routes/lab/index'
-import { Route as LabWeatherRouteImport } from './routes/lab/weather'
-import { Route as LabRedlineRouteImport } from './routes/lab/redline'
-import { Route as LabPeelRouteImport } from './routes/lab/peel'
-import { Route as LabFrostRouteImport } from './routes/lab/frost'
-import { Route as LabFragileRouteImport } from './routes/lab/fragile'
 import { Route as LabDustRouteImport } from './routes/lab/dust'
+import { Route as LabFragileRouteImport } from './routes/lab/fragile'
+import { Route as LabFrostRouteImport } from './routes/lab/frost'
+import { Route as LabPeelRouteImport } from './routes/lab/peel'
+import { Route as LabRedlineRouteImport } from './routes/lab/redline'
+import { Route as LabWeatherRouteImport } from './routes/lab/weather'
 
-const HireRoute = HireRouteImport.update({
-  id: '/hire',
-  path: '/hire',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HireRoute = HireRouteImport.update({
+  id: '/hire',
+  path: '/hire',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LabIndexRoute = LabIndexRouteImport.update({
@@ -34,24 +34,9 @@ const LabIndexRoute = LabIndexRouteImport.update({
   path: '/lab/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LabWeatherRoute = LabWeatherRouteImport.update({
-  id: '/lab/weather',
-  path: '/lab/weather',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LabRedlineRoute = LabRedlineRouteImport.update({
-  id: '/lab/redline',
-  path: '/lab/redline',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LabPeelRoute = LabPeelRouteImport.update({
-  id: '/lab/peel',
-  path: '/lab/peel',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LabFrostRoute = LabFrostRouteImport.update({
-  id: '/lab/frost',
-  path: '/lab/frost',
+const LabDustRoute = LabDustRouteImport.update({
+  id: '/lab/dust',
+  path: '/lab/dust',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LabFragileRoute = LabFragileRouteImport.update({
@@ -59,9 +44,24 @@ const LabFragileRoute = LabFragileRouteImport.update({
   path: '/lab/fragile',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LabDustRoute = LabDustRouteImport.update({
-  id: '/lab/dust',
-  path: '/lab/dust',
+const LabFrostRoute = LabFrostRouteImport.update({
+  id: '/lab/frost',
+  path: '/lab/frost',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LabPeelRoute = LabPeelRouteImport.update({
+  id: '/lab/peel',
+  path: '/lab/peel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LabRedlineRoute = LabRedlineRouteImport.update({
+  id: '/lab/redline',
+  path: '/lab/redline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LabWeatherRoute = LabWeatherRouteImport.update({
+  id: '/lab/weather',
+  path: '/lab/weather',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -149,18 +149,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/hire': {
-      id: '/hire'
-      path: '/hire'
-      fullPath: '/hire'
-      preLoaderRoute: typeof HireRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hire': {
+      id: '/hire'
+      path: '/hire'
+      fullPath: '/hire'
+      preLoaderRoute: typeof HireRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lab/': {
@@ -170,32 +170,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LabIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lab/weather': {
-      id: '/lab/weather'
-      path: '/lab/weather'
-      fullPath: '/lab/weather'
-      preLoaderRoute: typeof LabWeatherRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lab/redline': {
-      id: '/lab/redline'
-      path: '/lab/redline'
-      fullPath: '/lab/redline'
-      preLoaderRoute: typeof LabRedlineRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lab/peel': {
-      id: '/lab/peel'
-      path: '/lab/peel'
-      fullPath: '/lab/peel'
-      preLoaderRoute: typeof LabPeelRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lab/frost': {
-      id: '/lab/frost'
-      path: '/lab/frost'
-      fullPath: '/lab/frost'
-      preLoaderRoute: typeof LabFrostRouteImport
+    '/lab/dust': {
+      id: '/lab/dust'
+      path: '/lab/dust'
+      fullPath: '/lab/dust'
+      preLoaderRoute: typeof LabDustRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lab/fragile': {
@@ -205,11 +184,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LabFragileRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lab/dust': {
-      id: '/lab/dust'
-      path: '/lab/dust'
-      fullPath: '/lab/dust'
-      preLoaderRoute: typeof LabDustRouteImport
+    '/lab/frost': {
+      id: '/lab/frost'
+      path: '/lab/frost'
+      fullPath: '/lab/frost'
+      preLoaderRoute: typeof LabFrostRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lab/peel': {
+      id: '/lab/peel'
+      path: '/lab/peel'
+      fullPath: '/lab/peel'
+      preLoaderRoute: typeof LabPeelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lab/redline': {
+      id: '/lab/redline'
+      path: '/lab/redline'
+      fullPath: '/lab/redline'
+      preLoaderRoute: typeof LabRedlineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lab/weather': {
+      id: '/lab/weather'
+      path: '/lab/weather'
+      fullPath: '/lab/weather'
+      preLoaderRoute: typeof LabWeatherRouteImport
       parentRoute: typeof rootRouteImport
     }
   }

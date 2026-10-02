@@ -16,12 +16,8 @@ import "./redline.css";
  * ink. raspberry appears only where something wasn't his. the amount of raspberry
  * on the sheet is therefore not a design decision, it is a measurement.
  *
- * NUMBERS: every figure below is copied from src/components/experience-custody.tsx
- * and src/routes/index.tsx. nothing is estimated, rounded or derived. where a repo's
- * ratio is stated (449/552, 369/713) the dimension line is split at that ratio, so
- * the geometry cannot disagree with the caption. where only a commit floor is known
- * ("620+"), the line stays whole and the gap is a redline note instead. no figure
- * gets a share it cannot cite.
+ * the original personal-project figures are preserved as a design study.
+ * private contract-work figures are omitted from the public lab.
  *
  * no canvas, no webgl, no javascript past routing. html, css and svg, and it is
  * finished with scripting off.
@@ -109,69 +105,6 @@ const OWN: Array<Figure> = [
             { chip: "canvas", note: "an imperative core owns the pixels, so nothing re-renders" },
             { chip: "react", note: "owns the buttons, and only the buttons" },
         ],
-    },
-];
-
-/** figures 5 to 8: paid work, from src/components/experience-custody.tsx. clients stay unnamed. */
-const CONTRACT: Array<Figure> = [
-    {
-        name: "energy-management system",
-        tagline: "internal ems · one of the largest czech energy groups",
-        stack: "react · typescript · vite · mui · tanstack query · zustand · daypilot",
-        dim: "custody: 449 of 552 commits · ~81%",
-        share: 81,
-        redline: "the backend, not mine.",
-        callouts: [
-            {
-                chip: "daypilot",
-                note: "the operations calendar: drag to move and resize, preview clamped at the grid edges",
-            },
-            {
-                chip: "mui",
-                note: "dashboard widgets and charts, down to the mobile tooltips and sticky table headers",
-            },
-        ],
-    },
-    {
-        name: "customer-monitoring portal",
-        tagline: "internal portal · the same energy group",
-        stack: "react · typescript · vite · mui · tanstack query · zustand · azure msal",
-        dim: "custody: 369 of 713 commits · ~51%",
-        share: 51,
-        redline: "the other half, not mine. this one was a team.",
-        callouts: [
-            {
-                chip: "tanstack query",
-                note: "server-side pagination, search, sorting and filtering across every table",
-            },
-            { chip: "mui", note: "one sort-and-filter popover, built once, reused everywhere" },
-        ],
-    },
-    {
-        name: "b2b room planner",
-        tagline: "equipment placed in 2d and 3d",
-        stack: "babylon.js · react · next.js · nestjs · gltf-transform · draco",
-        dim: "custody: 620+ commits · largest single contributor",
-        redline: "the rest of the platform, not mine. i owned the 3d.",
-        callouts: [
-            {
-                chip: "babylon.js",
-                note: "instancing, csg wall and window cutouts, and the 4 to 8 upgrade underneath",
-            },
-            {
-                chip: "gltf-transform",
-                note: "models shrunk on the upload endpoint, everything normalised to glb",
-            },
-        ],
-    },
-    {
-        name: "career portal",
-        tagline: "the largest czech pharmacy chain",
-        stack: "next.js",
-        dim: "custody: no commit count worth quoting",
-        redline: "the design, the content, most of the rest, not mine.",
-        note: "the smallest claim on the sheet, kept small on purpose",
-        callouts: [{ chip: "next.js", note: "the cms wiring, and the plumbing around it" }],
     },
 ];
 
@@ -448,15 +381,6 @@ function Page() {
                     </h2>
                     {OWN.map((fig, i) => (
                         <Fig key={fig.name} fig={fig} n={i + 1} />
-                    ))}
-                </section>
-
-                <section className="sheet-section" aria-labelledby="rl-sec-b">
-                    <h2 className="section-rule" id="rl-sec-b">
-                        section b · figures 05 to 08 · drawn under contract, apr 2024 to aug 2026
-                    </h2>
-                    {CONTRACT.map((fig, i) => (
-                        <Fig key={fig.name} fig={fig} n={i + 5} />
                     ))}
                 </section>
 

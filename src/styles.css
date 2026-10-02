@@ -1,6 +1,20 @@
 @import "@fontsource-variable/sora";
 @import "@fontsource-variable/martian-mono";
 
+/* what the page is set in for the moment before sora arrives on a slow line: a
+   local arial stretched to sora's average letter width and given sora's ascent
+   and descent, so the lede wraps the same and nothing jumps when sora swaps in.
+   numbers from sora's own tables (upm 1000, ascent 970, descent 290, a mean
+   lowercase advance 1.154 times arial's) */
+@font-face {
+  font-family: 'Sora Fallback';
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('LiberationSans'), local('Arimo');
+  size-adjust: 115.4%;
+  ascent-override: 84.06%;
+  descent-override: 25.13%;
+  line-gap-override: 0%;
+}
+
 /* ------------------------------------------------------------------ */
 /* tokens                                                              */
 /* ------------------------------------------------------------------ */
@@ -8,55 +22,114 @@
 :root {
   color-scheme: light;
 
-  --bg: oklch(1 0 0);
-  --surface: oklch(0.955 0.008 357);
-  --ink: oklch(0.18 0.015 357);
-  --muted: oklch(0.45 0.02 357);
+  /* noon. the page is the white under a noon sky: a hair cool, so the field of
+     sky, moss and sand on the board below reads as the same daylight */
+  --bg: oklch(0.993 0.003 230);
+  --surface: oklch(0.955 0.01 230);
+  --ink: oklch(0.2 0.02 250);
+  --ink-2: color-mix(in oklch, var(--ink) 76%, var(--bg));
+  --muted: oklch(0.47 0.025 245);
+  --faint: color-mix(in oklch, var(--ink) 32%, var(--bg));
   --rasp: oklch(0.55 0.21 357);
   --rasp-deep: oklch(0.49 0.2 357);
+  --amber: oklch(0.74 0.15 68);
+  --mark: color-mix(in oklch, var(--rasp) 24%, transparent);
+  /* the lit phrase's own colour: the ink under noon's stroke, the raspberry after dark */
+  --lit: var(--ink);
   --accent: oklch(0.42 0.15 265);
-  --hairline: oklch(0.18 0.015 357 / 0.14);
+  --hairline: color-mix(in oklch, var(--ink) 13%, transparent);
   --footer-bg: oklch(0.18 0.015 357);
   --footer-ink: oklch(0.97 0.004 357);
   --footer-link-hover: oklch(0.78 0.16 357);
 
-  --font-sans: 'Sora Variable', system-ui, sans-serif;
+  /* the board's field: four soft lights under a film of grain, home base's mesh
+     held still. noon is moss, sky, sand and a blush of the raspberry. the grain's
+     strength per look is baked into its png, so the field is one element's
+     backgrounds and never a translucent layer of its own */
+  --field-1: oklch(0.93 0.07 155 / 0.6);
+  --field-2: oklch(0.89 0.07 240 / 0.65);
+  --field-3: oklch(0.95 0.07 78 / 0.6);
+  --field-4: oklch(0.93 0.06 357 / 0.38);
+  --grain: url('/grain-light.png');
+
+  --font-sans: 'Sora Variable', 'Sora Fallback', system-ui, sans-serif;
   --font-mono: 'Martian Mono Variable', monospace;
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* night: home base's own ground, a green-black that the navy sky sits over, with
+   moss and night-sky light pooling in the field. ink is home base's warm white */
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: oklch(0.13 0.01 357);
-  --surface: oklch(0.18 0.012 357);
-  --ink: oklch(0.93 0.006 357);
-  --muted: oklch(0.7 0.015 357);
-  --rasp: oklch(0.6 0.22 357);
-  --rasp-deep: oklch(0.74 0.17 357);
-  --hairline: oklch(0.93 0.006 357 / 0.16);
+  --bg: oklch(0.178 0.018 200);
+  --surface: oklch(0.22 0.02 200);
+  --ink: oklch(0.945 0.012 110);
+  --muted: oklch(0.76 0.02 170);
+  --faint: color-mix(in oklch, var(--ink) 34%, var(--bg));
+  --rasp: oklch(0.62 0.22 357);
+  --rasp-deep: oklch(0.78 0.16 357);
+  --amber: oklch(0.8 0.13 72);
+  --mark: transparent;
+  --lit: var(--rasp-deep);
+  --hairline: color-mix(in oklch, var(--ink) 14%, transparent);
   --footer-bg: oklch(0.17 0.012 357);
   --footer-ink: oklch(0.93 0.006 357);
+
+  --field-1: oklch(0.4 0.1 148 / 0.55);
+  --field-2: oklch(0.34 0.1 262 / 0.7);
+  --field-3: oklch(0.38 0.08 192 / 0.45);
+  --field-4: oklch(0.36 0.11 330 / 0.32);
+  --grain: url('/grain-dark.png');
 }
 
 /* dusk: the ground after the sun has gone but before the sky has. a warm dark
-   plum rather than black, cream ink rather than white, and the raspberry lifted
-   toward peach so links hold 6.7:1 on it. it only exists because the visitor
-   asked for it; no system setting lands here */
+   plum, cream ink, and the field lit from the sky's own peach and indigo. the
+   raspberry is lifted toward peach so links hold 6.7:1 on it. it only exists
+   because the visitor asked for it; no system setting lands here */
 :root[data-theme='dusk'] {
   color-scheme: dark;
 
-  --bg: oklch(0.31 0.04 25);
-  --surface: oklch(0.36 0.04 25);
+  --bg: oklch(0.3 0.042 22);
+  --surface: oklch(0.35 0.045 22);
   --ink: oklch(0.95 0.018 70);
-  --muted: oklch(0.78 0.03 55);
+  --muted: oklch(0.81 0.03 55);
+  --faint: color-mix(in oklch, var(--ink) 36%, var(--bg));
   --rasp: oklch(0.64 0.21 357);
-  --rasp-deep: oklch(0.8 0.15 5);
-  --hairline: oklch(0.95 0.018 70 / 0.16);
+  --rasp-deep: oklch(0.82 0.14 5);
+  --amber: oklch(0.83 0.12 70);
+  --mark: transparent;
+  --lit: var(--rasp-deep);
+  --hairline: color-mix(in oklch, var(--ink) 15%, transparent);
   --footer-bg: oklch(0.22 0.03 25);
   --footer-ink: oklch(0.95 0.018 70);
+
+  --field-1: oklch(0.52 0.1 45 / 0.5);
+  --field-2: oklch(0.38 0.1 285 / 0.65);
+  --field-3: oklch(0.45 0.09 15 / 0.42);
+  --field-4: oklch(0.42 0.12 345 / 0.4);
+  --grain: url('/grain-dark.png');
 }
+
+/* ------------------------------------------------------------------ */
+/* the look changes as one                                             */
+/* ------------------------------------------------------------------ */
+
+/* a change of look eases across the board, but only where it is one element's
+   paint: the field's ground and its four lights. those are copied into
+   properties the field keeps to itself (inherits: false), so a frame of the ease
+   restyles the field alone. easing the shared tokens on body instead made every
+   element on the page restyle every frame, and with the sim running at the top
+   of the page that cost a third of the frames in firefox without gpu layers.
+   text, rules and accents take the new look at once, the same moment the hero's
+   chrome does; the ground under them keeps pace with the canvas's own ground
+   (250ms) and the lights come last (650ms), the way the sky above takes its time */
+@property --field-ground { syntax: '<color>'; inherits: false; initial-value: transparent; }
+@property --field-light-1 { syntax: '<color>'; inherits: false; initial-value: transparent; }
+@property --field-light-2 { syntax: '<color>'; inherits: false; initial-value: transparent; }
+@property --field-light-3 { syntax: '<color>'; inherits: false; initial-value: transparent; }
+@property --field-light-4 { syntax: '<color>'; inherits: false; initial-value: transparent; }
 
 /* ------------------------------------------------------------------ */
 /* base                                                                */
@@ -80,9 +153,6 @@ body {
   font-size: 1.0625rem;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
-  transition:
-    background 250ms var(--ease-out),
-    color 250ms var(--ease-out);
 }
 
 ::selection {
@@ -155,6 +225,19 @@ a:focus-visible {
   isolation: isolate;
   touch-action: pan-y;
   cursor: crosshair;
+  /* the sim writes the exact shaft to --shaft once it has measured the grid, which
+     is after hydration. until then the copy reads this guess, the same sum done
+     in css: a cell is about 6px, the shaft is 11% of the columns plus one on a
+     wide grid and eases to 6 cells on a phone's. the percentages resolve where
+     it is used, against the copy's container, which is the stage's width, so the
+     first paint is already the final box (within a few pixels) */
+  --shaft-guess: max(36px, min(15% - 30px, 11% + 6px));
+}
+
+@supports (width: round(nearest, 10%, 6px)) {
+  .weather-hero {
+    --shaft-guess: max(36px, min(15% - 30px, round(nearest, 11%, 6px) + 6px));
+  }
 }
 
 .weather-canvas {
@@ -196,7 +279,7 @@ a:focus-visible {
      container's gutter is narrower than a shaft: 24px against 36px, so the
      water ran under the words. the sim writes its shaft width to --shaft and
      the copy keeps that plus a hand's width clear of it on both sides */
-  width: min(100% - max(3rem, 2 * (var(--shaft, 0px) + 0.5rem)), 68rem);
+  width: min(100% - max(3rem, 2 * (var(--shaft, var(--shaft-guess)) + 0.5rem)), 68rem);
 }
 
 .weather-hero .hero-copy :is(h1, p) {
@@ -526,256 +609,6 @@ a:focus-visible {
 }
 
 /* ------------------------------------------------------------------ */
-/* projects                                                            */
-/* ------------------------------------------------------------------ */
-
-.projects {
-  padding-block: clamp(3.5rem, 9vw, 7rem) clamp(2rem, 5vw, 3.5rem);
-}
-
-.projects h2,
-.smaller h2 {
-  font-size: clamp(1.9rem, 4.5vw, 3.1rem);
-}
-
-.section-sub {
-  margin-top: 0.8rem;
-  color: var(--muted);
-}
-
-.project-list {
-  list-style: none;
-  margin: clamp(2rem, 5vw, 3.5rem) 0 0;
-  padding: 0;
-}
-
-.project {
-  display: grid;
-  grid-template-columns: minmax(15rem, 2fr) 3fr;
-  gap: clamp(1.5rem, 4vw, 4rem);
-  padding-block: clamp(2.25rem, 5vw, 3.75rem);
-  border-top: 1px solid var(--hairline);
-}
-
-.project-name {
-  display: inline-block;
-  font-size: clamp(1.7rem, 3.2vw, 2.5rem);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  color: var(--ink);
-  text-decoration: none;
-}
-
-.project-name .arrow {
-  display: inline-block;
-  margin-left: 0.18em;
-  font-size: 0.7em;
-  color: var(--rasp);
-  transition: transform 180ms var(--ease-out);
-}
-
-.project-name:hover {
-  color: var(--rasp-deep);
-}
-
-.project-name:hover .arrow {
-  transform: translate(0.15em, -0.15em);
-}
-
-.project-tagline {
-  margin-top: 0.6rem;
-  font-weight: 600;
-}
-
-.project-stack {
-  margin-top: 0.75rem;
-  font-family: var(--font-mono);
-  font-size: 0.74rem;
-  color: var(--muted);
-}
-
-.project-body p {
-  max-width: 62ch;
-}
-
-.project-name--static {
-  cursor: default;
-}
-
-.project-note {
-  margin-top: 0.75rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--muted);
-}
-
-.project-preview {
-  /* each project's shots glow in their own light; raspberry is the default */
-  --preview-glow: oklch(0.49 0.2 357);
-  --glow-contact: color-mix(in oklch, var(--preview-glow) 52%, transparent);
-  --glow-ambient: color-mix(in oklch, var(--preview-glow) 42%, transparent);
-  --preview-gap: clamp(1rem, 2.2vw, 1.6rem);
-
-  grid-column: 1 / -1;
-  margin: clamp(1.75rem, 3.5vw, 2.75rem) 0 0;
-  display: grid;
-  /* a definite column so the percentage offsets on the phone resolve against the figure */
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--preview-gap);
-}
-
-/* dark swallows shadows, so the glow has to push harder to read as light */
-:root:is([data-theme='dark'], [data-theme='dusk']) .project-preview {
-  --glow-contact: color-mix(in oklch, var(--preview-glow) 72%, transparent);
-  --glow-ambient: color-mix(in oklch, var(--preview-glow) 58%, transparent);
-}
-
-/* capped to the shot's own pixels by an inline max-width, then centred as one block.
-   the explicit width is load-bearing: auto margins alone would size this to its content */
-.project-preview--single {
-  width: 100%;
-  margin-inline: auto;
-}
-
-/* the anchor is the click-to-enlarge target; block so it adds no inline whitespace */
-.preview-frame {
-  display: block;
-  text-decoration: none;
-}
-
-.preview-frame:focus-visible {
-  border-radius: 18px;
-}
-
-/* this framing is the unifier across three very different screenshot palettes */
-.preview-shot {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 16px;
-  border: 1px solid var(--hairline);
-  background: var(--surface);
-}
-
-.preview-shot--wide,
-.preview-shot--single,
-.preview-shot--panel {
-  box-shadow:
-    0 26px 60px -28px var(--glow-contact),
-    0 18px 110px -22px var(--glow-ambient);
-}
-
-.preview-shot--phone {
-  box-shadow:
-    0 20px 46px -24px var(--glow-contact),
-    0 12px 80px -18px var(--glow-ambient);
-}
-
-.preview-supporting {
-  display: grid;
-  gap: clamp(0.75rem, 1.5vw, 1.1rem);
-}
-
-/* phones stay deliberately small — the wide shot they sit on is the dominant element */
-.preview-supporting--phones {
-  --phone-width: clamp(140px, 16vw, 190px);
-
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-}
-
-.preview-frame--phone {
-  width: var(--phone-width);
-}
-
-/* the phone rides the wide shot's bottom-right corner, lined up with the "today" card
-   inside that shot: 1.18% is the card's own inset from the asset's right edge (16 of the
-   shot's 1360 css px), and 25.37% is where the card's bottom edge falls (345 css px up
-   from the bottom). both are shares of the figure's width, so the phone keeps a constant
-   28px of air under the card at every viewport */
-.project-preview--wide-phones .preview-supporting--phones {
-  position: relative;
-  z-index: 1;
-  justify-content: flex-end;
-  margin-top: calc(28px - 25.37% - var(--preview-gap));
-  padding-right: 1.18%;
-}
-
-/* the phone hangs well past the wide shot, leaving that band empty on the left: the
-   caption climbs into it, one gap plus its own single line, so the two bottoms line up */
-.project-preview--wide-phones .preview-caption {
-  /* start, not stretch: the row is short here, and a stretched caption would sit low in it */
-  align-self: start;
-  margin-top: calc((var(--preview-gap) + 1.3rem) * -1);
-}
-
-.preview-supporting--panels {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.preview-caption {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  line-height: 1.8;
-  color: var(--muted);
-  max-width: 62ch;
-}
-
-/* theme-paired shots: both render, css picks one, so the swap needs no javascript */
-.preview-frame--dark {
-  display: none;
-}
-
-:root:is([data-theme='dark'], [data-theme='dusk']) .preview-frame--light {
-  display: none;
-}
-
-:root:is([data-theme='dark'], [data-theme='dusk']) .preview-frame--dark {
-  display: block;
-}
-
-.project-live {
-  margin-top: 1rem;
-  font-weight: 600;
-}
-
-/* ------------------------------------------------------------------ */
-/* interlude + smaller things                                          */
-/* ------------------------------------------------------------------ */
-
-.interlude {
-  background: var(--surface);
-  padding-block: clamp(3rem, 7vw, 5rem);
-}
-
-.interlude p {
-  max-width: 44ch;
-  font-size: clamp(1.2rem, 2.4vw, 1.6rem);
-  font-weight: 600;
-  line-height: 1.45;
-  letter-spacing: -0.01em;
-  text-align: center;
-}
-
-.smaller {
-  padding-block: clamp(3.5rem, 9vw, 6.5rem);
-}
-
-.smaller-list {
-  list-style: none;
-  margin: clamp(1.5rem, 4vw, 2.5rem) 0 0;
-  padding: 0;
-  display: grid;
-  gap: 1.25rem;
-}
-
-.smaller-list li {
-  max-width: 68ch;
-}
-
-/* ------------------------------------------------------------------ */
 /* footer                                                              */
 /* ------------------------------------------------------------------ */
 
@@ -783,7 +616,6 @@ a:focus-visible {
   background: var(--footer-bg);
   color: var(--footer-ink);
   padding-block: clamp(4rem, 10vw, 7.5rem);
-  transition: background 250ms var(--ease-out);
 }
 
 .footer h2 {
@@ -823,26 +655,6 @@ a:focus-visible {
   outline-color: var(--footer-ink);
 }
 
-/* the recruiter door. deliberately quiet next to the two big contact links:
-   whoever needs it is already looking for it, everyone else is here for the sand */
-.footer-hire {
-  margin-top: 1.6rem;
-  font-size: 0.95rem;
-}
-
-.footer-hire a {
-  color: var(--footer-ink);
-  text-decoration-color: color-mix(in oklch, currentColor 35%, transparent);
-  transition:
-    color 160ms var(--ease-out),
-    text-underline-offset 180ms var(--ease-out),
-    text-decoration-color 180ms var(--ease-out);
-}
-
-.footer-hire a:hover {
-  color: var(--footer-link-hover);
-}
-
 .colophon {
   margin-top: clamp(2.5rem, 6vw, 4rem);
   font-family: var(--font-mono);
@@ -852,175 +664,10 @@ a:focus-visible {
 }
 
 /* ------------------------------------------------------------------ */
-/* screenshot viewer                                                   */
-/* ------------------------------------------------------------------ */
-
-/* display is only flipped on [open] so the ua's own dialog:not([open]) rule still hides it,
-   and it transitions discretely so the close still gets to fade */
-.lightbox {
-  display: none;
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
-  max-height: 100%;
-  margin: 0;
-  padding: clamp(0.75rem, 3vw, 2rem);
-  border: 0;
-  background: transparent;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition:
-    opacity 180ms var(--ease-out),
-    display 180ms allow-discrete,
-    overlay 180ms allow-discrete;
-}
-
-.lightbox[open] {
-  display: flex;
-  opacity: 1;
-}
-
-@starting-style {
-  .lightbox[open] {
-    opacity: 0;
-  }
-}
-
-/* ::backdrop sits outside the cascade of the page, so the ink is spelled out rather than
-   tokened. the wash is the same near-black in both themes: a shot needs a neutral room */
-.lightbox::backdrop {
-  background: oklch(0.13 0.01 357 / 0.88);
-  opacity: 0;
-  transition: opacity 180ms var(--ease-out);
-}
-
-.lightbox[open]::backdrop {
-  opacity: 1;
-}
-
-@starting-style {
-  .lightbox[open]::backdrop {
-    opacity: 0;
-  }
-}
-
-.lightbox-stage {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  max-width: 100%;
-  /* a definite height down the chain, so the shot's own max-height: 100% has something
-     to resolve against and never grows past the viewport */
-  height: 100%;
-  transform: scale(0.985);
-  transition: transform 180ms var(--ease-out);
-}
-
-.lightbox[open] .lightbox-stage {
-  transform: scale(1);
-}
-
-@starting-style {
-  .lightbox[open] .lightbox-stage {
-    transform: scale(0.985);
-  }
-}
-
-.lightbox-close {
-  align-self: flex-end;
-  padding: 0.35rem 0.85rem;
-  border: 1px solid var(--hairline);
-  border-radius: 999px;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  cursor: pointer;
-  transition: background 160ms var(--ease-out);
-}
-
-/* on the dark wash the page background is near-black too, so the chip lifts a step */
-:root:is([data-theme='dark'], [data-theme='dusk']) .lightbox-close {
-  background: var(--surface);
-}
-
-.lightbox-close:hover {
-  background: var(--surface);
-}
-
-/* the shot doubles as the zoom toggle: fit to the screen, or its own pixels and pan */
-.lightbox-zoom {
-  display: flex;
-  /* safe centring: when the shot is bigger than the box, it scrolls from its top-left
-     instead of having its first pixels pushed out of reach */
-  align-items: safe center;
-  justify-content: safe center;
-  flex: 1 1 auto;
-  min-height: 0;
-  max-width: 100%;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: zoom-in;
-}
-
-.lightbox-zoom--actual {
-  overflow: auto;
-  cursor: zoom-out;
-}
-
-.lightbox-img {
-  display: block;
-  width: auto;
-  height: auto;
-  max-height: 100%;
-  border-radius: 12px;
-  border: 1px solid var(--hairline);
-  background: var(--surface);
-}
-
-.lightbox-zoom--actual .lightbox-img {
-  max-height: none;
-}
-
-/* ------------------------------------------------------------------ */
 /* responsive + motion                                                 */
 /* ------------------------------------------------------------------ */
 
 @media (max-width: 720px) {
-  .project {
-    grid-template-columns: 1fr;
-    gap: 1.1rem;
-  }
-
-  /* phones first: the desktop shot is illegible this narrow, so tap it to enlarge instead */
-  .project-preview--wide-phones .preview-supporting {
-    order: -1;
-  }
-
-  /* no overlap here — the phone sits above the wide shot, not on it */
-  .project-preview--wide-phones .preview-supporting--phones {
-    justify-content: center;
-    margin-top: 0;
-    padding-right: 0;
-  }
-
-  .project-preview--wide-phones .preview-caption {
-    margin-top: 0;
-  }
-
-  /* the phone takes the whole column, stopping at its own 390px css size and centring
-     there — upscaling past that would turn the ui text to mush */
-  .preview-frame--phone {
-    width: 100%;
-  }
-
-  .preview-supporting--panels {
-    grid-template-columns: 1fr;
-  }
-
   /* the corners pull in, and the bar out of the handle keeps every chip's word:
      it simply scrolls sideways in the room it is given */
   /* the pill hangs off the band's bottom edge here rather than sitting inside
@@ -1172,394 +819,6 @@ a:focus-visible {
   }
 }
 
-/* ------------------------------------------------------------------ */
-/* scroll polish: project rows                                         */
-/* ------------------------------------------------------------------ */
-
-/* everything below is scroll-driven and pure css — no javascript, no observer.
-   the whole block lives inside @supports, so a browser without scroll-driven
-   animations gets the static page exactly as it was: hairlines drawn, rows
-   opaque, no rail. same for anyone who asked for reduced motion */
-
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    /* the hairline draws itself left to right as the row arrives, so the list
-       reads like it is being ruled a row at a time. the real border hands over
-       to a pseudo-element of the same colour — same pixel, same place */
-    .project {
-      position: relative;
-      border-top-color: transparent;
-      /* the rule is 1px tall, and a view() timeline of its own would span 1px of
-         scroll — it would pop, not draw. so it rides the row's timeline instead */
-      view-timeline: --row block;
-    }
-
-    .project::before {
-      content: '';
-      position: absolute;
-      inset: -1px 0 auto 0;
-      height: 1px;
-      background: var(--hairline);
-      transform: scaleX(0);
-      transform-origin: left center;
-      animation: row-rule linear both;
-      animation-timeline: --row;
-      animation-range: entry 0% entry 32%;
-    }
-
-    /* the row's two columns rise into place, left column a beat ahead of the
-       right. short and early: it is finished long before the row is the thing
-       you are reading. transform and opacity only, so nothing reflows */
-    .project-head,
-    .project-body {
-      animation: row-rise linear both;
-      animation-timeline: view();
-      animation-range: entry 8% entry 75%;
-    }
-
-    .project-body {
-      animation-range: entry 18% entry 90%;
-    }
-  }
-}
-
-@keyframes row-rule {
-  to {
-    transform: scaleX(1);
-  }
-}
-
-@keyframes row-rise {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/* section nav                                                         */
-/* ------------------------------------------------------------------ */
-
-/* the table of contents lives in the page's outer margin and is hidden until that
-   margin is genuinely wide enough to hold it. the container caps at 68rem, so the
-   gutter only clears the nav's width past ~1400px — below that there is nothing to
-   sit in and covering the text would be worse than having no nav at all */
-.section-nav {
-  display: none;
-}
-
-@media (min-width: 1400px) {
-  .section-nav {
-    display: block;
-    position: fixed;
-    z-index: 30;
-    top: 50%;
-    right: 1.25rem;
-    width: 7rem;
-    transform: translateY(-50%);
-    /* the hero owns this margin first — its sand hint pins to the same corner and the
-       canvas wants to be touched — so the nav waits offstage until the hero is gone.
-       visibility rides the same duration as the fade so it flips only once the nav has
-       finished going, and under reduced motion the global duration reset makes both
-       instant */
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition:
-      opacity 260ms var(--ease-out),
-      visibility 260ms var(--ease-out);
-  }
-
-  .section-nav.is-visible {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-  }
-
-  .section-nav ul {
-    display: grid;
-    gap: 0.6rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  /* the marker is the page's own square grain, so the nav reads as part of the
-     same object rather than a widget bolted to the side */
-  .section-nav-link {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    align-items: start;
-    gap: 0.55rem;
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    line-height: 1.35;
-    color: var(--muted);
-    text-decoration: none;
-    transition:
-      color 180ms var(--ease-out),
-      opacity 180ms var(--ease-out);
-  }
-
-  .section-nav-mark {
-    width: 6px;
-    height: 6px;
-    margin-top: 0.42em;
-    border: 1px solid currentColor;
-    opacity: 0.55;
-    transition:
-      background 180ms var(--ease-out),
-      opacity 180ms var(--ease-out);
-  }
-
-  .section-nav-link:hover {
-    color: var(--ink);
-  }
-
-  .section-nav-link.is-active {
-    color: var(--rasp-deep);
-  }
-
-  .section-nav-link.is-active .section-nav-mark {
-    background: var(--rasp);
-    border-color: var(--rasp);
-    opacity: 1;
-  }
-}
-
-/* registered so the dog-ear on the hire nudge can animate its size; a browser that
-   doesn't know @property just snaps between the two values */
-@property --fold {
-  syntax: '<length>';
-  inherits: false;
-  initial-value: 1.1rem;
-}
-
-/* ------------------------------------------------------------------ */
-/* hire nudge                                                          */
-/* ------------------------------------------------------------------ */
-
-/* the recruiter door, offered from the bottom-left corner while the reader is in the
-   side projects. a sheet of the page's own surface with one dog-ear folded over at the
-   top right: the fold grows a touch under the pointer, the closest this page gets to
-   peeling back and showing the other page underneath. the left margin is free on every
-   width (the section nav and theme toggle both live on the right) */
-.hire-nudge {
-  position: fixed;
-  z-index: 30;
-  left: 1.25rem;
-  bottom: 1.25rem;
-  width: min(21rem, calc(100vw - 2.5rem));
-  padding: 1.1rem 1.25rem 1.15rem;
-  background: var(--surface);
-  color: var(--ink);
-  border: 1px solid var(--hairline);
-  /* --fold is the size of the dog-ear; the corner is clipped away so the fold's own
-     triangle reads as the page behind showing through */
-  --fold: 1.1rem;
-  clip-path: polygon(
-    0 0,
-    calc(100% - var(--fold)) 0,
-    100% var(--fold),
-    100% 100%,
-    0 100%
-  );
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transform: translateY(0.6rem);
-  transition:
-    opacity 260ms var(--ease-out),
-    transform 320ms var(--ease-out),
-    visibility 260ms var(--ease-out),
-    --fold 220ms var(--ease-out);
-}
-
-.hire-nudge.is-visible {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: none;
-}
-
-/* folded: the card slides down until only a thin strip of its top edge shows above
-   the viewport bottom — the tab. the dog-ear stays on that strip, so the folded thing
-   is recognisably the same sheet, just mostly tucked away */
-.hire-nudge.is-folded {
-  --tab: 2.1rem;
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translateY(calc(100% - var(--tab) + 1.25rem));
-}
-
-/* the tab is the card's top strip; it only catches the pointer while folded */
-.hire-nudge-tab {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: var(--tab, 2.1rem);
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0 1.25rem;
-  border: 0;
-  background: none;
-  color: var(--rasp-deep);
-  font: inherit;
-  font-family: var(--font-mono);
-  font-size: 0.74rem;
-  font-weight: 600;
-  cursor: pointer;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 180ms var(--ease-out);
-}
-
-.hire-nudge.is-folded .hire-nudge-tab {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.hire-nudge-caret {
-  width: 0.38rem;
-  height: 0.38rem;
-  border-top: 1.5px solid currentColor;
-  border-left: 1.5px solid currentColor;
-  transform: translateY(0.1rem) rotate(45deg);
-  transition: transform 180ms var(--ease-out);
-}
-
-.hire-nudge-tab:hover .hire-nudge-caret {
-  transform: translateY(-0.05rem) rotate(45deg);
-}
-
-/* the card body fades while folded so nothing peeks through the bottom strip */
-.hire-nudge-title,
-.hire-nudge-body,
-.hire-nudge-actions {
-  transition: opacity 180ms var(--ease-out);
-}
-
-.hire-nudge.is-folded .hire-nudge-title,
-.hire-nudge.is-folded .hire-nudge-body,
-.hire-nudge.is-folded .hire-nudge-actions {
-  opacity: 0;
-}
-
-/* the turned-over corner: a triangle in the raspberry, sitting exactly where the
-   clip removed the surface, so it looks folded rather than painted on */
-.hire-nudge::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: var(--fold);
-  height: var(--fold);
-  background: linear-gradient(
-    225deg,
-    transparent 50%,
-    var(--rasp) 50%,
-    var(--rasp-deep) 100%
-  );
-  transition: inherit;
-}
-
-@media (hover: hover) {
-  .hire-nudge:hover {
-    --fold: 1.7rem;
-  }
-}
-
-.hire-nudge-title {
-  margin: 0;
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  font-size: 1.02rem;
-}
-
-.hire-nudge-body {
-  margin: 0.4rem 0 0;
-  font-size: 0.88rem;
-  line-height: 1.55;
-  color: var(--muted);
-}
-
-.hire-nudge-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.55rem 1rem;
-  margin: 0.9rem 0 0;
-  font-size: 0.88rem;
-}
-
-/* the same pill as the hire page's actions, so the card already speaks in the
-   accent of the page it points to */
-.hire-nudge-cta {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.42rem 0.85rem;
-  border: 1px solid var(--rasp);
-  border-radius: 999px;
-  color: var(--rasp-deep);
-  font-weight: 600;
-  text-decoration: none;
-  transition:
-    background-color 180ms var(--ease-out),
-    color 180ms var(--ease-out);
-}
-
-.hire-nudge-cta .arrow {
-  display: inline-block;
-  margin-left: 0.35em;
-  transition: transform 180ms var(--ease-out);
-}
-
-.hire-nudge-cta:hover {
-  background: color-mix(in oklch, var(--rasp) 12%, transparent);
-}
-
-.hire-nudge-cta:hover .arrow {
-  transform: translateX(0.2em);
-}
-
-.hire-nudge-dismiss {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--muted);
-  font: inherit;
-  font-size: 0.82rem;
-  text-decoration: underline;
-  text-decoration-color: color-mix(in oklch, currentColor 35%, transparent);
-  text-underline-offset: 0.2em;
-  cursor: pointer;
-  transition: color 160ms var(--ease-out);
-}
-
-.hire-nudge-dismiss:hover {
-  color: var(--ink);
-}
-
-@media (max-width: 720px) {
-  .hire-nudge {
-    left: 0.75rem;
-    right: 0.75rem;
-    bottom: 0.75rem;
-    width: auto;
-  }
-
-  .hire-nudge.is-folded {
-    transform: translateY(calc(100% - var(--tab) + 0.75rem));
-  }
-}
-
 /* anchor jumps glide only for readers who did not ask for stillness; under reduced
    motion the same link lands instantly */
 @media (prefers-reduced-motion: no-preference) {
@@ -1569,9 +828,6 @@ a:focus-visible {
 }
 
 .hero,
-.projects,
-.own,
-.smaller,
 .footer {
   scroll-margin-top: 1.5rem;
 }
@@ -1580,12 +836,14 @@ a:focus-visible {
 /* text details                                                        */
 /* ------------------------------------------------------------------ */
 
-/* every link that leaves the site carries the mark the project names already
-   use: a small arrow that leans out under the pointer. the empty alt text
-   after the slash keeps the glyph out of the accessibility tree, and a parser
-   that doesn't understand that syntax drops the arrow rather than announcing
-   it. currentColor, so the footer's near-white links stay near-white */
-main a[href^='http']:not(.project-name):not(.preview-frame)::after {
+/* every link that leaves the site gets its arrow here and only here: markup
+   never types one, so a link can't end up with two. it leans out under the
+   pointer. the empty alt text after the slash keeps the glyph out of the
+   accessibility tree, and a parser that doesn't understand that syntax drops
+   the arrow rather than announcing it. currentColor, so the footer's
+   near-white links stay near-white. a link that is a picture or a pill of its
+   own opts out with .no-arrow */
+main a[href^='http']:not(.no-arrow)::after {
   content: '↗' / '';
   display: inline-block;
   margin-left: 0.14em;
@@ -1595,7 +853,7 @@ main a[href^='http']:not(.project-name):not(.preview-frame)::after {
   transition: transform 180ms var(--ease-out);
 }
 
-main a[href^='http']:not(.project-name):not(.preview-frame):hover::after {
+main a[href^='http']:not(.no-arrow):hover::after {
   transform: translate(0.15em, -0.15em);
 }
 
@@ -1623,4 +881,17 @@ figcaption {
 :root:is([data-theme='dark'], [data-theme='dusk']) ::selection {
   background: var(--rasp-deep);
   color: var(--bg);
+}
+
+/* direct doors into the collection and the quiet recruiter route */
+.hero-doors { display: flex; flex-wrap: wrap; gap: .7rem 1.8rem; font-size: .9rem; margin: 1.5rem 0; }
+
+/* read by screen readers, not drawn */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

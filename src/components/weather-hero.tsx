@@ -340,7 +340,8 @@ function resolve(scratch: CanvasRenderingContext2D, css: string): RGB {
 
 /* -------------------------------------------------------------- component */
 
-type Hud = { humidity: number; cover: number; drops: number };
+/** the sky's own readings, refreshed every twenty ticks while the loop runs */
+export type Hud = { humidity: number; cover: number; drops: number };
 
 type Props = {
     /** the copy block. it sits on the canvas, under the sky band */
@@ -349,6 +350,8 @@ type Props = {
     overlay?: ReactNode;
     /** the lab's extra chrome: the soak button and the drop count */
     lab?: boolean;
+    /** hears the same readings the lab's readout shows, so the page can talk about its own weather */
+    onWeather?: (hud: Hud) => void;
     /**
      * lab prototype: the island's rock carries on down the page as its
      * background. "rock" is the keel's own tones, "washed" the same tile lifted
@@ -363,7 +366,7 @@ export type Ground = "off" | "rock" | "washed";
 export const DIRT_COLS = 48;
 export const DIRT_ROWS = 28;
 
-export function WeatherHero({ children, overlay, lab = false, ground = "off" }: Props) {
+export function WeatherHero({ children, overlay, lab = false, ground = "off", onWeather }: Props) {
     const stageRef = useRef<HTMLDivElement>(null);
     const bandRef = useRef<HTMLDivElement>(null);
     const handleRef = useRef<HTMLButtonElement>(null);
@@ -371,6 +374,8 @@ export function WeatherHero({ children, overlay, lab = false, ground = "off" }: 
     const themeRef = useRef<Theme>("light");
     const toolRef = useRef<number>(RASP);
     const groundRef = useRef<Ground>(ground);
+    const weatherRef = useRef(onWeather);
+    weatherRef.current = onWeather;
     const [theme, setTheme] = useState<Theme>("light");
     const [tool, setTool] = useState<number>(RASP);
     const [awake, setAwake] = useState(false);
@@ -1974,6 +1979,7 @@ export function WeatherHero({ children, overlay, lab = false, ground = "off" }: 
                 for (let i = 0; i < cloud.length; i++) if (cloud[i] > 0.012) covered++;
                 cover = covered / cloud.length;
                 setHud({ humidity: air, cover, drops: waterCount });
+                weatherRef.current?.({ humidity: air, cover, drops: waterCount });
             }
         };
 

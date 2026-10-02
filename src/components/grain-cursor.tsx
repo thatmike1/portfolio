@@ -40,6 +40,7 @@ export function GrainCursor() {
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         };
         resize();
+        canvas.hidden = true;
 
         const grains: Array<Grain> = [];
         let last: { x: number; y: number } | null = null;
@@ -69,6 +70,10 @@ export function GrainCursor() {
             }
             ctx.globalAlpha = 1;
             if (grains.length) raf = requestAnimationFrame(frame);
+            // an empty canvas still covers the whole window, and a browser compositing
+            // without a gpu blends that layer into every scrolled frame. so between
+            // strokes it isn't there at all
+            else canvas.hidden = true;
         };
 
         const onMove = (e: PointerEvent) => {
@@ -97,6 +102,7 @@ export function GrainCursor() {
                     shade: (Math.random() * palette.length) | 0,
                 });
             }
+            canvas.hidden = false;
             if (!raf) raf = requestAnimationFrame(frame);
         };
 
@@ -111,6 +117,7 @@ export function GrainCursor() {
             cancelAnimationFrame(raf);
             raf = 0;
             ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+            canvas.hidden = true;
         };
 
         // the theme toggle changes which raspberry the grains are made of

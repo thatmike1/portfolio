@@ -1,0 +1,667 @@
+/* nákup's own world, small. the real app is light-only on purpose (it is read under
+   supermarket tubes), so the sheet stays paper in every look of this page and sits
+   on it like a printed object. one variable grotesque, a navy key plate, one ink per
+   person, and green only where two inks overprint. the font file is a latin subset
+   of bricolage grotesque and only downloads once this toy renders */
+@font-face {
+  font-family: 'Nakup Bricolage';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500 800;
+  font-stretch: 78% 100%;
+  src: url('/fonts/bricolage-subset.woff2') format('woff2-variations');
+}
+
+/* the czech letters the latin subset leaves out (tomáš needs the š), cut from the
+   latin-ext file to these few glyphs. the browser only fetches it when one shows */
+@font-face {
+  font-family: 'Nakup Bricolage';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500 800;
+  font-stretch: 78% 100%;
+  src: url('/fonts/bricolage-czech.woff2') format('woff2-variations');
+  unicode-range: U+010C-010F, U+011A-011B, U+0147-0148, U+0158-0161, U+0164-0165, U+016E-016F, U+017D-017E;
+}
+
+.nk-wrap {
+  --paper: #f3f4ef;
+  --paper-deep: #e8eae2;
+  --key: #17203b;
+  --key-soft: #4a5370;
+  --key-mute: #5b6480;
+  --rule: rgb(23 32 59 / 0.14);
+  --rule-strong: rgb(23 32 59 / 0.32);
+  --ink-bara: #ffc21a;
+  --ink-tomas: #2cb1f0;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.15' numOctaves='2' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -3.4 2.55'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  --speck: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='s' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.15' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 -2.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+  --halftone-edge: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='34'%3E%3Crect width='10' height='3.4'/%3E%3Ccircle cx='5' cy='3' r='4.6'/%3E%3Ccircle cx='0' cy='3' r='1.6'/%3E%3Ccircle cx='10' cy='3' r='1.6'/%3E%3Ccircle cx='0' cy='9' r='3.7'/%3E%3Ccircle cx='10' cy='9' r='3.7'/%3E%3Ccircle cx='5' cy='15' r='2.8'/%3E%3Ccircle cx='0' cy='21' r='1.9'/%3E%3Ccircle cx='10' cy='21' r='1.9'/%3E%3Ccircle cx='5' cy='27' r='1.1'/%3E%3C/svg%3E");
+  --grain-size: 260px;
+  --misreg-x: 1.5px;
+  --misreg-y: 1.5px;
+  --misreg-lg-x: 3px;
+  --misreg-lg-y: 2px;
+  --nk-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  display: grid;
+  justify-items: start;
+  gap: 0.8rem;
+}
+
+@media (max-resolution: 1.5dppx) {
+  .nk-wrap {
+    --grain-size: 130px;
+  }
+}
+
+.nk-wrap [data-ink='bara'] {
+  --ink: var(--ink-bara);
+}
+
+.nk-wrap [data-ink='tomas'] {
+  --ink: var(--ink-tomas);
+}
+
+.nk-sheet[data-me='bara'] {
+  --ink-me: var(--ink-bara);
+}
+
+.nk-sheet[data-me='tomas'] {
+  --ink-me: var(--ink-tomas);
+}
+
+/* the switch above the sheet speaks the page's language, not the app's */
+.nk-holder {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+}
+
+.nk-holder-label {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--muted);
+  margin-right: 0.2rem;
+}
+
+.nk-holder-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.7rem 0.25rem 0.3rem;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 160ms var(--ease-out), border-color 160ms var(--ease-out);
+}
+
+.nk-holder-pick[aria-pressed='true'] {
+  border-color: var(--ink);
+  background: color-mix(in oklch, var(--ink) 8%, transparent);
+}
+
+/* the stamps on the page's ground keep a paper disc under them so the ink reads
+   the same on white and on night */
+.nk-holder .nk-stamp {
+  background: var(--paper);
+  border-radius: 50%;
+}
+
+/* ---------- the sheet ---------- */
+
+.nk-sheet {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 23.5rem);
+  background: var(--paper);
+  color: var(--key);
+  font-family: 'Nakup Bricolage', var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 2px rgb(23 32 59 / 0.1),
+    0 18px 40px -18px rgb(23 32 59 / 0.28);
+}
+
+:root:is([data-theme='dark'], [data-theme='dusk']) .nk-sheet {
+  box-shadow: 0 18px 40px -18px rgb(0 0 0 / 0.6);
+}
+
+/* the paper's tooth, one static layer of specks over the whole sheet */
+.nk-sheet::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: var(--key);
+  mask-image: var(--speck);
+  mask-size: var(--grain-size);
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.nk-sheet button,
+.nk-sheet input {
+  font-family: inherit;
+  color: inherit;
+}
+
+/* ---------- masthead: the field flooded in the holder's ink ---------- */
+
+.nk-mast {
+  position: relative;
+  isolation: isolate;
+  padding: 14px 20px 40px;
+}
+
+.nk-mast-ink {
+  position: absolute;
+  inset: 0 0 24px;
+  z-index: -2;
+  background: var(--ink-me);
+}
+
+.nk-mast-ink::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--paper);
+  mask-image: var(--speck);
+  mask-size: var(--grain-size);
+  opacity: 0.6;
+}
+
+.nk-mast-edge {
+  position: absolute;
+  inset: auto 0 -8px;
+  height: 34px;
+  z-index: -2;
+  background: var(--ink-me);
+  mask-image: var(--halftone-edge);
+  mask-size: 10px 34px;
+  mask-repeat: repeat-x;
+}
+
+.nk-hello {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.nk-word {
+  margin-top: 4px;
+  font-size: 3rem;
+  font-weight: 800;
+  font-stretch: 78%;
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+}
+
+.nk-status {
+  margin-top: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgb(23 32 59 / 0.82);
+}
+
+/* the other one's disc overprints the edge of the field: where the inks meet, green */
+.nk-them {
+  position: absolute;
+  right: 20px;
+  bottom: 2px;
+  z-index: -1;
+  mix-blend-mode: multiply;
+}
+
+.nk-them .nk-stamp-ink {
+  mix-blend-mode: normal;
+}
+
+/* ---------- stamps ---------- */
+
+.nk-stamp {
+  --size: 34px;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  font-family: 'Nakup Bricolage', var(--font-sans);
+  font-weight: 750;
+  font-size: calc(var(--size) * 0.46);
+  line-height: 1;
+  color: var(--key);
+}
+
+.nk-stamp-ink {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--ink);
+  mask-image: var(--grain);
+  mask-size: var(--grain-size);
+  mix-blend-mode: multiply;
+  translate: var(--misreg-x) var(--misreg-y);
+}
+
+.nk-stamp-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.75px solid var(--key);
+}
+
+.nk-stamp-letter {
+  position: relative;
+  transform: translateY(-0.04em);
+}
+
+.nk-stamp--mini {
+  --size: 22px;
+  --misreg-x: 1px;
+  --misreg-y: 1px;
+}
+
+.nk-stamp--mini .nk-stamp-ring {
+  border-width: 1.25px;
+}
+
+.nk-stamp--big {
+  --size: 84px;
+  --misreg-x: var(--misreg-lg-x);
+  --misreg-y: var(--misreg-lg-y);
+  font-stretch: 78%;
+}
+
+.nk-stamp--big .nk-stamp-ring {
+  border-width: 2px;
+}
+
+/* ---------- the list ---------- */
+
+/* the sheet keeps its height and the list scrolls inside it, as in the app */
+.nk-list {
+  position: relative;
+  max-height: 22.5rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule-strong) transparent;
+  padding-bottom: 14px;
+}
+
+.nk-aisle ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nk-aisle-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 0 20px;
+  padding: 18px 0 6px;
+  border-bottom: 1.75px solid var(--key);
+  font-size: 0.75rem;
+  font-weight: 750;
+  font-stretch: 82%;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  line-height: 1.35;
+}
+
+.nk-aisle-head span {
+  font-stretch: 100%;
+  letter-spacing: 0;
+  font-weight: 600;
+  color: var(--key-soft);
+}
+
+.nk-row {
+  position: relative;
+  isolation: isolate;
+  margin: 0 20px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.nk-row:last-child {
+  border-bottom: 0;
+}
+
+.nk-row-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.nk-row-card:focus-visible {
+  outline: 2px solid var(--key);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* an item that just arrived from the other phone gets a pass of their ink */
+.nk-flash {
+  position: absolute;
+  inset: 0 -20px;
+  z-index: -1;
+  background: var(--ink);
+  mix-blend-mode: multiply;
+  opacity: 0;
+  animation: nk-flash 2.4s var(--nk-ease) 1;
+  pointer-events: none;
+}
+
+@keyframes nk-flash {
+  0% {
+    opacity: 0.55;
+    clip-path: inset(0 100% 0 0);
+  }
+  18% {
+    opacity: 0.55;
+    clip-path: inset(0 0 0 0);
+  }
+  100% {
+    opacity: 0;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* the tick: key ring, and a disc of the ticker's ink stamped slightly off register,
+   over the adder's plate laid the other way. two people, two plates, green between */
+.nk-tick {
+  position: relative;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+}
+
+.nk-tick-ring {
+  position: absolute;
+  inset: 0;
+  border: 1.75px solid var(--key);
+  border-radius: 50%;
+}
+
+.nk-tick-ink {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--ink);
+  mask-image: var(--grain);
+  mask-size: var(--grain-size);
+  mix-blend-mode: multiply;
+  translate: var(--misreg-x) var(--misreg-y);
+}
+
+.nk-tick-ink--under {
+  translate: calc(var(--misreg-x) * -1) calc(var(--misreg-y) * -0.6);
+}
+
+.nk-tick-check {
+  position: relative;
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: var(--key);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* the name, its band and the band's second plate share one grid cell, so the band
+   is exactly as long as the word */
+.nk-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: inline-grid;
+  font-size: 1.0625rem;
+  font-weight: 560;
+  line-height: 1.25;
+}
+
+.nk-name > * {
+  grid-area: 1 / 1;
+}
+
+.nk-name + * {
+  margin-left: auto;
+}
+
+.nk-name-text {
+  position: relative;
+  transition: color 0.25s var(--nk-ease);
+}
+
+/* the strike is a band of the ticker's ink over the word, not a line through it */
+.nk-band {
+  align-self: center;
+  height: 62%;
+  margin-inline: -6px;
+  border-radius: 2px;
+  background: var(--ink);
+  mask-image: var(--grain);
+  mask-size: var(--grain-size);
+  mix-blend-mode: multiply;
+  transform: rotate(-0.7deg);
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.32s var(--nk-ease);
+}
+
+.nk-band--under {
+  translate: calc(var(--misreg-lg-x) * -1) calc(var(--misreg-lg-y) * -1);
+  opacity: 0.55;
+  transition-delay: 0.06s;
+}
+
+.nk-row[data-done='true'] .nk-band {
+  clip-path: inset(0 0 0 0);
+}
+
+.nk-row[data-done='true'] .nk-name-text {
+  color: var(--key-soft);
+}
+
+.nk-qty {
+  flex: none;
+  padding: 2px 7px 3px;
+  border: 1.5px solid var(--key);
+  border-radius: 5px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.nk-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- dock ---------- */
+
+.nk-dock {
+  position: relative;
+  background: var(--paper-deep);
+  border-top: 1.75px solid var(--key);
+  padding: 10px 0 12px;
+}
+
+.nk-usuals {
+  display: flex;
+  gap: 7px;
+  padding: 0 20px 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.nk-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 34px;
+  padding: 0 11px 1px 8px;
+  border: 1.5px solid var(--rule-strong);
+  border-radius: 8px;
+  background: var(--paper);
+  font-size: 0.875rem;
+  font-weight: 560;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform 0.12s var(--nk-ease),
+    border-color 0.12s;
+}
+
+.nk-chip:active {
+  transform: scale(0.95);
+  border-color: var(--key);
+  background: var(--ink-me);
+}
+
+.nk-chip svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: var(--key-soft);
+  stroke-width: 1.9;
+  stroke-linecap: round;
+}
+
+.nk-add {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 0 20px;
+}
+
+.nk-add input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px 1px;
+  border: 1.75px solid var(--key);
+  border-radius: 8px;
+  background: var(--paper);
+  font-size: 1rem;
+  font-weight: 520;
+  outline: none;
+  transition: box-shadow 0.18s var(--nk-ease);
+}
+
+.nk-add input::placeholder {
+  color: var(--key-mute);
+  font-weight: 450;
+}
+
+/* focus lays your ink down behind the field, off register like everything else here */
+.nk-add input:focus-visible {
+  box-shadow: var(--misreg-lg-x) var(--misreg-lg-y) 0 0 var(--ink-me);
+}
+
+.nk-send {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.12s var(--nk-ease);
+}
+
+.nk-send::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--ink);
+  mask-image: var(--grain);
+  mask-size: var(--grain-size);
+  transform: translate(var(--misreg-lg-x), var(--misreg-lg-y));
+  transition: transform 0.12s var(--nk-ease);
+}
+
+.nk-send::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.75px solid var(--key);
+}
+
+.nk-send:active {
+  transform: scale(0.94);
+}
+
+.nk-send:active::before {
+  transform: translate(0, 0);
+}
+
+.nk-send:focus-visible {
+  outline: 2px solid var(--key);
+  outline-offset: 3px;
+}
+
+.nk-send svg {
+  position: relative;
+  z-index: 1;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--key);
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nk-toast {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: calc(100% + 10px);
+  padding: 9px 14px;
+  border-radius: 8px;
+  background: var(--key);
+  color: var(--paper);
+  font-size: 0.875rem;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 0.2s var(--nk-ease),
+    transform 0.2s var(--nk-ease);
+  pointer-events: none;
+  z-index: 6;
+}
+
+.nk-toast.is-on {
+  opacity: 1;
+  transform: none;
+}

@@ -3,13 +3,14 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 
 import appCss from "../styles.css?url";
+import soraLatin from "@fontsource-variable/sora/files/sora-latin-wght-normal.woff2?url";
 import { Analytics } from "../lib/analytics";
 
 const TITLE = "mike pšenčík · i make stuff";
-// leads with the commercial work now that the page carries it — this is the text
-// that shows up when someone pastes the link into a hiring channel
+// the text that shows up when someone pastes the link into a chat, so it says what the
+// page actually holds
 const DESCRIPTION =
-    "full-stack product engineer in czechia. two years of contract react and node (a staffing marketplace, an energy-management system, a react native app on both stores, the 3d in a b2b planner) plus falling-sand toys and claude code skills. sometimes it works, sometimes it doesn't.";
+    "i'm mike, a full-stack product engineer in czechia. tools i built for working with ai agents, a few public apps, one small product, and a falling-sand toy you can poke. sometimes it works, sometimes it doesn't.";
 
 // runs before first paint so the saved theme never flashes the wrong colors
 const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme');if(t!=='dark'&&t!=='light'&&t!=='dusk'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme='light'}})()`;
@@ -31,6 +32,10 @@ export const Route = createRootRoute({
         ],
         links: [
             { rel: "stylesheet", href: appCss },
+            // the masthead's words wrap differently in the fallback face, so the
+            // font is fetched beside the stylesheet instead of after it, and the
+            // first paint already sets the lede in sora
+            { rel: "preload", href: soraLatin, as: "font", type: "font/woff2", crossOrigin: "anonymous" },
             { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
         ],
         scripts: [{ children: THEME_INIT }],

@@ -1,0 +1,185 @@
+#!/usr/bin/env node
+/**
+ * turns master screenshots into the webp ladder the site serves, and writes the typed
+ * manifest the components read their srcset, intrinsic size and placeholder from.
+ * run it by hand whenever a shot changes, then commit both outputs:
+ *
+ *   npm run images -- <masters-dir>
+ *
+ * every png, jpg or webp directly inside <masters-dir> becomes one image, named after
+ * its file: `beadside.png` is `SHOWCASE_IMAGES.beadside`. a folder of symlinks named
+ * by id, pointing at the captures, works too, and keeps the capture's name in the
+ * manifest. the script owns
+ * public/showcase/ outright and clears it first, so a dropped master leaves nothing
+ * stale behind. masters stay out of the repo: they are big, and the ladder is all a
+ * visitor ever downloads.
+ */
+import { mkdir, readdir, realpath, rm, writeFile } from "node:fs/promises";
+import { basename, extname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import sharp from "sharp";
+
+const ROOT = resolve(fileURLToPath(import.meta.url), "../..");
+const OUT_DIR = join(ROOT, "public/showcase");
+const MANIFEST = join(ROOT, "src/lib/showcase-images-generated.ts");
+const PUBLIC_PATH = "/showcase";
+
+/**
+ * widths a variant can take. a 2336px-wide screen showing a shot at ~60% of its width
+ * at dpr 1.1 asks for ~1550 device px, a 390px phone at 3x asks for ~1170, and the
+ * lightbox at actual size asks for the master itself, so the top rung is the master
+ * (capped at 2560) and the rungs below step by roughly 1.3–1.7x
+ */
+const LADDER = [480, 800, 1200, 1600, 2000, 2560];
+const MAX_WIDTH = 2560;
+
+/** text-heavy ui shots: high enough quality that 11px labels survive, chroma kept sharp */
+const WEBP = { quality: 84, effort: 6, smartSubsample: true };
+
+/**
+ * shots whose ui is printed on a grain texture. at 84 the encoder spends most of
+ * the bytes keeping the noise (an 800px nákup shot came out at 285k); at 52 the
+ * grain softens a touch, the text stays crisp, and the file is 112k
+ */
+const GRAINY = [{ prefix: "nakup", quality: 52 }];
+
+function webpFor(id) {
+    const grainy = GRAINY.find((g) => id.startsWith(g.prefix));
+    return grainy ? { ...WEBP, quality: grainy.quality } : WEBP;
+}
+
+/** the placeholder is a few hundred bytes of the shot itself, inlined in the html */
+const PLACEHOLDER_WIDTH = 24;
+
+const IMAGE_EXT = new Set([".png", ".jpg", ".jpeg", ".webp"]);
+
+/** a file name becomes an identifier the manifest can key on */
+function idFor(file) {
+    return basename(file, extname(file))
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+}
+
+/** the rungs a master of this width gets: everything below it, then the master's own width */
+export function ladderFor(masterWidth) {
+    const top = Math.min(masterWidth, MAX_WIDTH);
+    // a rung within 10% of the top saves too little to be worth a file
+    return [...LADDER.filter((w) => w < top * 0.9), top];
+}
+
+async function processMaster(path) {
+    const id = idFor(path);
+    const master = sharp(path, { limitInputPixels: false }).rotate();
+    const { width, height } = await master.metadata();
+    if (!width || !height) throw new Error(`${path}: no dimensions`);
+
+    const widths = ladderFor(width);
+    const variants = [];
+    for (const w of widths) {
+        const h = Math.round((height * w) / width);
+        const file = `${id}-${w}.webp`;
+        const info = await master
+            .clone()
+            .resize({ width: w, height: h, kernel: "lanczos3" })
+            .webp(webpFor(id))
+            .toFile(join(OUT_DIR, file));
+        variants.push({ file, width: w, height: h, bytes: info.size });
+    }
+
+    // the placeholder is blurred before encoding so the browser's upscale reads as soft
+    // focus rather than blocks
+    const ph = await master
+        .clone()
+        .resize({ width: PLACEHOLDER_WIDTH })
+        .blur(0.6)
+        .webp({ quality: 40, effort: 6 })
+        .toBuffer();
+    const { data } = await master
+        .clone()
+        .resize(1, 1, { fit: "cover" })
+        .removeAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+    const color = `#${[...data.subarray(0, 3)].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+
+    const top = variants.at(-1);
+    return {
+        id,
+        // the real file's name, so a folder of id-named symlinks still says which capture it was
+        source: basename(await realpath(path)),
+        image: {
+            src: `${PUBLIC_PATH}/${top.file}`,
+            width: top.width,
+            height: top.height,
+            srcSet: variants.map((v) => `${PUBLIC_PATH}/${v.file} ${v.width}w`).join(", "),
+            placeholder: `data:image/webp;base64,${ph.toString("base64")}`,
+            color,
+        },
+        variants,
+    };
+}
+
+function manifestSource(entries) {
+    const body = entries
+        .map(({ id, source, image }) => {
+            const fields = Object.entries(image)
+                .map(([key, value]) => `        ${key}: ${JSON.stringify(value)},`)
+                .join("\n");
+            const key = /^[a-z_$][a-z0-9_$]*$/i.test(id) ? id : JSON.stringify(id);
+            return `    // ${source}\n    ${key}: {\n${fields}\n    },`;
+        })
+        .join("\n");
+    return `// generated by scripts/showcase-images.mjs from the master screenshots; do not edit.
+// rerun \`npm run images -- <masters-dir>\` instead.
+import type { ResponsiveImage } from "./responsive-image";
+
+export const SHOWCASE_IMAGES = {
+${body}
+} as const satisfies Record<string, ResponsiveImage>;
+
+export type ShowcaseImageId = keyof typeof SHOWCASE_IMAGES;
+`;
+}
+
+async function main() {
+    const from = process.argv[2];
+    if (!from) {
+        console.error("usage: npm run images -- <masters-dir>");
+        process.exit(1);
+    }
+    const dir = resolve(from);
+    const files = (await readdir(dir))
+        .filter((f) => IMAGE_EXT.has(extname(f).toLowerCase()))
+        .sort();
+    if (!files.length) throw new Error(`no images in ${dir}`);
+
+    const ids = files.map(idFor);
+    const clash = ids.find((id, i) => ids.indexOf(id) !== i);
+    if (clash) throw new Error(`two masters both become "${clash}"`);
+
+    // empty the folder rather than removing it: a running dev server watches the
+    // folder, and loses track of it if it disappears and comes back
+    await mkdir(OUT_DIR, { recursive: true });
+    for (const stale of await readdir(OUT_DIR)) await rm(join(OUT_DIR, stale), { force: true });
+
+    const entries = [];
+    for (const file of files) {
+        const entry = await processMaster(join(dir, file));
+        entries.push(entry);
+        const sizes = entry.variants
+            .map((v) => `${v.width}w ${Math.round(v.bytes / 1024)}k`)
+            .join(", ");
+        console.log(`${entry.id.padEnd(22)} ${sizes}`);
+    }
+
+    await writeFile(MANIFEST, manifestSource(entries));
+    console.log(`\n${entries.length} images -> public/showcase/, manifest -> src/lib/showcase-images-generated.ts`);
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    main().catch((error) => {
+        console.error(error.message);
+        process.exit(1);
+    });
+}

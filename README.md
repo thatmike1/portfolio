@@ -16,6 +16,9 @@ live at [thatmike1.dev](https://thatmike1.dev). the previous `thatmike1.portfoli
 npm install
 npm run dev      # http://localhost:3000
 npm run build    # production build into .output/
+npm test         # vitest
+npm run images -- <masters-dir>   # rebuild public/showcase/ and its manifest from master screenshots
+npm run facts    # re-read the board's numbers off the projects (src/lib/board-facts.json)
 ```
 
 ## structure
@@ -30,6 +33,12 @@ npm run build    # production build into .output/
 - `src/lib/frost.ts` — snow and ice: flakes drift down and cap the word, freeze the lake, and the noon sun melts them
 - `src/lib/fish.ts` — fish for the lake: they arrive with the water, cruise the basin and now and then one leaps
 - `src/lib/frog.ts` — a frog that comes for the fireflies, sits on a letter and snaps them with its tongue
-- `src/routes/index.tsx` — the whole page
-- `src/styles.css` — design tokens + all styling
+- `src/routes/index.tsx` — the homepage: the masthead under the sky, then the board; `src/routes/hire.tsx` — the recruiter page
+- `src/components/board.tsx` — the shelves and tiles; `sky-report.tsx` — the sky column; `pixel-charts.tsx` — the grain charts
+- `src/components/minis/` — the four try-it toys, each its own lazy chunk
+- `scripts/board-facts.mjs` — reads every number the board states off the projects, dated
+- `src/lib/showcase.ts` — every project fact both pages show
+- `scripts/showcase-images.mjs` — master screenshots in, webp ladder + `src/lib/showcase-images-generated.ts` out; commit both
+- `src/components/showcase-image.tsx`, `src/components/lightbox.tsx` — a screenshot on the page, and the viewer it opens
+- `src/styles.css` — design tokens + global styling; components carry their own css
 - `PRODUCT.md` / `DESIGN.md` — design system context
