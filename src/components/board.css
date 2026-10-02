@@ -27,19 +27,42 @@
 
 /* at noon it is a highlighter stroke through the lower half of the words, the
    way home base marks its number; after dark the words themselves take the
-   raspberry, since a pale band on a dark ground reads as a selection */
+   raspberry, since a pale band on a dark ground reads as a selection. one rule
+   for all three looks: --mark is the stroke (transparent after dark) and --lit is
+   the words' colour (the ink at noon), both tokens in styles.css */
 .fusion :is(.tile-line, .shelf-lede, .mast-take, .signoff-take) em {
   font-style: normal;
-  background: linear-gradient(transparent 58%, var(--mark) 58%, var(--mark) 92%, transparent 92%);
+  color: var(--lit);
+  background: linear-gradient(transparent 58%, var(--mark) 58%, var(--mark) 92%, transparent 92%) no-repeat 0 0 / 100% 100%;
   padding-inline: 0.06em;
   margin-inline: -0.06em;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
 
-:root:is([data-theme='dark'], [data-theme='dusk']) .fusion :is(.tile-line, .shelf-lede, .mast-take, .signoff-take) em {
-  background: none;
-  color: var(--rasp-deep);
+/* the phrase lights the first time its line scrolls in: the stroke sweeps through
+   the words left to right, and after dark the words warm from the ink to the
+   raspberry. a beat after the line lands, so the eye is on it; the words never
+   move, only their paint */
+.fusion em[data-arrival='waiting'] {
+  color: var(--ink);
+  background-size: 0% 100%;
+}
+
+.fusion em[data-arrival='arriving'] {
+  animation: phrase-light 560ms cubic-bezier(0.33, 0, 0.2, 1) 160ms both;
+}
+
+@keyframes phrase-light {
+  from {
+    color: var(--ink);
+    background-size: 0% 100%;
+  }
+
+  to {
+    color: var(--lit);
+    background-size: 100% 100%;
+  }
 }
 
 /* a label with its hairline run out to the edge: home base's section head */

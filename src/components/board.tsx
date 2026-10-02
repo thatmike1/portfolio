@@ -1,5 +1,6 @@
 import { lazy } from "react";
 import type { ComponentType, LazyExoticComponent, ReactNode } from "react";
+import { useArrival } from "../lib/arrival";
 import { FACTS } from "../lib/facts";
 import { ARCHIVE, SHELF, SHOWCASE, SUPPORTING } from "../lib/showcase";
 import type { Line, Reach, ShelfItem, ShowcaseProject } from "../lib/showcase";
@@ -110,11 +111,26 @@ const REACH: Record<Reach, string> = {
     private: "stays at home",
 };
 
+/**
+ * the lit phrase of a sentence headline. it lights up the first time its line
+ * scrolls into view (the highlighter stroke sweeps through at noon, the words take
+ * the raspberry after dark); a line already on screen when the page lands is lit
+ * from the start, and so is every line for a reader who asked for less motion
+ */
+export function Lit({ children }: { children: ReactNode }) {
+    const [ref, arrival] = useArrival<HTMLElement>(0.9);
+    return (
+        <em ref={ref} data-arrival={arrival}>
+            {children}
+        </em>
+    );
+}
+
 export function Marked({ line }: { line: Line }) {
     return (
         <>
             {line.lead}
-            <em>{line.mark}</em>
+            <Lit>{line.mark}</Lit>
             {line.tail}
         </>
     );
@@ -357,7 +373,7 @@ export function Board() {
                 count="3 tools · used daily"
                 lede={
                     <>
-                        three tools for working with a pile of agents, and <em>all three are open</em>{" "}
+                        three tools for working with a pile of agents, and <Lit>all three are open</Lit>{" "}
                         on my screen every day.
                     </>
                 }
@@ -380,7 +396,7 @@ export function Board() {
                 count="3 public · no account"
                 lede={
                     <>
-                        three public things for making a choice: <em>a model, a font, a station</em>.
+                        three public things for making a choice: <Lit>a model, a font, a station</Lit>.
                     </>
                 }
                 sub="all three open in a browser, and none of them asks you to sign up."
@@ -400,7 +416,7 @@ export function Board() {
                 count="5 · plus the archive"
                 lede={
                     <>
-                        one lives on <em>two phones at home</em>, one sells for $29, and three are
+                        one lives on <Lit>two phones at home</Lit>, one sells for $29, and three are
                         smaller things i keep around.
                     </>
                 }

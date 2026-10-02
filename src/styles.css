@@ -20,6 +20,8 @@
   --rasp-deep: oklch(0.49 0.2 357);
   --amber: oklch(0.74 0.15 68);
   --mark: color-mix(in oklch, var(--rasp) 24%, transparent);
+  /* the lit phrase's own colour: the ink under noon's stroke, the raspberry after dark */
+  --lit: var(--ink);
   --accent: oklch(0.42 0.15 265);
   --hairline: color-mix(in oklch, var(--ink) 13%, transparent);
   --footer-bg: oklch(0.18 0.015 357);
@@ -55,6 +57,8 @@
   --rasp: oklch(0.62 0.22 357);
   --rasp-deep: oklch(0.78 0.16 357);
   --amber: oklch(0.8 0.13 72);
+  --mark: transparent;
+  --lit: var(--rasp-deep);
   --hairline: color-mix(in oklch, var(--ink) 14%, transparent);
   --footer-bg: oklch(0.17 0.012 357);
   --footer-ink: oklch(0.93 0.006 357);
@@ -81,6 +85,8 @@
   --rasp: oklch(0.64 0.21 357);
   --rasp-deep: oklch(0.82 0.14 5);
   --amber: oklch(0.83 0.12 70);
+  --mark: transparent;
+  --lit: var(--rasp-deep);
   --hairline: color-mix(in oklch, var(--ink) 15%, transparent);
   --footer-bg: oklch(0.22 0.03 25);
   --footer-ink: oklch(0.95 0.018 70);
