@@ -77,7 +77,12 @@ export default function TallyMini() {
 
     // the sample the reader is looking at; null means "now"
     const [cursor, setCursor] = useState<number | null>(null);
-    const [focus, setFocus] = useState<Session["id"] | null>(null);
+    // a pressed row stays lit until it is pressed again; a mouse resting on a row
+    // lights it for as long as it rests there. a press is a click, a tap or enter,
+    // so all three select on the first go
+    const [pinned, setPinned] = useState<Session["id"] | null>(null);
+    const [hovered, setHovered] = useState<Session["id"] | null>(null);
+    const focus = hovered ?? pinned;
     const chart = useRef<HTMLDivElement>(null);
 
     const sample = cursor ?? SAMPLES;
@@ -254,16 +259,17 @@ export default function TallyMini() {
                         <button
                             type="button"
                             className={`tally-session tally-session--${session.id}`}
-                            aria-pressed={focus === session.id}
+                            aria-pressed={pinned === session.id}
                             onPointerEnter={(event) => {
-                                if (event.pointerType === "mouse") setFocus(session.id);
+                                if (event.pointerType === "mouse") setHovered(session.id);
                             }}
                             onPointerLeave={(event) => {
-                                if (event.pointerType === "mouse") setFocus(null);
+                                if (event.pointerType === "mouse") setHovered(null);
                             }}
-                            onFocus={() => setFocus(session.id)}
-                            onBlur={() => setFocus(null)}
-                            onClick={() => setFocus((f) => (f === session.id ? null : session.id))}
+                            onClick={() => setPinned((p) => (p === session.id ? null : session.id))}
+                            onKeyDown={(event) => {
+                                if (event.key === "Escape") setPinned(null);
+                            }}
                         >
                             <span className="tally-swatch" aria-hidden="true" />
                             <span className="tally-session-title">{session.title}</span>
