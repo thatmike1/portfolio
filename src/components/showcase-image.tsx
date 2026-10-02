@@ -67,7 +67,7 @@ export function ShowcaseImage({
                     )
                         return;
                     event.preventDefault();
-                    openShot(shots, index);
+                    openShot(shots, index, event.currentTarget.querySelector("img"));
                 }}
             >
                 <img

@@ -11,10 +11,12 @@ import {
     type PointerEvent,
     type ReactNode,
 } from "react";
+import { reducedMotion } from "../lib/arrival";
 import type { ResponsiveImage, Shot } from "../lib/responsive-image";
 import "./lightbox.css";
 
-type OpenShot = (gallery: readonly Shot[], index: number) => void;
+/** open the viewer on a shot; `from` is the picture on the page it grows out of */
+type OpenShot = (gallery: readonly Shot[], index: number, from?: HTMLElement | null) => void;
 
 const LightboxContext = createContext<OpenShot | null>(null);
 
@@ -31,6 +33,9 @@ type Anchor = { fx: number; fy: number; x: number; y: number };
 
 /** pixels a drag has to cover before it stops counting as a click */
 const DRAG_SLOP = 4;
+/** the one beat the viewer takes to open out of a picture and to close back into it */
+const BEAT = 220;
+const BEAT_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 /** how far one arrow press pans a zoomed shot */
 const PAN_STEP = 96;
 
@@ -51,10 +56,23 @@ export function shotSizes(
 }
 
 /**
+ * the transform that puts `to` exactly over `from`: the first frame of a shot growing
+ * out of its picture on the page, or the last frame of it shrinking back
+ */
+export function flipFrom(from: DOMRect, to: DOMRect): string {
+    return `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${from.width / to.width}, ${from.height / to.height})`;
+}
+
+/**
  * mounts the viewer once and hands its opener down through context. the native <dialog>
  * does the heavy lifting: top layer, inert page, escape to close, focus handed back to
  * whatever opened it. on top of that: fit by default, click or z for actual pixels,
  * drag or arrows to pan, left/right through a project's shots, backdrop to close.
+ *
+ * the shot opens out of the picture that was clicked and closes back into it: one
+ * transform on the image from the page figure's box to its fit box and back, while
+ * the room and the chrome fade in the same beat. a shot that was zoomed, or stepped
+ * away from the one that opened, has nowhere on the page to go, so it fades.
  */
 export function LightboxProvider({ children }: { children: ReactNode }) {
     const dialogRef = useRef<HTMLDialogElement>(null);
@@ -62,7 +80,11 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
     const [gallery, setGallery] = useState<readonly Shot[]>([]);
     const [index, setIndex] = useState(0);
     const [open, setOpen] = useState(false);
+    const [closing, setClosing] = useState(false);
     const [zoomed, setZoomed] = useState(false);
+    // where the viewer opened from: the picture on the page and which shot it showed
+    const origin = useRef<{ from: HTMLElement; index: number } | null>(null);
+    const flipped = useRef(false);
     const [stage, setStage] = useState({ width: 0, height: 0 });
     const [dpr, setDpr] = useState(1);
     const anchor = useRef<Anchor | null>(null);
@@ -75,13 +97,37 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
     const shot = gallery[index] ?? null;
     const many = gallery.length > 1;
 
-    const openShot = useCallback<OpenShot>((next, at) => {
+    const openShot = useCallback<OpenShot>((next, at, from) => {
+        origin.current = from && !reducedMotion() ? { from, index: at } : null;
+        flipped.current = false;
         setGallery(next);
         setIndex(at);
         setZoomed(false);
+        setClosing(false);
         setDpr(window.devicePixelRatio || 1);
         setOpen(true);
     }, []);
+
+    /** close in one beat: the shot back into its picture, or a fade when it has none */
+    const close = useCallback(() => {
+        const img = stageRef.current?.querySelector<HTMLImageElement>(".lightbox-img");
+        const home = origin.current;
+        // no animate (jsdom, an old browser) means no beat: the dialog just closes
+        if (!img || typeof img.animate !== "function" || reducedMotion() || closing) {
+            setOpen(false);
+            return;
+        }
+        setClosing(true);
+        const frames =
+            home && home.index === index && !zoomed && home.from.isConnected
+                ? [{ transform: "none" }, { transform: flipFrom(home.from.getBoundingClientRect(), img.getBoundingClientRect()) }]
+                : [{ opacity: 1 }, { opacity: 0 }];
+        const run = img.animate(frames, { duration: BEAT, easing: BEAT_EASE, fill: "forwards" });
+        run.onfinish = run.oncancel = () => {
+            setOpen(false);
+            setClosing(false);
+        };
+    }, [closing, index, zoomed]);
 
     // a layout effect, and declared first, so the dialog is already showing when the
     // stage below gets measured
@@ -114,6 +160,22 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
     }, [open, shot]);
 
     const sizes = shot ? shotSizes(shot.image, stage, dpr) : null;
+
+    // the first frame with a fit size: the shot starts over its picture on the page and
+    // grows into place, once per opening
+    useLayoutEffect(() => {
+        const img = stageRef.current?.querySelector<HTMLImageElement>(".lightbox-img");
+        const home = origin.current;
+        if (!open || flipped.current || !img || !home || !sizes || sizes.fit <= 0) return;
+        if (typeof img.animate !== "function") return;
+        flipped.current = true;
+        const to = img.getBoundingClientRect();
+        if (!to.width) return;
+        img.animate([{ transform: flipFrom(home.from.getBoundingClientRect(), to) }, { transform: "none" }], {
+            duration: BEAT,
+            easing: BEAT_EASE,
+        });
+    }, [open, sizes, shot]);
 
     // after the zoom lands, scroll so the anchored point is back under the pointer
     useLayoutEffect(() => {
@@ -253,8 +315,15 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
                 className="lightbox"
                 ref={dialogRef}
                 aria-label="screenshot viewer"
+                data-closing={closing ? "true" : undefined}
+                // escape would close the dialog in a frame; this asks it to wait a beat
+                onCancel={(event) => {
+                    event.preventDefault();
+                    close();
+                }}
                 onClose={() => {
                     setOpen(false);
+                    setClosing(false);
                     setZoomed(false);
                 }}
                 onKeyDown={onKeyDown}
@@ -271,7 +340,7 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
                         target === stageRef.current ||
                         (target instanceof HTMLElement && target.dataset.backdrop === "true")
                     )
-                        setOpen(false);
+                        close();
                 }}
             >
                 {shot && sizes ? (
@@ -300,11 +369,7 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
                                         : ""}
                                 </span>
                             </p>
-                            <button
-                                type="button"
-                                className="lightbox-close"
-                                onClick={() => setOpen(false)}
-                            >
+                            <button type="button" className="lightbox-close" onClick={close}>
                                 close
                             </button>
                         </div>

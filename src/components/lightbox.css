@@ -10,7 +10,9 @@
   --lb-edge: oklch(0.94 0.006 357 / 0.22);
 
   /* display is only flipped on [open] so the ua's own dialog:not([open]) rule still
-     hides it, and it transitions discretely so the close still gets to fade */
+     hides it. the dialog itself does not fade: the shot grows out of its picture on
+     the page (lightbox.tsx moves it), so it has to be solid from the first frame.
+     the room and the chrome fade around it in the same beat */
   display: none;
   width: 100%;
   max-width: 100%;
@@ -21,30 +23,21 @@
   border: 0;
   background: transparent;
   color: var(--lb-ink);
-  opacity: 0;
-  transition:
-    opacity 180ms var(--ease-out),
-    display 180ms allow-discrete,
-    overlay 180ms allow-discrete;
 }
 
 .lightbox[open] {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: clamp(0.5rem, 1.2vw, 0.85rem);
-  opacity: 1;
 }
 
-@starting-style {
-  .lightbox[open] {
-    opacity: 0;
-  }
-}
-
+/* the room: the one full-screen thing here that fades, once on open and once on
+   close, both set off by the visitor. it was already so; the beat just matches the
+   shot's */
 .lightbox::backdrop {
   background: oklch(0.13 0.01 357 / 0.96);
   opacity: 0;
-  transition: opacity 180ms var(--ease-out);
+  transition: opacity 220ms var(--ease-out);
 }
 
 .lightbox[open]::backdrop {
@@ -55,6 +48,26 @@
   .lightbox[open]::backdrop {
     opacity: 0;
   }
+}
+
+.lightbox[data-closing]::backdrop {
+  opacity: 0;
+}
+
+/* the bar and the foot fade in behind the shot and out ahead of it */
+.lightbox[open] :is(.lightbox-bar, .lightbox-foot) {
+  opacity: 1;
+  transition: opacity 220ms var(--ease-out);
+}
+
+@starting-style {
+  .lightbox[open] :is(.lightbox-bar, .lightbox-foot) {
+    opacity: 0;
+  }
+}
+
+.lightbox[data-closing] :is(.lightbox-bar, .lightbox-foot) {
+  opacity: 0;
 }
 
 /* a modal leaves the page scrollable under the wash; this holds it still. the page
@@ -216,6 +229,8 @@
   max-width: none;
   height: auto;
   border-radius: 10px;
+  /* the open and close transforms are measured from the top-left corner */
+  transform-origin: 0 0;
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;

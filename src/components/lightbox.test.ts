@@ -3,7 +3,7 @@ import { createElement } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import type { ResponsiveImage, Shot } from "../lib/responsive-image";
-import { LightboxProvider, shotSizes } from "./lightbox";
+import { LightboxProvider, flipFrom, shotSizes } from "./lightbox";
 import { ShowcaseImage } from "./showcase-image";
 
 const image = (name: string): ResponsiveImage => ({
@@ -112,6 +112,14 @@ describe("screenshot viewer", () => {
         expect(dialog.open).toBe(true);
         fireEvent.click(dialog);
         expect(dialog.open).toBe(false);
+    });
+});
+
+describe("the viewer's beat", () => {
+    it("puts the shot over the picture it opened from: offset by the gap, scaled by the ratio", () => {
+        const from = new DOMRect(100, 400, 500, 250);
+        const to = new DOMRect(300, 100, 1000, 500);
+        expect(flipFrom(from, to)).toBe("translate(-200px, 300px) scale(0.5, 0.5)");
     });
 });
 
