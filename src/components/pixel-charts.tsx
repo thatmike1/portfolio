@@ -1,14 +1,25 @@
+import type { CSSProperties } from "react";
+import { useArrival } from "../lib/arrival";
 import { FACTS, count } from "../lib/facts";
 
 /**
  * the board's small charts. every mark is a square grain on a whole-pixel grid,
  * the same material the sky up top is made of, so a chart reads as a handful of
  * the sand rather than a widget. they are pictures of numbers the caption says in
- * words, so each svg is hidden from assistive tech and the caption carries it
+ * words, so each svg is hidden from assistive tech and the caption carries it.
+ *
+ * the first time a chart scrolls into view its grains pour in from above the
+ * frame and land where they belong, bottom row first, as if the sky's sand filled
+ * it; board.css has the keyframes, each grain only says when it falls. the svg's
+ * box is fixed so nothing around it moves, and a chart already on screen when
+ * the page lands is simply there
  */
 
 const G = 5; // a grain: about the hero's own cell
 const S = 6; // a grain and its gap
+
+/** when a grain falls, in ms after the chart arrives */
+const pour = (ms: number) => ({ "--d": ms } as CSSProperties);
 
 const fmt = (d: Date) =>
     `${d.getUTCDate()} ${d.toLocaleString("en", { month: "short", timeZone: "UTC" }).toLowerCase()}`;
@@ -27,8 +38,9 @@ export function CommitPiles() {
     const start = new Date(`${from}T00:00:00Z`);
     const end = new Date(start.getTime() + (days.length - 1) * 86_400_000);
     const total = days.reduce((a, b) => a + b, 0);
+    const [ref, arrival] = useArrival<HTMLElement>();
     return (
-        <figure className="chart chart--piles">
+        <figure className="chart chart--piles" ref={ref} data-arrival={arrival}>
             <svg
                 viewBox={`0 0 ${width} ${height}`}
                 width={width}
@@ -58,6 +70,8 @@ export function CommitPiles() {
                             y={height - 3 - (Math.floor(i / perRow) + 1) * S + 1}
                             width={G}
                             height={G}
+                            // the piles fill from the floor up, sweeping across the days
+                            style={pour(Math.floor(i / perRow) * 55 + d * 14 + ((d * 7 + i * 3) % 4) * 9)}
                         />
                     ));
                 })}
@@ -82,8 +96,9 @@ export function DiffGrains() {
     const rows = Math.ceil(all / perRow);
     const width = perRow * S - 1;
     const height = rows * S - 1;
+    const [ref, arrival] = useArrival<HTMLElement>();
     return (
-        <figure className="chart chart--diff">
+        <figure className="chart chart--diff" ref={ref} data-arrival={arrival}>
             <svg
                 viewBox={`0 0 ${width} ${height}`}
                 width={width}
@@ -99,6 +114,8 @@ export function DiffGrains() {
                         y={Math.floor(i / perRow) * S}
                         width={G}
                         height={G}
+                        // the bottom row lands first and each row above it settles on that
+                        style={pour((rows - 1 - Math.floor(i / perRow)) * 70 + (i % perRow) * 11 + ((i * 5) % 3) * 8)}
                     />
                 ))}
             </svg>
@@ -119,13 +136,19 @@ export function DiffGrains() {
 export function FontMaps() {
     const { cols, rows } = FACTS.fonts.grid;
     const c = 2;
+    const [ref, arrival] = useArrival<HTMLElement>();
     return (
-        <figure className="chart chart--maps">
+        <figure className="chart chart--maps" ref={ref} data-arrival={arrival}>
             <div className="chart-maps">
                 {FACTS.fonts.maps.map((map) => {
-                    const cells: Array<[number, number, number]> = [];
+                    // the cells are two pixels each and there are hundreds, so they fall a
+                    // row at a time: each row of the map is one group, floor first
+                    const byRow = new Map<number, Array<[number, number]>>();
                     for (let i = 0; i < map.cells.length; i += 3) {
-                        cells.push([map.cells[i], map.cells[i + 1], map.cells[i + 2]]);
+                        const y = map.cells[i + 1];
+                        const row = byRow.get(y) ?? [];
+                        row.push([map.cells[i], map.cells[i + 2]]);
+                        byRow.set(y, row);
                     }
                     return (
                         <div className="chart-map" key={map.deck}>
@@ -137,15 +160,19 @@ export function FontMaps() {
                                 aria-hidden="true"
                             >
                                 <rect className="chart-plate" x={0} y={0} width={cols * c} height={rows * c} />
-                                {cells.map(([x, y, n]) => (
-                                    <rect
-                                        key={`${x}-${y}`}
-                                        className={n > 1 ? "chart-grain" : "chart-grain chart-grain--soft"}
-                                        x={x * c}
-                                        y={y * c}
-                                        width={c}
-                                        height={c}
-                                    />
+                                {[...byRow.entries()].map(([y, row]) => (
+                                    <g key={y} className="chart-row" style={pour((rows - 1 - y) * 22)}>
+                                        {row.map(([x, n]) => (
+                                            <rect
+                                                key={x}
+                                                className={n > 1 ? "chart-grain" : "chart-grain chart-grain--soft"}
+                                                x={x * c}
+                                                y={y * c}
+                                                width={c}
+                                                height={c}
+                                            />
+                                        ))}
+                                    </g>
                                 ))}
                             </svg>
                             <span className="chart-axis">
@@ -175,8 +202,9 @@ export function RadioDial() {
     });
     const width = x - gap;
     const height = 26;
+    const [ref, arrival] = useArrival<HTMLElement>();
     return (
-        <figure className="chart chart--dial">
+        <figure className="chart chart--dial" ref={ref} data-arrival={arrival}>
             <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} shapeRendering="crispEdges" aria-hidden="true">
                 <rect className="chart-rule" x={0} y={height - 1} width={width} height={1} />
                 {groups.map((lane, li) => (
@@ -190,6 +218,8 @@ export function RadioDial() {
                                 y={height - 3 - 16}
                                 width={G - 1}
                                 height={16}
+                                // the dial fills from quiet to loud, a station at a time
+                                style={pour((lane.start / S + i) * 9)}
                             />
                         ))}
                     </g>

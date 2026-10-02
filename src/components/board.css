@@ -651,6 +651,36 @@
   fill: var(--rasp);
 }
 
+/* the pour. a chart below the fold holds its grains out of sight until it scrolls
+   in, then each one falls from above the frame and lands where it belongs, bottom
+   row first, in the order the chart says with --d. the svg clips the fall, so a
+   grain appears at the top edge already moving; the box itself never changes, and
+   a chart already on screen when the page lands skips all of this. transform only,
+   on grains of a few pixels, and it runs once: nothing here is a layer that
+   repaints on scroll */
+.chart[data-arrival='waiting'] :is(.chart-grain, .chart-row) {
+  opacity: 0;
+}
+
+.chart[data-arrival='arriving'] :is(.chart-grain, .chart-row) {
+  animation: grain-pour 340ms cubic-bezier(0.5, 0, 0.85, 0.55) both;
+  animation-delay: calc(var(--d, 0) * 1ms);
+}
+
+.chart[data-arrival='arriving'] .chart-row .chart-grain {
+  animation: none;
+}
+
+@keyframes grain-pour {
+  from {
+    transform: translateY(calc(-100% - 24px));
+  }
+
+  to {
+    transform: none;
+  }
+}
+
 .chart-grain--soft {
   fill: color-mix(in oklch, var(--rasp) 50%, transparent);
 }
