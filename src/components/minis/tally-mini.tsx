@@ -3,14 +3,14 @@ import type { KeyboardEvent, PointerEvent } from "react";
 import "./tally-mini.css";
 
 /**
- * tally's question in miniature: the meter says 59%, so what ate it? three invented
+ * tally's question in miniature: the meter says 59%, so what ate it? four invented
  * agent sessions share a synthetic five-hour block. the chart stacks each session's
  * cumulative share, so the band thickness at "now" is the answer, and scrubbing back
  * through the block shows who was running when the meter moved.
  */
 
 type Session = {
-    id: "a" | "b" | "c";
+    id: "a" | "b" | "c" | "d";
     title: string;
     model: string;
     tokens: string;
@@ -18,28 +18,40 @@ type Session = {
     steps: number[];
 };
 
-/** the same invented morning the screenshot beside this toy shows: a block since 09:00, now 11:30 */
+/**
+ * the same invented morning the screenshot beside this toy shows: a block since 09:00,
+ * now 11:30, 59 points, split about 30 / 16 / 12 / 1 the way the screenshot splits
+ * them (50%, 27%, 20%, 2%). points are fractional where the screenshot's are, and each
+ * session runs in the hours the screenshot gives it
+ */
 const SESSIONS: Session[] = [
     {
         id: "a",
         title: "keep the cart and coupon when a card is declined",
         model: "opus 5.5 · xhigh",
         tokens: "20.2M tokens · 206 requests",
-        steps: [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 2, 2, 1, 2, 2, 1, 1, 1, 0],
+        steps: [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 2, 2, 1, 2, 2, 1, 1, 0.7, 0],
     },
     {
         id: "b",
         title: "port settings to the new form components",
         model: "fable 5.1 · medium",
         tokens: "4.2M tokens · 56 requests",
-        steps: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 1, 2, 1, 1, 1, 1, 1],
+        steps: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1, 1, 1],
     },
     {
         id: "c",
         title: "map tiles go blank on a fast zoom-out",
         model: "opus 5.5 · high",
         tokens: "7.4M tokens · 76 requests",
-        steps: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        steps: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+    {
+        id: "d",
+        title: "release notes for 0.9, then tag it",
+        model: "sonnet 5 · medium",
+        tokens: "835k tokens · 20 requests",
+        steps: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.4, 0.5, 0.4, 0, 0, 0, 0],
     },
 ];
 
@@ -48,6 +60,12 @@ const BLOCK_MINUTES = 300;
 const STEP_MINUTES = 5;
 const SAMPLES = SESSIONS[0].steps.length;
 const NOW_MINUTES = SAMPLES * STEP_MINUTES;
+/**
+ * when the screenshot says the block runs out: 13:09. tally draws its pace from the
+ * block's first reading (09:06) to the latest, not from the top of the block, so the
+ * toy takes tally's answer rather than redoing the sum on its own grid
+ */
+const FULL_AT_MINUTES = 13 * 60 + 9 - BLOCK_START;
 
 const clock = (minutesIntoBlock: number) => {
     const total = Math.round(BLOCK_START + minutesIntoBlock) % (24 * 60);
@@ -72,8 +90,8 @@ export default function TallyMini() {
     const series = useMemo(() => SESSIONS.map((s) => cumulative(s.steps)), []);
     const totals = series.map((s) => s[SAMPLES]);
     const used = totals.reduce((a, b) => a + b, 0);
-    const pace = used / NOW_MINUTES;
-    const fullAt = NOW_MINUTES + (100 - used) / pace;
+    const fullAt = FULL_AT_MINUTES;
+    const pace = (100 - used) / (fullAt - NOW_MINUTES);
 
     // the sample the reader is looking at; null means "now"
     const [cursor, setCursor] = useState<number | null>(null);
@@ -87,7 +105,8 @@ export default function TallyMini() {
 
     const sample = cursor ?? SAMPLES;
     const at = (i: number) => series.reduce((sum, s) => sum + s[i], 0);
-    const meter = at(sample);
+    // points are fractional where the screenshot's are; the meter reads whole percent, as tally's does
+    const meter = Math.round(at(sample));
 
     // the stacked bands: each one is the area between the sessions below it and itself
     const bands = useMemo(() => {
@@ -187,7 +206,7 @@ export default function TallyMini() {
                                 {running.length === 0
                                     ? "nothing running yet."
                                     : running.length === SESSIONS.length
-                                      ? "all three sessions were moving it."
+                                      ? "all four sessions were moving it."
                                       : `${running.map((s) => s.title).join(" + ")} moved it.`}
                             </p>
                         </>
@@ -275,7 +294,7 @@ export default function TallyMini() {
                             <span className="tally-session-title">{session.title}</span>
                             <span className="tally-session-share">{share(k)}%</span>
                             <span className="tally-session-meta">
-                                ~{totals[k]} pts · {session.model} · {session.tokens}
+                                ~{Math.round(totals[k])} pts · {session.model} · {session.tokens}
                             </span>
                         </button>
                     </li>

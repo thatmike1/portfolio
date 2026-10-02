@@ -4,6 +4,7 @@
   --s-a: var(--rasp);
   --s-b: oklch(0.76 0.14 72);
   --s-c: color-mix(in oklch, var(--ink) 42%, var(--bg));
+  --s-d: color-mix(in oklch, var(--ink) 24%, var(--bg));
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0.9rem;
@@ -108,13 +109,18 @@
   fill: var(--s-c);
 }
 
+.tally-band--d {
+  fill: var(--s-d);
+}
+
 .tally-mini[data-focus] .tally-band {
   opacity: 0.22;
 }
 
 .tally-mini[data-focus='a'] .tally-band--a,
 .tally-mini[data-focus='b'] .tally-band--b,
-.tally-mini[data-focus='c'] .tally-band--c {
+.tally-mini[data-focus='c'] .tally-band--c,
+.tally-mini[data-focus='d'] .tally-band--d {
   opacity: 1;
 }
 
@@ -214,6 +220,10 @@
 
 .tally-session--c .tally-swatch {
   background: var(--s-c);
+}
+
+.tally-session--d .tally-swatch {
+  background: var(--s-d);
 }
 
 .tally-session-title {

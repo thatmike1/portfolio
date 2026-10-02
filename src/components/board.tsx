@@ -72,11 +72,11 @@ const TOYS: Record<string, Toy> = {
     tally: {
         toy: lazy(() => import("./minis/tally-mini")),
         label: "a working miniature of tally's block explanation",
-        minHeight: "27rem",
+        minHeight: "36.5rem",
         caption: (
             <>
-                <b>try it:</b> drag across the block, or point at a session. three synthetic
-                sessions, the same question tally answers.
+                <b>try it:</b> drag across the block, or point at a session. the four synthetic
+                sessions from the screenshot, the same question tally answers.
             </>
         ),
     },
