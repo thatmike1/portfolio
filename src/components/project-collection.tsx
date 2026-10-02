@@ -43,9 +43,8 @@ export function ProjectCollection() {
                         <span>and kept using.</span>
                     </h2>
                     <p>
-                        some became products. some just made my days better.
-                        <br />
-                        pick one, have a look around.
+                        tools for working alongside ai agents, a couple of public apps, and the
+                        fork i live in. pick one, have a look around.
                     </p>
                 </div>
                 {enhanced ? (

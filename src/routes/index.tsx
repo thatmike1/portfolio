@@ -7,9 +7,25 @@ import { LightboxProvider } from "../components/lightbox";
 import { SectionNav } from "../components/section-nav";
 import { ProjectCollection } from "../components/project-collection";
 import { ShowcaseImage } from "../components/showcase-image";
-import { SHOWCASE_IMAGES } from "../lib/showcase-images-generated";
+import { ARCHIVE, SHELF, SUPPORTING } from "../lib/showcase";
+import type { ShowcaseLink } from "../lib/showcase";
 
 export const Route = createFileRoute("/")({ component: Home });
+
+const [cookie, nakup] = SUPPORTING;
+
+function Links({ links }: { links: ShowcaseLink[] }) {
+    if (!links.length) return null;
+    return (
+        <ul className="collection-links">
+            {links.map((link) => (
+                <li key={link.href}>
+                    <a href={link.href}>{link.label}</a>
+                </li>
+            ))}
+        </ul>
+    );
+}
 
 function Home() {
     return (
@@ -30,116 +46,60 @@ function Home() {
                             a small business, a shared list, a little room to play.
                         </p>
                         <div className="further-pair">
-                            <article className="further-product" id="good-cookie">
+                            <article className="further-product" id={cookie.id}>
                                 <ShowcaseImage
-                                    shots={[
-                                        {
-                                            image: SHOWCASE_IMAGES["good-cookie"],
-                                            alt: "Good Cookie's live demo shows its consent banner blocking a tracking script on an invented shop",
-                                            caption: "a working banner demo on a made-up shop",
-                                        },
-                                    ]}
-                                    sizes="(min-width: 1136px) 600px, (min-width: 601px) 55vw, calc(100vw - 3rem)"
+                                    shots={cookie.shots}
+                                    sizes="(min-width: 1136px) 520px, (min-width: 601px) 46vw, calc(100vw - 3rem)"
                                 />
-                                <h3>Good Cookie</h3>
-                                <p>
-                                    one payment, your own files. a short wizard turns a site's
-                                    answers into privacy pages and a self-hosted consent banner. i
-                                    built the product, checkout and zip delivery. a small business
-                                    experiment, shipped and open for business.
-                                </p>
-                                <p className="collection-stack">
-                                    node · express · stripe · file generation
-                                </p>
-                                <p>
-                                    <a href="https://goodcookie.app/">
-                                        try the banner
-                                    </a>
-                                </p>
+                                <h3>{cookie.name}</h3>
+                                <p className="further-summary">{cookie.summary}</p>
+                                <p className="further-detail">{cookie.detail}</p>
+                                <p className="collection-use">{cookie.use}</p>
+                                <p className="collection-stack">{cookie.stack}</p>
+                                <Links links={cookie.links} />
                             </article>
-                            <article className="further-product further-product--nakup" id="nakup">
-                                <ShowcaseImage
-                                    shots={[
-                                        {
-                                            image: SHOWCASE_IMAGES.nakup,
-                                            alt: "Nákup with invented groceries and anonymous people, in blue and yellow inks",
-                                            caption: "the actual app · invented groceries and people",
-                                        },
-                                    ]}
-                                    sizes="240px"
-                                />
+                            <article className="further-product further-product--nakup" id={nakup.id}>
+                                <ShowcaseImage shots={nakup.shots} sizes="(min-width: 601px) 200px, 240px" />
                                 <div>
-                                    <h3>nákup</h3>
-                                    <p>
-                                        a grocery list for two people, one ink each. it works in the
-                                        supermarket basement, syncs when signal returns, and
-                                        remembers which aisle a thing belongs in.
-                                    </p>
-                                    <p>
-                                        small on purpose. optimistic operations, retry-safe sync and
-                                        a list that gets easier to use the more you use it.
-                                    </p>
-                                    <p className="collection-stack">
-                                        react · typescript · node · sse · offline replay
-                                    </p>
-                                    <p className="collection-use">
-                                        in real household use · private app
-                                    </p>
+                                    <h3>{nakup.name}</h3>
+                                    <p className="further-summary">{nakup.summary}</p>
+                                    <p className="further-detail">{nakup.detail}</p>
+                                    <p className="collection-use">{nakup.use}</p>
+                                    <p className="collection-stack">{nakup.stack}</p>
                                 </div>
                             </article>
                         </div>
                         <ul className="further-small">
-                            <li id="powder-lab">
-                                <h3>
-                                    <a href="https://powder.ssscribe.app/">powder lab</a>
-                                </h3>
-                                <p>
-                                    falling sand, reactive materials and deterministic multiplayer.
-                                    react does the buttons; the simulation does the pixels. the sand
-                                    above is its little cousin.{" "}
-                                    <a href="https://github.com/thatmike1/powder-lab">source</a>.
-                                </p>
-                            </li>
-                            <li id="ssscribe">
-                                <h3>ssscribe</h3>
-                                <p>
-                                    speak on my phone, get copy-ready text on my laptop. a private,
-                                    self-hosted transcription pwa with realtime sync and ai
-                                    transforms. react, pocketbase and deepgram.{" "}
-                                    <a href="/ssscribe/desktop.webp">early design study</a>.
-                                </p>
-                            </li>
-                            <li id="reader">
-                                <h3>
-                                    <a href="https://read.thatmike1.dev/">Reader</a>
-                                </h3>
-                                <p>
-                                    a finite edition instead of an endless feed. exact reading
-                                    markers, guest storage and account sync, so coming back means
-                                    continuing rather than starting over.
-                                </p>
-                            </li>
+                            {SHELF.map((item) => (
+                                <li id={item.id} key={item.id}>
+                                    <h3>{item.href ? <a href={item.href}>{item.name}</a> : item.name}</h3>
+                                    <p>
+                                        {item.text}
+                                        {item.links.map((link) => (
+                                            <span key={link.href}>
+                                                {" "}
+                                                <a href={link.href}>{link.label}</a>.
+                                            </span>
+                                        ))}
+                                    </p>
+                                </li>
+                            ))}
                         </ul>
                         <details className="collection-archive">
                             <summary>older experiments, still worth a look</summary>
                             <ul>
-                                <li>
-                                    <a href="https://ontask.ssscribe.app/">on-task</a>: a desktop
-                                    creature that noticed when i drifted. the daemon is retired; the
-                                    interactive site survives.
-                                </li>
-                                <li>
-                                    <a href="https://thatmike1.github.io/cc-bench/">cc-bench</a>: an
-                                    instrument for measuring what an agent config changes. the tool
-                                    is built; the research question is still open.{" "}
-                                    <a href="https://github.com/thatmike1/cc-bench">source</a>.
-                                </li>
-                                <li>
-                                    <a href="https://github.com/thatmike1/aw-watcher-git">
-                                        aw-watcher-git
-                                    </a>
-                                    : editor-independent repo and branch tracking for ActivityWatch.
-                                </li>
+                                {ARCHIVE.map((item) => (
+                                    <li key={item.id}>
+                                        {item.href ? <a href={item.href}>{item.name}</a> : item.name}:{" "}
+                                        {item.text}
+                                        {item.links.map((link) => (
+                                            <span key={link.href}>
+                                                {" "}
+                                                <a href={link.href}>{link.label}</a>.
+                                            </span>
+                                        ))}
+                                    </li>
+                                ))}
                             </ul>
                         </details>
                     </div>

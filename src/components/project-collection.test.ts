@@ -20,8 +20,8 @@ describe("project collection", () => {
         fireEvent.keyDown(document.activeElement ?? tabs[0], { key: "Home" });
         expect(document.activeElement).toBe(tabs[0]);
         fireEvent.keyDown(tabs[0], { key: "ArrowRight" });
-        expect(window.location.hash).toBe("#font-tinder");
-        expect(screen.getByRole("tabpanel").id).toBe("font-tinder");
+        expect(window.location.hash).toBe("#tally");
+        expect(screen.getByRole("tabpanel").id).toBe("tally");
         expect(tabs.filter((tab) => tab.tabIndex === 0)).toEqual([tabs[1]]);
     });
 
@@ -29,8 +29,8 @@ describe("project collection", () => {
         window.history.replaceState(null, "", "/#model-map");
         render(createElement(ProjectCollection));
         expect(screen.getByRole("tabpanel").id).toBe("model-map");
-        fireEvent.click(screen.getByRole("tab", { name: /tally/ }));
-        expect(window.location.hash).toBe("#tally");
+        fireEvent.click(screen.getByRole("tab", { name: /diskzokej/ }));
+        expect(window.location.hash).toBe("#diskzokej");
         act(() => {
             window.history.replaceState(null, "", "/#model-map");
             window.dispatchEvent(new PopStateEvent("popstate"));
