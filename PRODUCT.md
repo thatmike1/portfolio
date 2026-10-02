@@ -29,9 +29,9 @@ Hand-built, playful, stubborn. The voice is his actual GitHub bio: "i do stuff, 
 
 1. **Practice what you preach.** The site itself must be a "cool thing he made": the hero is a working falling-sand toy, an homage to his own powder-lab.
 2. **His words, not marketing words.** Copy is lowercase, first-person, concrete. Real numbers, real tricks ("the noita trick"), real admissions.
-3. **One loud color, used with commitment.** Raspberry on pure white. Not a safe dev-blue, not a dark theme.
+3. **One loud color, used with commitment.** Raspberry on a noon-white page, carried into dusk and night. Not a safe dev-blue, not a terminal-dark theme.
 4. **Specifics are the flex.** Every project blurb names one genuinely clever implementation detail instead of three adjectives.
-5. **Honesty included.** Day-job work is NDA-bound, so it's described without names. Abandoned projects say so.
+5. **Honesty included.** Day-job work is NDA-bound, so it's one sentence without names. Abandoned projects say so. Every number on the page is read off the project and dated, and every screenshot and toy runs on invented data.
 
 ## Accessibility & Inclusion
 
