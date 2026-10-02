@@ -480,6 +480,17 @@
     'spec';
 }
 
+/* nákup's phone order: the line, the three phones, the words, then the toy */
+.tile--nakup {
+  grid-template-areas:
+    'head'
+    'phones'
+    'detail'
+    'toy'
+    'meta'
+    'spec';
+}
+
 .tile-story,
 .tile-main {
   display: contents;
