@@ -145,45 +145,40 @@ function Links({ project }: { project: ShowcaseProject }) {
 /**
  * what each tile's screenshot takes on screen, for its srcset. a wide tile's shot is
  * about 2.65 of 3.55 shares of the board from 1840px and 2.15 of 3.15 on a laptop; a
- * full spread runs the board's width; a half tile is half of it
+ * full spread runs the board's width; a half tile is half of it on a wide screen and
+ * spreads across the board on a laptop
  */
 const SIZES = {
     wide: "(min-width: 1840px) 70vw, (min-width: 900px) 64vw, calc(100vw - 2.5rem)",
     full: "(min-width: 1840px) 94vw, (min-width: 900px) 64vw, calc(100vw - 2.5rem)",
-    half: "(min-width: 1840px) 46vw, (min-width: 900px) 64vw, calc(100vw - 2.5rem)",
-    more: "(min-width: 1840px) 33vw, 1px",
+    half: "(min-width: 1840px) 46vw, (min-width: 900px) 94vw, calc(100vw - 2.5rem)",
+    /** a heavyweight without a toy: beside its story from 1840px, spread across a laptop */
+    plain: "(min-width: 1840px) 70vw, (min-width: 900px) 94vw, calc(100vw - 2.5rem)",
 } as const;
 
 type Variant = "wide" | "full" | "half";
 
 /**
  * one project on the board: its name and its story in a sentence, the real screen as
- * big as the width allows, then the toy and a second screen where there is room, and
- * one true fact with its date. the story and the screen are two stacks that sit side
- * by side from a laptop up; on a phone both dissolve into one column, ordered so the
- * screen comes right after the line
+ * big as the width allows, the toy where there is one, and one true fact with its
+ * date. a project's other screens wait in the viewer. the story and the screen are two
+ * stacks; board.css places them per width, and on a phone both dissolve into one
+ * column ordered so the screen comes right after the line
  */
 function Tile({
     project,
     variant,
-    mirror = false,
     priority = false,
-    showMore = true,
 }: {
     project: ShowcaseProject;
     variant: Variant;
-    mirror?: boolean;
     priority?: boolean;
-    /** off where the second shot would only repeat what the toy beside it already shows */
-    showMore?: boolean;
 }) {
     const chart = CHARTS[project.id];
     const toy = TOYS[project.id];
-    // a second shot sits beside the toy on a wide screen; otherwise it waits in the viewer
-    const more = showMore && variant !== "half" && project.shots.length > 1;
     return (
         <article
-            className={`tile tile--${variant}${mirror ? " tile--mirror" : ""}${toy ? " tile--toy" : ""}`}
+            className={`tile tile--${variant}${toy ? " tile--toy" : variant === "wide" ? " tile--plain" : ""}`}
             id={project.id}
             aria-labelledby={`name-${project.id}`}
         >
@@ -195,46 +190,38 @@ function Tile({
                     </p>
                 </header>
                 <p className="tile-detail">{project.detail}</p>
-                <div className="tile-meta">
-                    <p className="tile-use">{project.use}</p>
-                    <Links project={project} />
-                </div>
-                <div className="tile-fact">
-                    {chart}
-                    {project.fact ? <p>{project.fact}</p> : null}
-                </div>
-                <div className="tile-spec">
-                    <p className="tile-stack">{project.stack}</p>
-                    <p className="tile-when">{project.when}</p>
+                {/* the notes are one column beside a toy on a wide screen; elsewhere
+                    they dissolve and board.css places each one on its own */}
+                <div className="tile-notes">
+                    <div className="tile-meta">
+                        <p className="tile-use">{project.use}</p>
+                        <Links project={project} />
+                    </div>
+                    <div className="tile-fact">
+                        {chart}
+                        {project.fact ? <p>{project.fact}</p> : null}
+                    </div>
+                    <div className="tile-spec">
+                        <p className="tile-stack">{project.stack}</p>
+                        <p className="tile-when">{project.when}</p>
+                    </div>
                 </div>
             </div>
             <div className="tile-main">
                 <ShowcaseImage
                     className="tile-shot"
                     shots={project.shots}
-                    sizes={SIZES[variant]}
+                    sizes={variant === "wide" && !toy ? SIZES.plain : SIZES[variant]}
                     priority={priority}
                 />
-                {toy || more ? (
-                    <div className="tile-after">
-                        {toy ? (
-                            <LazyMini
-                                className="tile-toy"
-                                toy={toy.toy}
-                                label={toy.label}
-                                minHeight={toy.minHeight}
-                                caption={toy.caption}
-                            />
-                        ) : null}
-                        {more ? (
-                            <ShowcaseImage
-                                className="tile-more"
-                                shots={project.shots}
-                                index={1}
-                                sizes={SIZES.more}
-                            />
-                        ) : null}
-                    </div>
+                {toy ? (
+                    <LazyMini
+                        className="tile-toy"
+                        toy={toy.toy}
+                        label={toy.label}
+                        minHeight={toy.minHeight}
+                        caption={toy.caption}
+                    />
                 ) : null}
             </div>
         </article>
@@ -399,11 +386,11 @@ export function Board() {
                 sub="all three open in a browser, and none of them asks you to sign up."
             >
                 <div className="board-row">
-                    <Tile project={byId("model-map")} variant="wide" showMore={false} />
+                    <Tile project={byId("model-map")} variant="wide" />
                 </div>
                 <div className="board-row board-row--two">
                     <Tile project={byId("font-tinder")} variant="half" />
-                    <Tile project={byId("diskzokej")} variant="half" mirror />
+                    <Tile project={byId("diskzokej")} variant="half" />
                 </div>
             </Shelf>
 

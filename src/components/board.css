@@ -465,16 +465,16 @@
 /* tile layouts                                                        */
 /* ------------------------------------------------------------------ */
 
-/* a phone's tile is one column, the line, then the screen right after it, then the
+/* a phone's tile is one column: the line, then the screen right after it, then the
    words, the toy and the fact. the story and main stacks dissolve into it so the
-   pieces can interleave; from a laptop up they become two real columns */
+   pieces can interleave; wider screens place them per variant below */
 .tile {
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
     'head'
     'shot'
     'detail'
-    'after'
+    'toy'
     'fact'
     'meta'
     'spec';
@@ -492,31 +492,19 @@
 }
 
 .tile-story,
-.tile-main {
+.tile-main,
+.tile-notes {
   display: contents;
 }
 
 .tile-head { grid-area: head; }
 .tile-shot { grid-area: shot; }
 .tile-detail { grid-area: detail; }
-.tile-after { grid-area: after; }
+.tile-toy { grid-area: toy; }
 .tile-fact { grid-area: fact; }
 .tile-meta { grid-area: meta; }
 .tile-spec { grid-area: spec; }
 .tile-phones { grid-area: phones; }
-.tile--nakup > .tile-toy { grid-area: toy; }
-
-/* the toy and the second screen share the row under the first screen */
-.tile-after {
-  display: grid;
-  gap: var(--col);
-  align-items: start;
-}
-
-/* a second screen is a wide screen's extra; on anything narrower it waits in the viewer */
-.tile-more {
-  display: none;
-}
 
 /* the frame of every screen on the board, and its mono caption */
 .tile .shot-frame {
@@ -852,62 +840,91 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* a laptop and up: the story beside its screen                        */
+/* a laptop and up                                                     */
 /* ------------------------------------------------------------------ */
 
 @media (min-width: 900px) {
-  /* two stacks side by side that don't share rows, so a long story never leaves a
-     hole under a short screen, or the other way round */
-  .tile--wide,
-  .tile--full,
-  .tile--half {
+  /* a tile with a toy: the story beside a stack of the screen and the toy under it.
+     the two stacks don't share rows, so the toy fills the space a long story leaves
+     under a short screen */
+  .tile--toy {
     grid-template-columns: minmax(300px, 1fr) minmax(0, 2.15fr);
     grid-template-areas: none;
     align-items: start;
   }
 
-  .tile--wide .tile-story,
-  .tile--full .tile-story,
-  .tile--half .tile-story,
-  .tile--wide .tile-main,
-  .tile--full .tile-main,
-  .tile--half .tile-main {
+  .tile--toy .tile-story,
+  .tile--toy .tile-main {
     display: block;
     min-width: 0;
     padding: var(--top) var(--col) var(--bottom);
   }
 
-  .tile-main {
+  .tile--toy .tile-main {
     align-self: stretch;
     border-left: 1px solid var(--hairline);
   }
 
-  .tile--mirror .tile-story {
-    order: 2;
-  }
-
-  .tile--mirror .tile-main {
-    order: 1;
-    border-left: 0;
-    border-right: 1px solid var(--hairline);
-  }
-
-  .tile-story .tile-detail,
-  .tile-story .tile-meta {
+  .tile--toy .tile-detail,
+  .tile--toy .tile-meta {
     margin-top: 1.1rem;
   }
 
-  .tile-story .tile-fact {
+  .tile--toy .tile-fact {
     margin-top: 1.8rem;
     padding-top: 1.2rem;
   }
 
-  .tile-story .tile-spec {
+  .tile--toy .tile-spec {
     margin-top: 0.8rem;
   }
 
-  .tile-main .tile-after {
+  .tile--toy .tile-toy {
     margin-top: var(--top);
+  }
+
+  /* a tile without one is a spread: the name and the line, the screen across the
+     board, then a strip of three hairline columns under it, the way home base
+     splits its today. nothing beside the screen to run short, so nothing leaves a
+     hole. (t3, the one plain heavyweight, goes back to story-beside-screen at 1840) */
+  :is(.tile--half, .tile--plain) {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 0.9fr);
+    grid-template-areas:
+      'head head head'
+      'shot shot shot'
+      'detail fact spec'
+      'detail fact meta';
+    grid-template-rows: auto auto auto 1fr;
+  }
+
+  :is(.tile--half, .tile--plain) :is(.tile-head, .tile-detail, .tile-shot, .tile-meta, .tile-fact, .tile-spec) {
+    padding-inline: var(--col);
+  }
+
+  :is(.tile--half, .tile--plain) .tile-head {
+    padding-top: var(--top);
+  }
+
+  :is(.tile--half, .tile--plain) .tile-shot {
+    padding-block: 1.3rem 1.6rem;
+  }
+
+  :is(.tile--half, .tile--plain) .tile-detail {
+    padding-bottom: var(--bottom);
+  }
+
+  :is(.tile--half, .tile--plain) :is(.tile-fact, .tile-spec, .tile-meta) {
+    border-top: 0;
+    border-left: 1px solid var(--hairline);
+  }
+
+  :is(.tile--half, .tile--plain) .tile-fact {
+    padding-bottom: var(--bottom);
+  }
+
+  :is(.tile--half, .tile--plain) .tile-meta {
+    padding-top: 0.9rem;
+    padding-bottom: var(--bottom);
   }
 
   /* nákup: the line across, the three phones under it, then the words beside the toy */
@@ -963,127 +980,198 @@
   }
 }
 
+/* a laptop wide enough for three phones and the toy in one row: the phones and the
+   list you can play with side by side, so neither leaves the right of the row
+   empty, then the words under the phones and the small print under the toy */
+@media (min-width: 1200px) and (max-width: 1839px) {
+  .tile--nakup {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
+    grid-template-areas:
+      'head head'
+      'phones toy'
+      'detail meta'
+      'detail spec';
+    grid-template-rows: auto auto auto 1fr;
+  }
+
+  .tile--nakup .tile-phones {
+    grid-template-columns: repeat(3, minmax(0, 300px));
+    padding-block: 1.6rem 2rem;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .tile--nakup > .tile-toy {
+    max-width: none;
+    padding-block: 1.6rem 2rem;
+    border-left: 1px solid var(--hairline);
+  }
+
+  .tile--nakup :is(.tile-meta, .tile-spec) {
+    border-left: 1px solid var(--hairline);
+  }
+
+  .tile--nakup .tile-meta {
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .tile--nakup .tile-detail {
+    padding-top: 1.1rem;
+    padding-bottom: var(--bottom);
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* a wide screen: the screens get big enough to read                   */
 /* ------------------------------------------------------------------ */
 
 @media (min-width: 1840px) {
-  /* the story column narrows to a letter's width, so the screen gets ~70% of the
-     row: beadside, the model map and the t3 showcase draw at about 1550px, where
-     their own text can be read */
-  .tile--wide {
-    grid-template-columns: minmax(380px, 0.9fr) minmax(0, 2.65fr);
+  /* beadside and the model map: the line and the story in a letter-wide column, the
+     screen at ~70% of the row beside it (≈1550px, where its own text reads), then the
+     same split mirrored under it: the toy as wide as the screen, and the notes (use
+     and links, the fact, the small print) in the letter-wide column beside it. each
+     row is one big thing and one column of words, so neither row has a half left
+     empty */
+  .tile--wide.tile--toy {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 0.85fr) minmax(0, 0.9fr) minmax(0, 0.9fr);
+    grid-template-areas:
+      'head shot shot shot'
+      'detail shot shot shot'
+      'toy toy toy notes';
+    grid-template-rows: auto 1fr auto;
   }
 
-  /* tally's capture is 2560px of layout, so it takes the whole row: the story runs
-     across the top in three hairline columns and the screen spans under it */
+  /* tally's capture is 2560px of layout, so its screen spans the whole row: the line
+     and the story run across the top, then the toy and the notes share the row under
+     the screen the way beadside's do */
   .tile--full {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .tile--full .tile-story {
-    display: grid;
-    grid-template-columns: minmax(380px, 0.9fr) minmax(0, 1.35fr) minmax(0, 1.3fr);
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 0.85fr) minmax(0, 0.9fr) minmax(0, 0.9fr);
     grid-template-areas:
-      'head detail fact'
-      'head detail spec'
-      'head detail meta';
-    grid-template-rows: auto auto 1fr;
-    padding: 0;
+      'head head detail detail'
+      'shot shot shot shot'
+      'toy toy toy notes';
+    grid-template-rows: auto auto auto;
   }
 
-  .tile--full .tile-story > * {
-    margin: 0;
-    padding: var(--top) var(--col) 0;
+  :is(.tile--wide.tile--toy, .tile--full) {
+    align-items: stretch;
   }
 
-  .tile--full .tile-detail,
-  .tile--full .tile-fact,
-  .tile--full .tile-spec,
-  .tile--full .tile-meta {
-    border-left: 1px solid var(--hairline);
-  }
-
-  .tile--full .tile-fact {
-    border-top: 0;
-  }
-
-  .tile--full .tile-spec {
-    padding-top: 0.8rem;
-  }
-
-  .tile--full .tile-meta {
-    padding-bottom: 1.2rem;
-  }
-
-  .tile--full .tile-main {
-    border-left: 0;
-    padding-top: 1.4rem;
-  }
-
-  /* a half tile: the name and the line on top, the screen as wide as the tile, then
-     a strip of three small columns under it, the way home base splits its today */
-  .tile--half,
-  .tile--half.tile--mirror {
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 0.9fr);
-    grid-template-areas:
-      'head head head'
-      'shot shot shot'
-      'detail fact spec'
-      'detail fact meta';
-    grid-template-rows: auto auto auto 1fr;
-  }
-
-  .tile--half .tile-story,
-  .tile--half .tile-main {
+  :is(.tile--wide.tile--toy, .tile--full) :is(.tile-story, .tile-main) {
     display: contents;
   }
 
-  .tile--half .tile-story > *,
-  .tile--half .tile-shot {
+  :is(.tile--wide.tile--toy, .tile--full) :is(.tile-head, .tile-detail, .tile-shot, .tile-toy) {
     margin: 0;
+    min-width: 0;
     padding-inline: var(--col);
   }
 
-  .tile--half .tile-head {
+  :is(.tile--wide.tile--toy, .tile--full) .tile-head {
     padding-top: var(--top);
   }
 
-  .tile--half .tile-shot {
-    padding-block: 1.3rem 1.6rem;
-  }
-
-  .tile--half .tile-detail {
+  .tile--wide.tile--toy .tile-detail {
+    padding-top: 1.1rem;
     padding-bottom: var(--bottom);
   }
 
-  .tile--half .tile-fact,
-  .tile--half .tile-spec,
-  .tile--half .tile-meta {
-    border-top: 0;
+  .tile--full .tile-detail {
+    padding-top: var(--top);
+    padding-bottom: 1.2rem;
+  }
+
+  .tile--wide.tile--toy .tile-shot {
+    padding-block: var(--top) var(--bottom);
     border-left: 1px solid var(--hairline);
   }
 
-  .tile--half .tile-fact {
-    padding-block: 0 var(--bottom);
+  .tile--full .tile-shot {
+    padding-block: 1.4rem var(--bottom);
   }
 
-  .tile--half .tile-meta {
-    padding-top: 0.9rem;
-    padding-bottom: var(--bottom);
+  :is(.tile--wide.tile--toy, .tile--full) .tile-toy {
+    padding-block: var(--top) var(--bottom);
+    border-top: 1px solid var(--hairline);
   }
 
-  /* the second screen appears beside the toy, or alone at half the row */
-  .tile-more {
+  /* the notes read top down beside the toy: how i use it and the links, the fact
+     under its own hairline, then the stack and the dates */
+  :is(.tile--wide.tile--toy, .tile--full) .tile-notes {
+    grid-area: notes;
     display: block;
+    min-width: 0;
+    padding: var(--top) var(--col) var(--bottom);
+    border-top: 1px solid var(--hairline);
+    border-left: 1px solid var(--hairline);
   }
 
-  .tile-after {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  :is(.tile--wide.tile--toy, .tile--full) .tile-meta {
+    margin-top: 0;
   }
 
-  .tile:not(.tile--toy) .tile-after {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  :is(.tile--wide.tile--toy, .tile--full) .tile-fact {
+    margin-top: 1.8rem;
+    padding-top: 1.2rem;
+  }
+
+  :is(.tile--wide.tile--toy, .tile--full) .tile-spec {
+    margin-top: 0.8rem;
+  }
+
+  /* t3, with no toy, keeps the story beside a screen it is about as tall as */
+  .tile--plain {
+    grid-template-columns: minmax(380px, 0.9fr) minmax(0, 2.65fr);
+    grid-template-areas: none;
+    grid-template-rows: none;
+    align-items: start;
+  }
+
+  .tile--plain .tile-story,
+  .tile--plain .tile-main {
+    display: block;
+    min-width: 0;
+    padding: var(--top) var(--col) var(--bottom);
+  }
+
+  .tile--plain :is(.tile-head, .tile-detail, .tile-shot, .tile-meta, .tile-fact, .tile-spec) {
+    padding-inline: 0;
+  }
+
+  .tile--plain .tile-main {
+    align-self: stretch;
+    border-left: 1px solid var(--hairline);
+  }
+
+  .tile--plain .tile-shot {
+    padding: 0;
+  }
+
+  .tile--plain .tile-detail,
+  .tile--plain .tile-meta {
+    margin-top: 1.1rem;
+  }
+
+  .tile--plain .tile-fact {
+    margin-top: 1.8rem;
+    padding: 1.2rem 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .tile--plain .tile-spec {
+    margin-top: 0.8rem;
+    padding: 0;
+    border-left: 0;
+  }
+
+  .tile--plain .tile-meta {
+    padding: 0;
+    border-left: 0;
+  }
+
+  .tile--plain .tile-detail {
+    padding: 0;
   }
 
   .board-row--two {
@@ -1266,7 +1354,7 @@
     padding-block: 1.2rem;
   }
 
-  .tile-after {
+  .tile-toy {
     padding-bottom: 1.6rem;
   }
 

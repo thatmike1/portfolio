@@ -159,3 +159,35 @@
   line-height: 1.7;
   color: var(--muted);
 }
+
+/* given a wide row, the readout stands beside the chart as a narrow column, so the
+   chart takes the width and the toy stays about as tall as the words next to it */
+@container (min-width: 64rem) {
+  .mm-mini {
+    grid-template-columns: minmax(15rem, 21rem) minmax(0, 1fr);
+    column-gap: 2.4rem;
+    align-items: start;
+  }
+
+  .mm-readout {
+    grid-row: 1 / span 2;
+    padding-top: 0.6rem;
+  }
+
+  .mm-name {
+    font-size: 1.5rem;
+  }
+
+  .mm-figures {
+    margin-top: 0.3rem;
+  }
+
+  .mm-verdict {
+    margin-top: 0.4rem;
+  }
+
+  .mm-chart,
+  .mm-foot {
+    grid-column: 2;
+  }
+}
