@@ -1,6 +1,20 @@
 @import "@fontsource-variable/sora";
 @import "@fontsource-variable/martian-mono";
 
+/* what the page is set in for the moment before sora arrives on a slow line: a
+   local arial stretched to sora's average letter width and given sora's ascent
+   and descent, so the lede wraps the same and nothing jumps when sora swaps in.
+   numbers from sora's own tables (upm 1000, ascent 970, descent 290, a mean
+   lowercase advance 1.154 times arial's) */
+@font-face {
+  font-family: 'Sora Fallback';
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('LiberationSans'), local('Arimo');
+  size-adjust: 115.4%;
+  ascent-override: 84.06%;
+  descent-override: 25.13%;
+  line-gap-override: 0%;
+}
+
 /* ------------------------------------------------------------------ */
 /* tokens                                                              */
 /* ------------------------------------------------------------------ */
@@ -38,7 +52,7 @@
   --field-4: oklch(0.93 0.06 357 / 0.38);
   --grain: url('/grain-light.png');
 
-  --font-sans: 'Sora Variable', system-ui, sans-serif;
+  --font-sans: 'Sora Variable', 'Sora Fallback', system-ui, sans-serif;
   --font-mono: 'Martian Mono Variable', monospace;
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -240,6 +254,19 @@ a:focus-visible {
   isolation: isolate;
   touch-action: pan-y;
   cursor: crosshair;
+  /* the sim writes the exact shaft to --shaft once it has measured the grid, which
+     is after hydration. until then the copy reads this guess, the same sum done
+     in css: a cell is about 6px, the shaft is 11% of the columns plus one on a
+     wide grid and eases to 6 cells on a phone's. the percentages resolve where
+     it is used, against the copy's container, which is the stage's width, so the
+     first paint is already the final box (within a few pixels) */
+  --shaft-guess: max(36px, min(15% - 30px, 11% + 6px));
+}
+
+@supports (width: round(nearest, 10%, 6px)) {
+  .weather-hero {
+    --shaft-guess: max(36px, min(15% - 30px, round(nearest, 11%, 6px) + 6px));
+  }
 }
 
 .weather-canvas {
@@ -281,7 +308,7 @@ a:focus-visible {
      container's gutter is narrower than a shaft: 24px against 36px, so the
      water ran under the words. the sim writes its shaft width to --shaft and
      the copy keeps that plus a hand's width clear of it on both sides */
-  width: min(100% - max(3rem, 2 * (var(--shaft, 0px) + 0.5rem)), 68rem);
+  width: min(100% - max(3rem, 2 * (var(--shaft, var(--shaft-guess)) + 0.5rem)), 68rem);
 }
 
 .weather-hero .hero-copy :is(h1, p) {

@@ -112,9 +112,10 @@
 /* ------------------------------------------------------------------ */
 
 /* the copy block of the hero. it keeps clear of the shafts the falls run down
-   (the sim writes --shaft), so the water passes beside the columns, not under them */
+   (the sim writes --shaft, and --shaft-guess stands in for it until then), so the
+   water passes beside the columns, not under them */
 .weather-hero .hero-copy.masthead {
-  width: calc(100% - 2 * (var(--shaft, 0px) + clamp(10px, 1.2vw, 28px)));
+  width: calc(100% - 2 * (var(--shaft, var(--shaft-guess)) + clamp(10px, 1.2vw, 28px)));
   max-width: 132rem;
   margin-inline: auto;
   padding-block: clamp(20px, 3vh, 44px) clamp(28px, 4vh, 56px);
@@ -163,6 +164,41 @@
   font-weight: 500;
   letter-spacing: -0.01em;
   max-width: 34ch;
+}
+
+/* the sky's sentence and the longest one it will say share a cell, so the box is
+   the final one from the first paint. which room is held depends on the motion
+   setting, which css knows before the script does */
+.sky-take {
+  display: grid;
+}
+
+.sky-take > * {
+  grid-area: 1 / 1;
+}
+
+.sky-take-room {
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.sky-take-room--still {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sky-take-room--live {
+    display: none;
+  }
+
+  .sky-take-room--still {
+    display: inline;
+  }
+
+  .mast-sky .sky-reading {
+    display: none;
+  }
 }
 
 .mast-live,
@@ -1412,7 +1448,7 @@
 
   .weather-hero .hero-copy.masthead {
     grid-template-columns: minmax(0, 1fr);
-    width: calc(100% - 2 * (var(--shaft, 0px) + 0.5rem));
+    width: calc(100% - 2 * (var(--shaft, var(--shaft-guess)) + 0.5rem));
   }
 
   .masthead .mast-col + .mast-col {

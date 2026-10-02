@@ -244,18 +244,29 @@ export function SkyColumn({
                     {reduced ? "still" : "live"}
                 </span>
             </h2>
-            <p className="mast-take" aria-live="off">
-                {line}
+            {/* the sentence grows from "reading the sky." to a full one when the
+                first reading lands, so the box is held open by the longest thing it
+                will say, set invisibly in the same cell: the column below never moves */}
+            <p className="mast-take sky-take" aria-live="off">
+                <span className="sky-take-now">{line}</span>
+                <span className="sky-take-room sky-take-room--live" aria-hidden="true">
+                    a few clouds over the sand, and <em>88,888 drops</em> of water are down in
+                    the picture.
+                </span>
+                <span className="sky-take-room sky-take-room--still" aria-hidden="true">
+                    the sky is holding still, <em>because you asked for less motion</em>. the sand
+                    still takes a click.
+                </span>
             </p>
-            {!reduced ? (
-                <div className="sky-reading">
-                    <DropStrip drops={drops} readings={readings} />
-                    <p className="sky-numbers">
-                        water, last 30s · cover {hud ? Math.round(hud.cover * 100) : "–"}% · in the
-                        air {hud ? Math.round(hud.humidity * 100) : "–"}%
-                    </p>
-                </div>
-            ) : null}
+            {/* rendered either way and hidden by the media query, so a reduced-motion
+                visitor does not see it drop out after hydration */}
+            <div className="sky-reading">
+                <DropStrip drops={reduced ? [] : drops} readings={readings} />
+                <p className="sky-numbers">
+                    water, last 30s · cover {hud && !reduced ? Math.round(hud.cover * 100) : "–"}% · in
+                    the air {hud && !reduced ? Math.round(hud.humidity * 100) : "–"}%
+                </p>
+            </div>
             <p className="mast-note">
                 the sand is real, go make a mess. it's a tiny cousin of{" "}
                 <a href="https://github.com/thatmike1/powder-lab">powder-lab</a>. the clouds

@@ -3,6 +3,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 
 import appCss from "../styles.css?url";
+import soraLatin from "@fontsource-variable/sora/files/sora-latin-wght-normal.woff2?url";
 import { Analytics } from "../lib/analytics";
 
 const TITLE = "mike pšenčík · i make stuff";
@@ -31,6 +32,10 @@ export const Route = createRootRoute({
         ],
         links: [
             { rel: "stylesheet", href: appCss },
+            // the masthead's words wrap differently in the fallback face, so the
+            // font is fetched beside the stylesheet instead of after it, and the
+            // first paint already sets the lede in sora
+            { rel: "preload", href: soraLatin, as: "font", type: "font/woff2", crossOrigin: "anonymous" },
             { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
         ],
         scripts: [{ children: THEME_INIT }],
