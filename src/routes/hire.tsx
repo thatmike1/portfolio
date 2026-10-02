@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SHOWCASE } from "../lib/showcase";
 import "../components/project-collection.css";
-import { ExperienceCustody } from "../components/experience-custody";
+import { DayJob } from "../components/day-job";
 import "./hire.css";
 
 /** the quiet recruiter route uses the same project facts as the homepage */
@@ -125,7 +125,7 @@ function Hire() {
                 </div>
             </section>
 
-            <ExperienceCustody />
+            <DayJob />
 
             <footer className="footer" id="say-hi">
                 <div className="container">

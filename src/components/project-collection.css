@@ -35,10 +35,6 @@
 .collection-archive { margin-top: 2rem; border-top: 1px solid var(--hairline); padding-top: 1rem; }
 .collection-archive summary { cursor: pointer; font-size: .9rem; color: var(--muted); }
 .collection-archive ul { padding-left: 1.2rem; font-size: .85rem; }
-.day-job { padding-block: 3rem; }
-.day-job .container { display: flex; gap: 2rem; align-items: baseline; justify-content: space-between; }
-.day-job h2 { font-size: 1.2rem; margin: 0; }
-.day-job p { margin: 0; }
 .collection-project:focus-visible { outline-offset: 1rem; }
 @media (max-width: 900px) {
     .collection-project { grid-template-columns: 1fr; gap: 2rem; }
@@ -63,6 +59,4 @@
     .further-product--nakup { grid-template-columns: 1fr; gap: 1.5rem; }
     .further-product--nakup .shot { max-width: 240px; }
     .further-small { grid-template-columns: 1fr; gap: 1.4rem; margin-top: 2.5rem; }
-    .day-job .container { display: block; }
-    .day-job h2 { margin-bottom: .6rem; }
 }

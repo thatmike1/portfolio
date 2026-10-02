@@ -1,0 +1,10 @@
+/* one restrained line about the private work, set with whitespace rather than a band */
+.day-job { padding-block: 3rem; }
+.day-job .container { display: flex; gap: 2rem; align-items: baseline; justify-content: space-between; }
+.day-job h2 { font-size: 1.2rem; margin: 0; }
+.day-job p { margin: 0; }
+
+@media (max-width: 600px) {
+    .day-job .container { display: block; }
+    .day-job h2 { margin-bottom: .6rem; }
+}

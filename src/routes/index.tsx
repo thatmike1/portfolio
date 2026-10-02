@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { WeatherHero } from "../components/weather-hero";
 import { HeroCopy } from "../components/hero-copy";
 import { GrainCursor } from "../components/grain-cursor";
-import { ExperienceCustody } from "../components/experience-custody";
+import { DayJob } from "../components/day-job";
 import { LightboxProvider } from "../components/lightbox";
 import { SectionNav } from "../components/section-nav";
 import { ProjectCollection } from "../components/project-collection";
@@ -104,7 +104,7 @@ function Home() {
                         </details>
                     </div>
                 </section>
-                <ExperienceCustody />
+                <DayJob />
                 <footer className="footer" id="say-hi">
                     <div className="container">
                         <h2>say hi</h2>
