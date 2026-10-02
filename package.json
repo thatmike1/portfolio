@@ -11,7 +11,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "images": "node scripts/showcase-images.mjs"
+    "images": "node scripts/showcase-images.mjs",
+    "facts": "node scripts/board-facts.mjs"
   },
   "dependencies": {
     "@fontsource-variable/martian-mono": "^5.2.7",
