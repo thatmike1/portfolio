@@ -7,12 +7,14 @@
  *   npm run images -- <masters-dir>
  *
  * every png, jpg or webp directly inside <masters-dir> becomes one image, named after
- * its file: `beadside.png` is `SHOWCASE_IMAGES.beadside`. the script owns
+ * its file: `beadside.png` is `SHOWCASE_IMAGES.beadside`. a folder of symlinks named
+ * by id, pointing at the captures, works too, and keeps the capture's name in the
+ * manifest. the script owns
  * public/showcase/ outright and clears it first, so a dropped master leaves nothing
  * stale behind. masters stay out of the repo: they are big, and the ladder is all a
  * visitor ever downloads.
  */
-import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readdir, realpath, rm, writeFile } from "node:fs/promises";
 import { basename, extname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
@@ -33,6 +35,18 @@ const MAX_WIDTH = 2560;
 
 /** text-heavy ui shots: high enough quality that 11px labels survive, chroma kept sharp */
 const WEBP = { quality: 84, effort: 6, smartSubsample: true };
+
+/**
+ * shots whose ui is printed on a grain texture. at 84 the encoder spends most of
+ * the bytes keeping the noise (an 800px nákup shot came out at 285k); at 52 the
+ * grain softens a touch, the text stays crisp, and the file is 112k
+ */
+const GRAINY = [{ prefix: "nakup", quality: 52 }];
+
+function webpFor(id) {
+    const grainy = GRAINY.find((g) => id.startsWith(g.prefix));
+    return grainy ? { ...WEBP, quality: grainy.quality } : WEBP;
+}
 
 /** the placeholder is a few hundred bytes of the shot itself, inlined in the html */
 const PLACEHOLDER_WIDTH = 24;
@@ -68,7 +82,7 @@ async function processMaster(path) {
         const info = await master
             .clone()
             .resize({ width: w, height: h, kernel: "lanczos3" })
-            .webp(WEBP)
+            .webp(webpFor(id))
             .toFile(join(OUT_DIR, file));
         variants.push({ file, width: w, height: h, bytes: info.size });
     }
@@ -92,7 +106,8 @@ async function processMaster(path) {
     const top = variants.at(-1);
     return {
         id,
-        source: basename(path),
+        // the real file's name, so a folder of id-named symlinks still says which capture it was
+        source: basename(await realpath(path)),
         image: {
             src: `${PUBLIC_PATH}/${top.file}`,
             width: top.width,

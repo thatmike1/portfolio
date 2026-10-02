@@ -51,8 +51,13 @@ export const SHOWCASE: ShowcaseProject[] = [
         shots: [
             {
                 image: SHOWCASE_IMAGES.beadside,
-                alt: "beadside: an invented backlog grouped by lane, beside an open issue with a human note and an agent's reply",
-                caption: "the real board, with an invented backlog",
+                alt: "beadside in its light look: an invented shop backlog grouped by lane, an agent's either-or question about a vat rounding bug waiting on the human, and a reply typed into the note box",
+                caption: "an agent asks, i answer · invented backlog",
+            },
+            {
+                image: SHOWCASE_IMAGES["beadside-note"],
+                alt: "beadside in its dark look: a webhook issue carrying the human's unread note above an agent's proposal",
+                caption: "the night look: a note the next session reads first",
             },
         ],
         links: [{ href: "https://github.com/thatmike1/beadside", label: "get beadside" }],
@@ -68,8 +73,13 @@ export const SHOWCASE: ShowcaseProject[] = [
         shots: [
             {
                 image: SHOWCASE_IMAGES.tally,
-                alt: "tally explains a synthetic usage block and splits it across three invented development sessions",
-                caption: "the running app, fed entirely synthetic usage and sessions",
+                alt: "tally's today page on a synthetic week: 59% of the five-hour block used, the sessions that spent it, a when-did-it-happen chart and the weekly meters",
+                caption: "the real app, fed an invented week of sessions and meter readings",
+            },
+            {
+                image: SHOWCASE_IMAGES["tally-timeline"],
+                alt: "tally's timeline at day zoom: meter lines, block pace, cost by token kind, and which project ate the points",
+                caption: "the timeline: where a day's points went",
             },
         ],
         links: [{ href: "https://github.com/thatmike1/tally", label: "see the source" }],
@@ -85,8 +95,8 @@ export const SHOWCASE: ShowcaseProject[] = [
         shots: [
             {
                 image: SHOWCASE_IMAGES.fonts,
-                alt: "font tinder shows an unnamed font in a chat and in a long reading sample, with swipe controls below",
-                caption: "judge the font in the places you'll actually read it",
+                alt: "font tinder's swipe screen: one unnamed font set in a chat, a long read, a small settings panel and a letter-detail panel, with nope, skip, love and like below",
+                caption: "judge a font in the places you'll actually read it",
             },
         ],
         links: [{ href: "https://fonts.thatmike1.dev/", label: "find your font" }],
@@ -102,8 +112,8 @@ export const SHOWCASE: ShowcaseProject[] = [
         shots: [
             {
                 image: SHOWCASE_IMAGES.diskzokej,
-                alt: "diskzokej's public radio dial with stations laid out from drift to loud, and a quiet player",
-                caption: "the public dial · it stays quiet until you press play",
+                alt: "diskzokej's public dial tuned to a synthwave station: the needle on the ruler, now playing, and every lane of stations in its own column",
+                caption: "the public dial, on air",
             },
         ],
         links: [{ href: "https://diskzokej.thatmike1.dev/", label: "turn the dial" }],
@@ -119,8 +129,13 @@ export const SHOWCASE: ShowcaseProject[] = [
         shots: [
             {
                 image: SHOWCASE_IMAGES.models,
-                alt: "model map's sortable table of models and reasoning efforts, with cost per task and benchmark filters",
+                alt: "model map's ranked table of models and reasoning efforts, with filters above and the best value in each column shaded",
                 caption: "a snapshot; today's ranking has probably moved",
+            },
+            {
+                image: SHOWCASE_IMAGES["models-frontier"],
+                alt: "model map's score-against-cost chart: intelligence index against dollars per task on a log scale, with the frontier stepping through the best points",
+                caption: "up and left is better; the line is the frontier",
             },
         ],
         links: [{ href: "https://models.thatmike1.dev/", label: "explore the map" }],
@@ -136,8 +151,13 @@ export const SHOWCASE: ShowcaseProject[] = [
         shots: [
             {
                 image: SHOWCASE_IMAGES.t3,
-                alt: "the t3 code fork's showcase site walks through the keyboard, sidebar, widget and issue-link additions in a demo thread",
+                alt: "the t3 code fork's showcase site: a big heading beside a live mock of the app with numbered dots on each addition",
                 caption: "the showcase site: click through the additions before installing anything",
+            },
+            {
+                image: SHOWCASE_IMAGES["t3-switcher"],
+                alt: "the showcase's ctrl+tab demo caught with the recent-threads switcher open",
+                caption: "ctrl+tab between threads, the way an editor does it",
             },
         ],
         links: [
@@ -160,8 +180,8 @@ export const SUPPORTING: ShowcaseProject[] = [
         shots: [
             {
                 image: SHOWCASE_IMAGES["good-cookie"],
-                alt: "good cookie's live demo: its consent banner holding back a tracking script on an invented shop",
-                caption: "the working banner demo, on a made-up shop",
+                alt: "good cookie's homepage: the $29 pack pitch beside a live consent banner on a made-up shop, with a tracking-cookie probe and a readout of what got blocked",
+                caption: "the real banner, on a made-up shop",
             },
         ],
         links: [{ href: "https://goodcookie.app/", label: "try the banner" }],
@@ -176,9 +196,19 @@ export const SUPPORTING: ShowcaseProject[] = [
         stack: "react · typescript · dependency-free node · sse · service worker",
         shots: [
             {
-                image: SHOWCASE_IMAGES.nakup,
-                alt: "nákup with invented groceries and two anonymous people, in blue and yellow inks",
-                caption: "the actual app · invented groceries and people",
+                image: SHOWCASE_IMAGES["nakup-list"],
+                alt: "nákup on tomáš's phone at home: fourteen things on the list in two inks, and a line saying bára is looking too",
+                caption: "1 · at home, both inks on one list · an invented household",
+            },
+            {
+                image: SHOWCASE_IMAGES["nakup-adds"],
+                alt: "nákup on bára's phone while tomáš is in the shop: the header says he's shopping, and she is typing parmazán",
+                caption: "2 · she adds while he shops",
+            },
+            {
+                image: SHOWCASE_IMAGES["nakup-shop"],
+                alt: "nákup in the shop: five of fifteen in the basket, and bára's late smetana ke šlehání flagged in her ink",
+                caption: "3 · in the shop, her late addition lights up",
             },
         ],
         links: [],
