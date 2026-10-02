@@ -117,7 +117,7 @@ export const SHOWCASE: ShowcaseProject[] = [
         summary: "i live in this app, so i started fixing the small things.",
         line: { lead: "i live in t3 code all day, so i gave it ", mark: "nine things", tail: " it was missing." },
         detail: "a fork of t3 code, the desktop app for agent threads, with ctrl+tab switching, effort shortcuts, sidebar widgets fed by scripts, child threads nested under the thread that started them, and links into beadside. upstream made the app; those are mine. the dull part i'm proudest of: the parent links live in a table of the fork's own, created at startup rather than as a numbered migration, so upstream's migrations can never collide with it.",
-        fact: `${FACTS.t3.commits} commits of mine on top of upstream, +${count(FACTS.t3.added)} lines and −${count(FACTS.t3.removed)} across them. i add to their app; i barely touch it.`,
+        fact: `${FACTS.t3.commits} commits of mine on top of upstream, +${count(FACTS.t3.added)} lines and −${count(FACTS.t3.removed)} across them. the counter in the screenshot is the whole branch on the day the site went up, the ${FACTS.t3.cherryPicked} commits i picked from upstream included. i add to their app; i barely touch it.`,
         reach: "live",
         when: `on upstream of ${day(FACTS.t3.upstreamFrom)} · counted ${day(FACTS.t3.readOn)}`,
         use: "i work in it every day · linux build + an interactive showcase",

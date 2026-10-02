@@ -33,11 +33,11 @@
     "readOn": "2026-10-02",
     "branch": "release-feed",
     "upstreamFrom": "2026-09-21",
-    "head": "2026-09-30",
-    "commits": 28,
-    "added": 6757,
-    "removed": 211,
-    "files": 110,
+    "head": "2026-10-02",
+    "commits": 30,
+    "added": 7461,
+    "removed": 318,
+    "files": 118,
     "cherryPicked": 7
   },
   "radio": {
