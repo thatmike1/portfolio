@@ -39,12 +39,27 @@ export default function BeadsideMini() {
     const [answer, setAnswer] = useState("");
     const timers = useRef<number[]>([]);
     const field = useRef<HTMLTextAreaElement>(null);
+    const root = useRef<HTMLDivElement>(null);
+    const startOver = useRef<HTMLButtonElement>(null);
+    // sending and starting over both unmount the control that was pressed, so focus
+    // is handed on once the next phase has rendered: to "start over" after a send,
+    // back to the note field after starting over. only when focus was in the toy,
+    // so a click elsewhere on the page is never pulled back here
+    const handOff = useRef<"start-over" | "field" | null>(null);
+    const focusInside = () => !!root.current?.contains(document.activeElement);
 
     useEffect(() => () => timers.current.forEach((t) => window.clearTimeout(t)), []);
+
+    useEffect(() => {
+        const target = handOff.current === "start-over" ? startOver.current : handOff.current === "field" ? field.current : null;
+        handOff.current = null;
+        target?.focus({ preventScroll: true });
+    }, [phase]);
 
     const send = (text: string, scripted?: string) => {
         const clean = text.trim();
         if (!clean || phase !== "waiting") return;
+        if (focusInside()) handOff.current = "start-over";
         setNote(clean);
         setDraft("");
         setPhase("sent");
@@ -61,6 +76,7 @@ export default function BeadsideMini() {
     const reset = () => {
         timers.current.forEach((t) => window.clearTimeout(t));
         timers.current = [];
+        if (focusInside()) handOff.current = "field";
         setPhase("waiting");
         setNote("");
         setDraft("");
@@ -84,7 +100,7 @@ export default function BeadsideMini() {
     const done = phase === "answered";
 
     return (
-        <div className="bs-mini" data-phase={phase}>
+        <div className="bs-mini" data-phase={phase} ref={root}>
             <div className="bs-index" aria-hidden="true">
                 <p className="bs-brand">
                     beadside <span>demo</span>
@@ -124,7 +140,7 @@ export default function BeadsideMini() {
                         {waiting ? "needs-human" : "human-note"}
                     </span>
                     {phase !== "waiting" ? (
-                        <button type="button" className="bs-reset" onClick={reset}>
+                        <button type="button" className="bs-reset" onClick={reset} ref={startOver}>
                             start over
                         </button>
                     ) : null}
