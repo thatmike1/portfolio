@@ -118,10 +118,10 @@ function Home() {
                             </p>
                             <img
                                 className="signoff-sora"
-                                src="/sora/walking.webp"
-                                alt="sora, trotting off the end of the page"
+                                src="/sora/sora.webp"
+                                alt="sora, a curly black and white havanese, seeing you off the end of the page"
                                 width={96}
-                                height={77}
+                                height={96}
                                 loading="lazy"
                             />
                         </section>

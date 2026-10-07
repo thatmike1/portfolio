@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Hud } from "./weather-hero";
 import type { Theme } from "../lib/theme";
 
@@ -50,17 +50,18 @@ export function isRaining(drops: number[]): boolean {
     return drops[drops.length - 1] - drops[drops.length - 4] > 60;
 }
 
-type Mood = { src: string; alt: string; line: string };
+/** the one portrait of sora: the original, not a sticker, whatever the sky is doing */
+const SORA_PIC = {
+    src: "/sora/sora.webp",
+    alt: "sora, a curly black and white havanese, sitting up and looking right at you",
+};
 
-/** sora reads the same sky: under the blanket in rain, asleep at night, watching otherwise */
-function soraMood(theme: Theme, raining: boolean): Mood {
-    if (raining)
-        return { src: "/sora/rain.webp", alt: "sora under a blanket", line: "under the blanket until it stops." };
-    if (theme === "dark")
-        return { src: "/sora/asleep.webp", alt: "sora curled up asleep", line: "asleep. it's night up there." };
-    if (theme === "dusk")
-        return { src: "/sora/tilt.webp", alt: "sora tilting her head", line: "wondering where the sun went." };
-    return { src: "/sora/sit.webp", alt: "sora sitting, watching", line: "watching the sand, as usual." };
+/** sora reads the same sky: in when it rains, asleep at night, watching otherwise */
+function soraLine(theme: Theme, raining: boolean): string {
+    if (raining) return "staying in until the rain stops.";
+    if (theme === "dark") return "asleep. it's night up there.";
+    if (theme === "dusk") return "wondering where the sun went.";
+    return "watching the sand, as usual.";
 }
 
 /**
@@ -118,7 +119,7 @@ function useReduced(): boolean {
  * water where it stands
  */
 function DropStrip({ drops, readings = drops.length }: { drops: number[]; readings?: number }) {
-    const S = 5;
+    const S = 7;
     const rows = 8;
     const width = KEEP * S - 1;
     const height = rows * S - 1;
@@ -156,46 +157,37 @@ function DropStrip({ drops, readings = drops.length }: { drops: number[]; readin
 }
 
 /**
+ * sora under the sky: the portrait, and beside it her name as a label, what she
+ * makes of the weather, and her age in the small print. when her mood changes the new line fades through; the first render
+ * shows it plainly, so the page lands complete
+ */
+function Sora({ line, age }: { line: string; age: string | null }) {
+    const first = useRef(line);
+    const moved = useRef(false);
+    if (line !== first.current) moved.current = true;
+    return (
+        <div className="sora">
+            <img className="sora-pic" src={SORA_PIC.src} alt={SORA_PIC.alt} width={104} height={104} />
+            <div className="sora-words">
+                <p className="mast-label sora-name">
+                    <span>sora</span>
+                </p>
+                <p key={line} className={`sora-say${moved.current ? " is-new" : ""}`}>
+                    {line}
+                </p>
+                {/* worked out after hydration; the line holds its height meanwhile */}
+                <p className="sora-age">{age ? `${age} old` : "\u00a0"}</p>
+            </div>
+        </div>
+    );
+}
+
+/**
  * the masthead's weather column: the sky above is a real simulation, so the page
  * reports it the way a start page reports the weather outside. the hero hands its
  * readings up through onWeather; under reduced motion the sky never moves, and the
  * column says so instead of pretending
  */
-/**
- * sora's portrait and her line. when her mood changes the new picture settles in
- * over the old one instead of replacing it in a frame, and the words fade through;
- * the first render shows her plainly, so the page lands complete
- */
-function Sora({ mood, age }: { mood: Mood; age: string | null }) {
-    const [shown, setShown] = useState<{ cur: Mood; prev: Mood | null }>({ cur: mood, prev: null });
-    const { cur, prev } = shown;
-    useEffect(() => {
-        if (mood.src === cur.src && mood.line === cur.line) return;
-        setShown((s) => ({ cur: mood, prev: s.cur }));
-    }, [mood, cur]);
-    // the old picture leaves once its fade is over; a separate effect, so the swap
-    // above re-running cannot cancel the timer
-    useEffect(() => {
-        if (!prev) return;
-        const id = window.setTimeout(() => setShown((s) => ({ cur: s.cur, prev: null })), 400);
-        return () => window.clearTimeout(id);
-    }, [prev]);
-    return (
-        <div className={`sora-line${prev ? " is-changing" : ""}`}>
-            <span className="sora-pic">
-                {prev && prev.src !== cur.src ? (
-                    <img key={`out-${prev.src}`} className="sora-out" src={prev.src} alt="" width={76} height={76} aria-hidden="true" />
-                ) : null}
-                <img key={cur.src} className="sora-in" src={cur.src} alt={cur.alt} width={76} height={76} />
-            </span>
-            <p key={cur.line} className="sora-say">
-                {age ? <>sora is {age} old, and </> : <>sora is </>}
-                {cur.line}
-            </p>
-        </div>
-    );
-}
-
 export function SkyColumn({
     hud,
     drops,
@@ -210,7 +202,7 @@ export function SkyColumn({
     const [age, setAge] = useState<string | null>(null);
     useEffect(() => setAge(soraAge(new Date())), []);
     const raining = !reduced && isRaining(drops);
-    const mood = soraMood(theme, raining);
+    const says = soraLine(theme, raining);
 
     let line: React.ReactNode;
     if (reduced) {
@@ -272,7 +264,7 @@ export function SkyColumn({
                 <a href="https://github.com/thatmike1/powder-lab">powder-lab</a>. the clouds
                 rain, the lake fills, the falls carry it back.
             </p>
-            <Sora mood={mood} age={age} />
+            <Sora line={says} age={age} />
         </section>
     );
 }

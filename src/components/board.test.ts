@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { Board, BOARD_INDEX } from "./board";
 import { ARCHIVE, SHELF, SHOWCASE, SUPPORTING } from "../lib/showcase";
 import { FACTS } from "../lib/facts";
-import { ageOn, isRaining } from "./sky-report";
+import { ageOn, isRaining, SkyColumn } from "./sky-report";
 import { parse } from "./minis/nakup-parse";
 import TallyMini from "./minis/tally-mini";
 import BeadsideMini from "./minis/beadside-mini";
@@ -56,6 +56,19 @@ describe("the sky column", () => {
         expect(ageOn(new Date(2026, 9, 2))).toEqual({ years: 1, months: 2, days: 17 });
         expect(ageOn(new Date(2026, 6, 15))).toEqual({ years: 1, months: 0, days: 0 });
         expect(ageOn(new Date(2026, 7, 3))).toEqual({ years: 1, months: 0, days: 19 });
+    });
+
+    it("shows sora's own portrait, never a sticker, whatever the sky is doing", () => {
+        vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+        for (const theme of ["light", "dusk", "dark"]) {
+            document.documentElement.dataset.theme = theme;
+            render(createElement(SkyColumn, { hud: null, drops: [] }));
+            const pic = screen.getByRole("img", { name: /^sora/ });
+            expect(pic.getAttribute("src")).toBe("/sora/sora.webp");
+            cleanup();
+        }
+        vi.unstubAllGlobals();
+        delete document.documentElement.dataset.theme;
     });
 
     it("calls it rain only when water is arriving", () => {
