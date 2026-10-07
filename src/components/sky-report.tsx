@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Hud } from "./weather-hero";
-import type { Theme } from "../lib/theme";
 
 /** how many readings the cover strip keeps: about half a minute of weather */
 const KEEP = 48;
@@ -86,23 +85,6 @@ const SORA_PIC = {
 };
 
 /**
- * what her line says. TEMP: the preview switches between these with ?sora= so
- * mike can pick; the other two go before merge
- */
-export type SoraSays = "quiet" | "font" | "sky";
-
-/** the typeface every letter on the page is set in carries her name; that is the line */
-const SORA_FONT_LINE = "this page is set in a typeface called sora. not a coincidence.";
-
-/** the line that reads the sky, naming what she is reacting to so it reads as cause and effect */
-function soraSkyLine(theme: Theme, raining: boolean): string {
-    if (raining) return "it's raining up there, so she's staying in.";
-    if (theme === "dark") return "it's night up there, so she's asleep.";
-    if (theme === "dusk") return "it's dusk up there, so she's waiting on dinner.";
-    return "it's dry up there, so she's watching the sand.";
-}
-
-/**
  * the hero's readings, kept for the masthead: the latest, a short history of the
  * water and of what fell, how many readings have come in all told (so a column of
  * the strip keeps its identity as it moves left), and the settled verdicts the
@@ -138,21 +120,6 @@ export function useSky() {
     const [sky, setSky] = useState<Sky>(NO_SKY);
     const onWeather = (hud: Hud) => setSky((s) => nextSky(s, hud));
     return { sky, onWeather };
-}
-
-function useTheme(): Theme {
-    const [theme, setTheme] = useState<Theme>("light");
-    useEffect(() => {
-        const read = () => {
-            const t = document.documentElement.dataset.theme;
-            setTheme(t === "dark" || t === "dusk" ? t : "light");
-        };
-        read();
-        const mo = new MutationObserver(read);
-        mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-        return () => mo.disconnect();
-    }, []);
-    return theme;
 }
 
 function useReduced(): boolean {
@@ -214,14 +181,11 @@ function DropStrip({ drops, readings = drops.length }: { drops: number[]; readin
 }
 
 /**
- * sora under the sky: the portrait, and beside it her name as a label, what she
- * makes of the weather, and her age in the small print. when her mood changes the new line fades through; the first render
- * shows it plainly, so the page lands complete
+ * sora under the sky: the portrait, her name as a label, and whose dog she is and
+ * how old in the small print. she doesn't comment on the weather: the sentence
+ * above already says what the sky is doing
  */
-function Sora({ line, age }: { line: string | null; age: string | null }) {
-    const first = useRef(line);
-    const moved = useRef(false);
-    if (line !== first.current) moved.current = true;
+function Sora({ age }: { age: string | null }) {
     return (
         <div className="sora">
             <img className="sora-pic" src={SORA_PIC.src} alt={SORA_PIC.alt} width={104} height={104} />
@@ -229,11 +193,6 @@ function Sora({ line, age }: { line: string | null; age: string | null }) {
                 <p className="mast-label sora-name">
                     <span>sora</span>
                 </p>
-                {line ? (
-                    <p key={line} className={`sora-say${moved.current ? " is-new" : ""}`}>
-                        {line}
-                    </p>
-                ) : null}
                 {/* worked out after hydration; the line holds its height meanwhile */}
                 <p className="sora-age">{age ? `my dog, ${age} old` : "\u00a0"}</p>
             </div>
@@ -247,15 +206,12 @@ function Sora({ line, age }: { line: string | null; age: string | null }) {
  * readings up through onWeather; under reduced motion the sky never moves, and the
  * column says so instead of pretending
  */
-export function SkyColumn({ sky = NO_SKY, soraSays = "quiet" }: { sky?: Sky; soraSays?: SoraSays }) {
+export function SkyColumn({ sky = NO_SKY }: { sky?: Sky }) {
     const { hud, drops, readings } = sky;
-    const theme = useTheme();
     const reduced = useReduced();
     const [age, setAge] = useState<string | null>(null);
     useEffect(() => setAge(soraAge(new Date())), []);
     const raining = !reduced && sky.raining;
-    const says =
-        soraSays === "font" ? SORA_FONT_LINE : soraSays === "sky" ? soraSkyLine(theme, raining) : null;
 
     let line: React.ReactNode;
     if (reduced) {
@@ -317,7 +273,7 @@ export function SkyColumn({ sky = NO_SKY, soraSays = "quiet" }: { sky?: Sky; sor
                 <a href="https://github.com/thatmike1/powder-lab">powder-lab</a>. the clouds
                 rain, the lake fills, the falls carry it back.
             </p>
-            <Sora line={says} age={age} />
+            <Sora age={age} />
         </section>
     );
 }

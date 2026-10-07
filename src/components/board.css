@@ -135,8 +135,14 @@
   border-left: 1px solid var(--hairline);
 }
 
+/* the masthead's outer edges are text too, on the board's lines: the letter
+   starts on the left one and the last column ends on the right one */
 .masthead .mast-letter {
   padding-left: 0;
+}
+
+.masthead .mast-col:last-child {
+  padding-right: 0;
 }
 
 .masthead h1 {
@@ -265,9 +271,9 @@
   max-width: 40ch;
 }
 
-/* sora under the sky: the portrait beside a label like a tile's name, what she
-   makes of the weather, and her age in mono the way a tile dates its fact. she is a cutout
-   on the page's own ground, so no frame and no shadow */
+/* sora under the sky: the portrait beside a label like a tile's name, and whose
+   dog she is and her age in mono the way a tile dates its fact. she is a cutout on
+   the page's own ground, so no frame and no shadow */
 .sora {
   display: grid;
   grid-template-columns: 104px minmax(0, 1fr);
@@ -293,32 +299,6 @@
   width: 104px;
   height: 104px;
   object-fit: contain;
-}
-
-.sora-say {
-  margin-top: 0.5rem;
-  font-size: clamp(1rem, 0.95vw, 1.2rem);
-  line-height: 1.4;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  color: var(--ink-2);
-  text-wrap: balance;
-}
-
-/* when the sky changes her mood the new line fades through; the first render shows
-   it plainly */
-.sora-say.is-new {
-  animation: sora-say 260ms var(--ease-out) both;
-}
-
-@keyframes sora-say {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
 }
 
 .mast-list {
@@ -422,6 +402,21 @@
 
 .board {
   padding-inline: var(--pad);
+}
+
+/* from a tablet up, the board's text starts and ends on the masthead's lines, so
+   the letter, every shelf and every tile hang off one edge. the masthead stands
+   clear of the falls by their shaft and a hand's width; the sim publishes the
+   shaft as --hero-shaft, and until it does this is the same guess the hero makes
+   (in vw, since --pad also resolves inside tiles). the board's text sits at --pad
+   plus --col, so --pad gives up the difference. a phone keeps its own, wider
+   edge: there the screenshots need the width more than the page needs the line */
+@media (min-width: 900px) {
+  .field {
+    --pad: calc(
+      var(--hero-shaft, max(36px, min(15vw - 30px, 11vw + 6px))) + clamp(10px, 1.2vw, 28px) - var(--col)
+    );
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -1382,6 +1377,10 @@
 @media (max-width: 1839px) {
   .weather-hero .hero-copy.masthead {
     grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  }
+
+  .masthead .mast-sky {
+    padding-right: 0;
   }
 
   .masthead .mast-col.mast-index {
