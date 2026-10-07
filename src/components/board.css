@@ -710,13 +710,11 @@
 }
 
 /* the pair rows stack until a wide screen has room for both side by side */
-.board-row--two,
-.board-row--cookie {
+.board-row--two {
   grid-template-columns: minmax(0, 1fr);
 }
 
-.board-row--two > * + *,
-.board-row--cookie > * + * {
+.board-row--two > * + * {
   border-left: 0;
   border-top: 1px solid var(--hairline);
 }
@@ -866,6 +864,21 @@
 .chart--piles .chart-axis,
 .chart--dial .chart-axis {
   max-width: 300px;
+}
+
+.chart--groove .chart-axis {
+  gap: 6px;
+  margin-top: 0.35rem;
+}
+
+/* each bar's label starts over its own bar */
+.chart--groove .chart-axis > span {
+  flex: 1;
+}
+
+.chart--groove .chart-axis--under {
+  display: block;
+  margin-top: 0.1rem;
 }
 
 .chart-key {
@@ -1351,22 +1364,9 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .board-row--cookie {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  }
-
-  .board-row--two > * + *,
-  .board-row--cookie > * + * {
+  .board-row--two > * + * {
     border-left: 1px solid var(--hairline);
     border-top: 0;
-  }
-
-  .board-row--cookie .room-list {
-    display: block;
-  }
-
-  .board-row--cookie .room-list li:first-child {
-    padding-top: 0.2rem;
   }
 
   /* nákup's evening in one row: the words, three phones, the list to play with */
@@ -1412,7 +1412,7 @@
   }
 
   /* on a laptop the index is a footnote under the letter and the sky: its legend on
-     one line and the eleven names flowing on the next, so the first shelf's headline
+     one line and the twelve names flowing on the next, so the first shelf's headline
      still lands within a screen and a half */
   .mast-index .mast-take {
     max-width: none;
