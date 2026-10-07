@@ -6,10 +6,49 @@ import { Board, BOARD_INDEX } from "../components/board";
 import { Dateline, SkyColumn, useSky } from "../components/sky-report";
 import { HeroTitle } from "../components/hero-copy";
 import { DAY_JOB } from "../lib/day-job";
+import { PreviewSwitch, usePreview } from "../components/preview-switch";
+import "../components/mast-variants.css";
 
 export const Route = createFileRoute("/")({ component: Home });
 
 const REACH_WORD = { live: "open it", source: "repo", private: "private" } as const;
+
+/**
+ * the index of everything on the board: how many open in a browser, how many are
+ * repos, how many stay home, and a link to each. TEMP: it renders in the masthead
+ * or, under the "index" preview layout, as the board's first strip
+ */
+function BoardIndexNav({ className, headingId }: { className: string; headingId: string }) {
+    const live = BOARD_INDEX.filter((p) => p.reach === "live").length;
+    const source = BOARD_INDEX.filter((p) => p.reach === "source").length;
+    const home = BOARD_INDEX.filter((p) => p.reach === "private").length;
+    return (
+        <nav className={className} aria-labelledby={headingId}>
+            <h2 className="mast-label" id={headingId}>
+                <span>on the board</span>
+                <span className="mast-count">{BOARD_INDEX.length}</span>
+            </h2>
+            <p className="mast-take">
+                <em>{live} of these open</em>{" "}
+                <i className="dot dot--live dot--inline" aria-hidden="true" /> in your browser,{" "}
+                {source} are repos you can run{" "}
+                <i className="dot dot--source dot--inline" aria-hidden="true" />, and {home} stay at
+                home <i className="dot dot--private dot--inline" aria-hidden="true" />.
+            </p>
+            <ul className="mast-list">
+                {BOARD_INDEX.map((p) => (
+                    <li key={p.id}>
+                        <a href={`#${p.id}`}>
+                            <i className={`dot dot--${p.reach}`} aria-hidden="true" />
+                            <span>{p.name}</span>
+                            <span className="visually-hidden">, {REACH_WORD[p.reach]}</span>
+                        </a>
+                    </li>
+                ))}
+            </ul>
+        </nav>
+    );
+}
 
 /**
  * the front page is one board under one sky. the sand hero is the sky; the row
@@ -18,16 +57,15 @@ const REACH_WORD = { live: "open it", source: "repo", private: "private" } as co
  * then fills the width the way a start page does, a shelf at a time
  */
 function Home() {
-    const sky = useSky();
-    const live = BOARD_INDEX.filter((p) => p.reach === "live").length;
-    const source = BOARD_INDEX.filter((p) => p.reach === "source").length;
-    const home = BOARD_INDEX.filter((p) => p.reach === "private").length;
+    const { sky, onWeather } = useSky();
+    const preview = usePreview();
     return (
         <LightboxProvider>
-            <main className="fusion">
+            <main className="fusion" data-mast={preview.mast}>
+                <PreviewSwitch preview={preview} />
                 <GrainCursor />
                 <header className="hero" id="top">
-                    <WeatherHero onWeather={sky.onWeather}>
+                    <WeatherHero onWeather={onWeather}>
                         <div className="hero-copy masthead">
                             <section className="mast-col mast-letter" aria-label="who i am">
                                 <Dateline />
@@ -45,37 +83,18 @@ function Home() {
                                     <a href="#say-hi">say hi ↓</a>
                                 </p>
                             </section>
-                            <SkyColumn hud={sky.hud} drops={sky.drops} readings={sky.readings} />
-                            <nav className="mast-col mast-index" aria-labelledby="index-heading">
-                                <h2 className="mast-label" id="index-heading">
-                                    <span>on the board</span>
-                                    <span className="mast-count">{BOARD_INDEX.length}</span>
-                                </h2>
-                                <p className="mast-take">
-                                    <em>{live} of these open</em>{" "}
-                                    <i className="dot dot--live dot--inline" aria-hidden="true" /> in
-                                    your browser, {source} are repos you can run{" "}
-                                    <i className="dot dot--source dot--inline" aria-hidden="true" />,
-                                    and {home} stay at home{" "}
-                                    <i className="dot dot--private dot--inline" aria-hidden="true" />.
-                                </p>
-                                <ul className="mast-list">
-                                    {BOARD_INDEX.map((p) => (
-                                        <li key={p.id}>
-                                            <a href={`#${p.id}`}>
-                                                <i className={`dot dot--${p.reach}`} aria-hidden="true" />
-                                                <span>{p.name}</span>
-                                                <span className="visually-hidden">, {REACH_WORD[p.reach]}</span>
-                                            </a>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </nav>
+                            <SkyColumn sky={sky} soraSays={preview.sora} />
+                            {preview.mast === "index" ? null : (
+                                <BoardIndexNav className="mast-col mast-index" headingId="index-heading" />
+                            )}
                         </div>
                     </WeatherHero>
                 </header>
 
                 <div className="field">
+                    {preview.mast === "index" ? (
+                        <BoardIndexNav className="board-index" headingId="index-heading" />
+                    ) : null}
                     <Board />
 
                     <footer className="signoff" id="say-hi">

@@ -37,17 +37,46 @@ export function soraAge(today: Date): string {
  * cell with a trace of cloud, so a normal sky sits around a third: the words are
  * pitched against that, not against zero
  */
-function skyWords(cover: number): string {
-    if (cover < 0.18) return "clear skies over the sand";
-    if (cover < 0.3) return "a few clouds over the sand";
-    if (cover < 0.42) return "cloudy over the sand";
-    return "heavy cloud over the sand";
+const SKY_WORDS = [
+    "clear skies over the sand",
+    "a few clouds over the sand",
+    "cloudy over the sand",
+    "heavy cloud over the sand",
+];
+const SKY_CUTS = [0.18, 0.3, 0.42];
+/** how far past a cut the cover has to get before the words change */
+const SKY_MARGIN = 0.03;
+
+const bandOf = (cover: number) => SKY_CUTS.filter((cut) => cover >= cut).length;
+
+/**
+ * which of the sky words to use, given the ones in use now. a normal sky sits
+ * right on a cut and wobbles across it every reading, so the words move only
+ * once the cover is clearly inside the next band
+ */
+export function skyBandAfter(was: number | null, cover: number): number {
+    const band = bandOf(cover);
+    if (was === null || band === was) return band;
+    return bandOf(cover - SKY_MARGIN) === bandOf(cover + SKY_MARGIN) ? band : was;
 }
 
-/** rain shows up as water arriving: the picture gaining drops over the last few readings */
-export function isRaining(drops: number[]): boolean {
-    if (drops.length < 4) return false;
-    return drops[drops.length - 1] - drops[drops.length - 4] > 60;
+/** readings averaged to call the rain, about two seconds of them */
+const RAIN_WINDOW = 6;
+/** drops let go per hundred columns a reading: it starts raining above the first and stops below the second */
+const RAIN_ON = 12;
+const RAIN_OFF = 4;
+
+/**
+ * whether it is raining, given whether it was. it reads what the clouds let go,
+ * not the water in the picture, which rises and falls with the lake draining
+ * whatever the sky does. the gap between starting and stopping keeps a shower's
+ * patchy edge from flipping the page every reading
+ */
+export function rainingAfter(was: boolean, fell: number[]): boolean {
+    if (fell.length < RAIN_WINDOW) return false;
+    const recent = fell.slice(-RAIN_WINDOW);
+    const mean = recent.reduce((sum, n) => sum + n, 0) / RAIN_WINDOW;
+    return mean >= (was ? RAIN_OFF : RAIN_ON);
 }
 
 /** the one portrait of sora: the original, not a sticker, whatever the sky is doing */
@@ -56,31 +85,59 @@ const SORA_PIC = {
     alt: "sora, a curly black and white havanese, sitting up and looking right at you",
 };
 
-/** sora reads the same sky: in when it rains, asleep at night, watching otherwise */
-function soraLine(theme: Theme, raining: boolean): string {
-    if (raining) return "staying in until the rain stops.";
-    if (theme === "dark") return "asleep. it's night up there.";
-    if (theme === "dusk") return "wondering where the sun went.";
-    return "watching the sand, as usual.";
+/**
+ * what her line says. TEMP: the preview switches between these with ?sora= so
+ * mike can pick; the other two go before merge
+ */
+export type SoraSays = "quiet" | "font" | "sky";
+
+/** the typeface every letter on the page is set in carries her name; that is the line */
+const SORA_FONT_LINE = "this page is set in a typeface called sora. not a coincidence.";
+
+/** the line that reads the sky, naming what she is reacting to so it reads as cause and effect */
+function soraSkyLine(theme: Theme, raining: boolean): string {
+    if (raining) return "it's raining up there, so she's staying in.";
+    if (theme === "dark") return "it's night up there, so she's asleep.";
+    if (theme === "dusk") return "it's dusk up there, so she's waiting on dinner.";
+    return "it's dry up there, so she's watching the sand.";
 }
 
 /**
  * the hero's readings, kept for the masthead: the latest, a short history of the
- * water, and how many readings have come in all told, so a column of the strip
- * keeps its identity as it moves left
+ * water and of what fell, how many readings have come in all told (so a column of
+ * the strip keeps its identity as it moves left), and the settled verdicts the
+ * sentences use, which only change when the sky clearly has
  */
-export function useSky() {
-    const [hud, setHud] = useState<Hud | null>(null);
-    const [drops, setDrops] = useState<number[]>([]);
-    const [readings, setReadings] = useState(0);
-    const keep = (list: number[], value: number) =>
-        list.length >= KEEP ? [...list.slice(1), value] : [...list, value];
-    const onWeather = (next: Hud) => {
-        setHud(next);
-        setDrops((d) => keep(d, next.drops));
-        setReadings((n) => n + 1);
+export type Sky = {
+    hud: Hud | null;
+    drops: number[];
+    fell: number[];
+    readings: number;
+    raining: boolean;
+    band: number | null;
+};
+
+const NO_SKY: Sky = { hud: null, drops: [], fell: [], readings: 0, raining: false, band: null };
+
+const keep = (list: number[], value: number) =>
+    list.length >= KEEP ? [...list.slice(1), value] : [...list, value];
+
+export function nextSky(sky: Sky, hud: Hud): Sky {
+    const fell = keep(sky.fell, hud.fell);
+    return {
+        hud,
+        drops: keep(sky.drops, hud.drops),
+        fell,
+        readings: sky.readings + 1,
+        raining: rainingAfter(sky.raining, fell),
+        band: skyBandAfter(sky.band, hud.cover),
     };
-    return { hud, drops, readings, onWeather };
+}
+
+export function useSky() {
+    const [sky, setSky] = useState<Sky>(NO_SKY);
+    const onWeather = (hud: Hud) => setSky((s) => nextSky(s, hud));
+    return { sky, onWeather };
 }
 
 function useTheme(): Theme {
@@ -161,7 +218,7 @@ function DropStrip({ drops, readings = drops.length }: { drops: number[]; readin
  * makes of the weather, and her age in the small print. when her mood changes the new line fades through; the first render
  * shows it plainly, so the page lands complete
  */
-function Sora({ line, age }: { line: string; age: string | null }) {
+function Sora({ line, age }: { line: string | null; age: string | null }) {
     const first = useRef(line);
     const moved = useRef(false);
     if (line !== first.current) moved.current = true;
@@ -172,11 +229,13 @@ function Sora({ line, age }: { line: string; age: string | null }) {
                 <p className="mast-label sora-name">
                     <span>sora</span>
                 </p>
-                <p key={line} className={`sora-say${moved.current ? " is-new" : ""}`}>
-                    {line}
-                </p>
+                {line ? (
+                    <p key={line} className={`sora-say${moved.current ? " is-new" : ""}`}>
+                        {line}
+                    </p>
+                ) : null}
                 {/* worked out after hydration; the line holds its height meanwhile */}
-                <p className="sora-age">{age ? `${age} old` : "\u00a0"}</p>
+                <p className="sora-age">{age ? `my dog, ${age} old` : "\u00a0"}</p>
             </div>
         </div>
     );
@@ -188,21 +247,15 @@ function Sora({ line, age }: { line: string; age: string | null }) {
  * readings up through onWeather; under reduced motion the sky never moves, and the
  * column says so instead of pretending
  */
-export function SkyColumn({
-    hud,
-    drops,
-    readings,
-}: {
-    hud: Hud | null;
-    drops: number[];
-    readings?: number;
-}) {
+export function SkyColumn({ sky = NO_SKY, soraSays = "quiet" }: { sky?: Sky; soraSays?: SoraSays }) {
+    const { hud, drops, readings } = sky;
     const theme = useTheme();
     const reduced = useReduced();
     const [age, setAge] = useState<string | null>(null);
     useEffect(() => setAge(soraAge(new Date())), []);
-    const raining = !reduced && isRaining(drops);
-    const says = soraLine(theme, raining);
+    const raining = !reduced && sky.raining;
+    const says =
+        soraSays === "font" ? SORA_FONT_LINE : soraSays === "sky" ? soraSkyLine(theme, raining) : null;
 
     let line: React.ReactNode;
     if (reduced) {
@@ -222,7 +275,7 @@ export function SkyColumn({
             </>
         ) : (
             <>
-                {skyWords(hud.cover)}, and <em>{hud.drops.toLocaleString("en")} drops</em> of water
+                {SKY_WORDS[sky.band ?? bandOf(hud.cover)]}, and <em>{hud.drops.toLocaleString("en")} drops</em> of water
                 are down in the picture.
             </>
         );

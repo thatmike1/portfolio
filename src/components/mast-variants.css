@@ -1,0 +1,170 @@
+/*
+ * TEMP, remove before merge: the masthead layouts mike is choosing between on the
+ * pr preview, switched by data-mast on .fusion (see preview-switch.tsx). the one
+ * he picks moves into board.css; the rest, and this file, go.
+ */
+
+/* ------------------------------------------------------------------ */
+/* the preview's own switch                                            */
+/* ------------------------------------------------------------------ */
+
+.preview-switch {
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 50;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  max-width: min(560px, calc(100vw - 24px));
+  padding: 8px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--muted);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.12);
+}
+
+.preview-switch p {
+  margin: 0 2px 0 6px;
+}
+
+.preview-switch p:first-child {
+  margin-left: 0;
+}
+
+.preview-switch button {
+  padding: 2px 8px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.preview-switch button[aria-pressed='true'] {
+  border-color: var(--rasp);
+  background: var(--rasp);
+  color: white;
+}
+
+.preview-switch .preview-switch-why {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* every variant but "now": one text edge from the letter down         */
+/* ------------------------------------------------------------------ */
+
+/* the masthead stands clear of the falls by their shaft and a hand's width; the
+   sim publishes the shaft as --hero-shaft, and until it does this is the same
+   guess the hero makes. the board's text starts at --pad plus --col, so pulling
+   --pad in by the difference lands it on the letter's edge */
+.fusion:not([data-mast='now']) {
+  --hero-gap: clamp(10px, 1.2vw, 28px);
+  --mast-inset: calc(var(--hero-shaft, max(36px, min(15vw - 30px, 11vw + 6px))) + var(--hero-gap));
+}
+
+.fusion:not([data-mast='now']) .field {
+  --pad: calc(var(--mast-inset) - var(--col));
+}
+
+/* the masthead's right edge is text too: its last column drops the padding it
+   kept for a neighbour it doesn't have */
+@media (min-width: 1840px) {
+  .fusion:not([data-mast='now']) .masthead .mast-col:last-child {
+    padding-right: 0;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1839px) {
+  .fusion:not([data-mast='now']) .masthead .mast-sky {
+    padding-right: 0;
+  }
+}
+
+@media (max-width: 899px) {
+  .fusion:not([data-mast='now']) {
+    --hero-gap: 0.5rem;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* grid: shelf heads split on the masthead's column lines              */
+/* ------------------------------------------------------------------ */
+
+/* the headline sits under the letter and the small print under the sky, so the
+   masthead's divider carries on down the page as an edge text starts on */
+@media (min-width: 900px) {
+  .fusion[data-mast='grid'] .shelf-head {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    column-gap: 0;
+  }
+
+  .fusion[data-mast='grid'] .shelf-lede {
+    padding-right: var(--col);
+  }
+
+  .fusion[data-mast='grid'] .shelf-sub {
+    padding-left: var(--col);
+  }
+}
+
+@media (min-width: 1840px) {
+  .fusion[data-mast='grid'] .shelf-head {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1.95fr);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* index: the board's contents open the board                          */
+/* ------------------------------------------------------------------ */
+
+/* the masthead keeps the letter and the sky, at every width; a wider letter
+   column would stretch the lede past a readable line, so it keeps its measure */
+@media (min-width: 900px) {
+  .fusion[data-mast='index'] .weather-hero .hero-copy.masthead {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  }
+
+  .fusion[data-mast='index'] .weather-hero .hero-copy .lede {
+    max-width: 36rem;
+  }
+}
+
+/* the index is the board's first row, on the board's edges, with a hairline
+   under it like a shelf's */
+.board-index {
+  margin-inline: var(--pad);
+  padding: clamp(26px, 3.4vh, 44px) var(--col) clamp(26px, 3.4vh, 44px);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.board-index .mast-take {
+  max-width: none;
+  margin-top: 0.55rem;
+  font-size: 1rem;
+}
+
+.board-index .mast-list {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  column-gap: 1.4rem;
+  margin-top: 0.7rem;
+}
+
+.board-index .mast-list a {
+  gap: 10px;
+  padding: 0.32rem 0;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 899px) {
+  .board-index {
+    display: none;
+  }
+}

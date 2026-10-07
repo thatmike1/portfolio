@@ -340,8 +340,12 @@ function resolve(scratch: CanvasRenderingContext2D, css: string): RGB {
 
 /* -------------------------------------------------------------- component */
 
-/** the sky's own readings, refreshed every twenty ticks while the loop runs */
-export type Hud = { humidity: number; cover: number; drops: number };
+/**
+ * the sky's own readings, refreshed every twenty ticks while the loop runs. fell
+ * is the drops and flakes the clouds let go since the last reading, per hundred
+ * columns, so a phone and an ultrawide under the same shower read the same
+ */
+export type Hud = { humidity: number; cover: number; drops: number; fell: number };
 
 type Props = {
     /** the copy block. it sits on the canvas, under the sky band */
@@ -381,7 +385,7 @@ export function WeatherHero({ children, overlay, lab = false, ground = "off", on
     const [awake, setAwake] = useState(false);
     /** the material bar is pulled out of the handle; shut is the resting state */
     const [drawer, setDrawer] = useState(false);
-    const [hud, setHud] = useState<Hud>({ humidity: 0.55, cover: 0, drops: 0 });
+    const [hud, setHud] = useState<Hud>({ humidity: 0.55, cover: 0, drops: 0, fell: 0 });
     const resetRef = useRef<() => void>(() => {});
     const soakRef = useRef<() => void>(() => {});
     /** the effect's hooks for the chrome: retarget the look, pour from a point */
@@ -511,6 +515,8 @@ export function WeatherHero({ children, overlay, lab = false, ground = "off", on
         // have. humidity is therefore not a free dial, it is what is left of a fixed
         // budget, which is what makes the cycle self-limiting instead of hand-tuned
         let waterCount = 0;
+        /** what the clouds have let go since the last reading */
+        let fell = 0;
         let capacity = 1;
         /** the honest reading: what fraction of the water budget is not on the ground */
         let airRaw = 1;
@@ -754,7 +760,11 @@ export function WeatherHero({ children, overlay, lab = false, ground = "off", on
             // reports as an error
             const shaftPx = `${((shaft0 + 1) * rect.width) / cols}px`;
             if (stage.style.getPropertyValue("--shaft") !== shaftPx) {
-                requestAnimationFrame(() => stage.style.setProperty("--shaft", shaftPx));
+                requestAnimationFrame(() => {
+                    stage.style.setProperty("--shaft", shaftPx);
+                    // the page under the hero lines up with the copy, so it gets the same number
+                    document.documentElement.style.setProperty("--hero-shaft", shaftPx);
+                });
             }
             // and the ground prototype's tile is sized off a cell
             document.documentElement.style.setProperty("--cell", `${rect.width / cols}px`);
@@ -924,10 +934,12 @@ export function WeatherHero({ children, overlay, lab = false, ground = "off", on
                     chill[ci] = Math.max(0, chill[ci] - 0.004);
                     flakes.push({ x: x + Math.random(), y: ty, phase: Math.random() * Math.PI * 2 });
                     waterCount++;
+                    fell++;
                     continue;
                 }
                 engine.set(x, ty, WATER);
                 waterCount++;
+                fell++;
             }
         };
 
@@ -1978,8 +1990,10 @@ export function WeatherHero({ children, overlay, lab = false, ground = "off", on
                 let covered = 0;
                 for (let i = 0; i < cloud.length; i++) if (cloud[i] > 0.012) covered++;
                 cover = covered / cloud.length;
-                setHud({ humidity: air, cover, drops: waterCount });
-                weatherRef.current?.({ humidity: air, cover, drops: waterCount });
+                const reading = { humidity: air, cover, drops: waterCount, fell: (fell * 100) / cols };
+                fell = 0;
+                setHud(reading);
+                weatherRef.current?.(reading);
             }
         };
 
