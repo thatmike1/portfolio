@@ -18,7 +18,7 @@ const REACH_WORD = { live: "open it", source: "repo", private: "private" } as co
  * then fills the width the way a start page does, a shelf at a time
  */
 function Home() {
-    const sky = useSky();
+    const { sky, onWeather } = useSky();
     const live = BOARD_INDEX.filter((p) => p.reach === "live").length;
     const source = BOARD_INDEX.filter((p) => p.reach === "source").length;
     const home = BOARD_INDEX.filter((p) => p.reach === "private").length;
@@ -27,7 +27,7 @@ function Home() {
             <main className="fusion">
                 <GrainCursor />
                 <header className="hero" id="top">
-                    <WeatherHero onWeather={sky.onWeather}>
+                    <WeatherHero onWeather={onWeather}>
                         <div className="hero-copy masthead">
                             <section className="mast-col mast-letter" aria-label="who i am">
                                 <Dateline />
@@ -45,7 +45,7 @@ function Home() {
                                     <a href="#say-hi">say hi ↓</a>
                                 </p>
                             </section>
-                            <SkyColumn hud={sky.hud} drops={sky.drops} readings={sky.readings} />
+                            <SkyColumn sky={sky} />
                             <nav className="mast-col mast-index" aria-labelledby="index-heading">
                                 <h2 className="mast-label" id="index-heading">
                                     <span>on the board</span>
@@ -118,10 +118,10 @@ function Home() {
                             </p>
                             <img
                                 className="signoff-sora"
-                                src="/sora/walking.webp"
-                                alt="sora, trotting off the end of the page"
+                                src="/sora/sora.webp"
+                                alt="sora, a curly black and white havanese, seeing you off the end of the page"
                                 width={96}
-                                height={77}
+                                height={96}
                                 loading="lazy"
                             />
                         </section>
