@@ -91,7 +91,7 @@ const ROWS: Array<Row> = [
         stack: "python · activitywatch · webgl2 · gtk3 · systemd · claude sonnet",
         line: "i declare what i'm working on and a little ink creature in the corner of my screen watches whether i actually do it.",
         note: "private repo · the site is public",
-        live: { href: "https://ontask.ssscribe.app/", label: "it'll watch you read it" },
+        live: { href: "https://ontask.thatmike1.dev/", label: "it'll watch you read it" },
     },
     {
         name: "cc-bench",
