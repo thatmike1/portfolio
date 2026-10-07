@@ -710,13 +710,11 @@
 }
 
 /* the pair rows stack until a wide screen has room for both side by side */
-.board-row--two,
-.board-row--cookie {
+.board-row--two {
   grid-template-columns: minmax(0, 1fr);
 }
 
-.board-row--two > * + *,
-.board-row--cookie > * + * {
+.board-row--two > * + * {
   border-left: 0;
   border-top: 1px solid var(--hairline);
 }
@@ -1366,22 +1364,9 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .board-row--cookie {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  }
-
-  .board-row--two > * + *,
-  .board-row--cookie > * + * {
+  .board-row--two > * + * {
     border-left: 1px solid var(--hairline);
     border-top: 0;
-  }
-
-  .board-row--cookie .room-list {
-    display: block;
-  }
-
-  .board-row--cookie .room-list li:first-child {
-    padding-top: 0.2rem;
   }
 
   /* nákup's evening in one row: the words, three phones, the list to play with */
