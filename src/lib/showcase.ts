@@ -154,7 +154,7 @@ export const SHOWCASE: ShowcaseProject[] = [
         shots: [
             {
                 image: SHOWCASE_IMAGES.models,
-                alt: "model map's ranked table of models and reasoning efforts, with filters above and the best value in each column shaded",
+                alt: "model map's ranked table of models and reasoning efforts, with filters alongside and the best value in each column shaded",
                 caption: "a snapshot; today's ranking has probably moved",
             },
             {

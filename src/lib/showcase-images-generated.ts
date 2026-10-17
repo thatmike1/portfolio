@@ -66,23 +66,23 @@ export const SHOWCASE_IMAGES = {
         placeholder: "data:image/webp;base64,UklGRm4AAABXRUJQVlA4IGIAAADQAwCdASoYAA4APu1iqU2ppaOiMAgBMB2JZQCdACHS18cH7JRUj6AA/vAGSK9QODm7aFoBEQy3YdOasv8v9VjvGVbjFjsOlGZ+plllD1guVA7lo9Sa63oOmh3d6XwkvMHgAA==",
         color: "#cec4b8",
     },
-    // models-extra-frontier-1920x1080-2x.png
+    // models-frontier.png
     "models-frontier": {
         src: "/showcase/models-frontier-2560.webp",
         width: 2560,
         height: 1440,
         srcSet: "/showcase/models-frontier-480.webp 480w, /showcase/models-frontier-800.webp 800w, /showcase/models-frontier-1200.webp 1200w, /showcase/models-frontier-1600.webp 1600w, /showcase/models-frontier-2000.webp 2000w, /showcase/models-frontier-2560.webp 2560w",
-        placeholder: "data:image/webp;base64,UklGRjwAAABXRUJQVlA4IDAAAADQAgCdASoYAA4APu1iqU2ppaQiMAgBMB2JaQAAe/QAAP7wIj6nQYn5uzBeUUCXgAA=",
-        color: "#161719",
+        placeholder: "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAADwAgCdASoYAA4APu1iqU2ppaOiMAgBMB2JaQDLLC0kAAD+8AGfVtThy6ephn70n4AAAA==",
+        color: "#1f1b17",
     },
-    // models-table-1920x1080-2x.png
+    // models.png
     models: {
         src: "/showcase/models-2560.webp",
         width: 2560,
         height: 1440,
         srcSet: "/showcase/models-480.webp 480w, /showcase/models-800.webp 800w, /showcase/models-1200.webp 1200w, /showcase/models-1600.webp 1600w, /showcase/models-2000.webp 2000w, /showcase/models-2560.webp 2560w",
-        placeholder: "data:image/webp;base64,UklGRjwAAABXRUJQVlA4IDAAAADQAgCdASoYAA4APu1iqU2ppaOiMAgBMB2JaQAAe/QAAP7v/+AC65moyGHcZksiEAA=",
-        color: "#171a1c",
+        placeholder: "data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAADwAgCdASoYAA4APu1iqk2ppaQiMAgBMB2JaQDGfC0kAAD+7+H6MiF9yBf6ZsAA",
+        color: "#201c19",
     },
     // nakup-2-she-adds-390x844-3x.png
     "nakup-adds": {
