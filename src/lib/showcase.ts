@@ -153,14 +153,14 @@ export const SHOWCASE: ShowcaseProject[] = [
         stack: "python · vanilla js · hand-drawn svg charts",
         shots: [
             {
-                image: SHOWCASE_IMAGES.models,
-                alt: "model map's ranked table of models and reasoning efforts, with filters alongside and the best value in each column shaded",
-                caption: "a snapshot; today's ranking has probably moved",
-            },
-            {
                 image: SHOWCASE_IMAGES["models-frontier"],
                 alt: "model map's score-against-cost chart: intelligence index against dollars per task on a log scale, with the frontier stepping through the best points",
                 caption: "up and left is better; the line is the frontier",
+            },
+            {
+                image: SHOWCASE_IMAGES.models,
+                alt: "model map's ranked table of models and reasoning efforts, with filters alongside and the best value in each column shaded",
+                caption: "a snapshot; today's ranking has probably moved",
             },
         ],
         links: [{ href: "https://models.thatmike1.dev/", label: "explore the map" }],
