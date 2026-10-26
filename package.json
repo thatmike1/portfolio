@@ -17,10 +17,10 @@
   "dependencies": {
     "@fontsource-variable/martian-mono": "^5.2.7",
     "@fontsource-variable/sora": "^5.2.8",
-    "@tanstack/react-devtools": "latest",
-    "@tanstack/react-router": "latest",
-    "@tanstack/react-router-devtools": "latest",
-    "@tanstack/react-router-ssr-query": "latest",
+    "@tanstack/react-devtools": "0.10.5",
+    "@tanstack/react-router": "1.170.41",
+    "@tanstack/react-router-devtools": "1.167.0",
+    "@tanstack/react-router-ssr-query": "1.167.1",
     "@tanstack/react-start": "1.168.60",
     "@tanstack/router-plugin": "^1.132.0",
     "nitro": "^3.0.260610-beta",
@@ -29,7 +29,7 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "@tanstack/devtools-vite": "latest",
+    "@tanstack/devtools-vite": "0.7.0",
     "@tanstack/router-cli": "^1.132.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.0",
@@ -39,14 +39,9 @@
     "@vitejs/plugin-react": "^6.0.1",
     "jsdom": "^28.1.0",
     "sharp": "^0.35.5",
-    "typescript": "^6.0.2",
+    "typescript": "7.0.2",
     "vite": "^8.0.0",
     "vitest": "^4.1.5"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "lightningcss"
-    ]
-  }
+  "packageManager": "pnpm@12.15.0"
 }

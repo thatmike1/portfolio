@@ -4,8 +4,8 @@
  * src/lib/board-facts.json (plus the model map toy's points). run it by hand when a
  * number should move, look at the diff, commit it:
  *
- *   npm run facts                 # everything it can reach
- *   npm run facts -- tally radio  # only some sources
+ *   pnpm run facts                 # everything it can reach
+ *   pnpm run facts tally radio  # only some sources
  *
  * sources: the public endpoints a visitor can open (the model map page, diskzokej's
  * /api/radio, font tinder's catalog, github's api for beadside's first issue, the
