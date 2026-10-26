@@ -13,12 +13,12 @@ live at [thatmike1.dev](https://thatmike1.dev). the previous `thatmike1.portfoli
 ## dev
 
 ```bash
-npm install
-npm run dev      # http://localhost:3000
-npm run build    # production build into .output/
-npm test         # vitest
-npm run images -- <masters-dir>   # rebuild public/showcase/ and its manifest from master screenshots
-npm run facts    # re-read the board's numbers off the projects (src/lib/board-facts.json)
+pnpm install --frozen-lockfile
+pnpm run dev      # http://localhost:3000
+pnpm run build    # production build into .output/
+pnpm test         # vitest
+pnpm run images <masters-dir>   # rebuild public/showcase/ and its manifest from master screenshots
+pnpm run facts    # re-read the board's numbers off the projects (src/lib/board-facts.json)
 ```
 
 ## structure
