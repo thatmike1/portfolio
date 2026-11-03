@@ -110,10 +110,11 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
 
     /** close in one beat: the shot back into its picture, or a fade when it has none */
     const close = useCallback(() => {
+        if (closing) return;
         const img = stageRef.current?.querySelector<HTMLImageElement>(".lightbox-img");
         const home = origin.current;
         // no animate (jsdom, an old browser) means no beat: the dialog just closes
-        if (!img || typeof img.animate !== "function" || reducedMotion() || closing) {
+        if (!img || typeof img.animate !== "function" || reducedMotion()) {
             setOpen(false);
             return;
         }
@@ -124,6 +125,8 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
                 : [{ opacity: 1 }, { opacity: 0 }];
         const run = img.animate(frames, { duration: BEAT, easing: BEAT_EASE, fill: "forwards" });
         run.onfinish = run.oncancel = () => {
+            run.onfinish = run.oncancel = null;
+            run.cancel();
             setOpen(false);
             setClosing(false);
         };
