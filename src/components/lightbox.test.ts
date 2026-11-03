@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { createElement } from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import type { ResponsiveImage, Shot } from "../lib/responsive-image";
 import { LightboxProvider, flipFrom, shotSizes } from "./lightbox";
@@ -116,6 +116,52 @@ describe("screenshot viewer", () => {
 });
 
 describe("the viewer's beat", () => {
+    it("shows the same screenshot again after a zoomed shot has faded closed", () => {
+        const runs: Array<{
+            onfinish: (() => void) | null;
+            oncancel: (() => void) | null;
+            cancel: () => void;
+            finish: () => void;
+        }> = [];
+        const original = Object.getOwnPropertyDescriptor(Element.prototype, "animate");
+        Object.defineProperty(Element.prototype, "animate", {
+            configurable: true,
+            value: function (this: HTMLElement, frames: Keyframe[]) {
+                const node = this;
+                const previous = node.style.opacity;
+                const run: (typeof runs)[number] = {
+                    onfinish: null,
+                    oncancel: null,
+                    cancel: () => { node.style.opacity = previous; },
+                    finish: () => {
+                        // a forwards-filled web animation keeps its final opacity until cancelled
+                        const opacity = frames.at(-1)?.opacity;
+                        if (opacity !== undefined) node.style.opacity = String(opacity);
+                        run.onfinish?.();
+                    },
+                };
+                runs.push(run);
+                return run;
+            },
+        });
+        try {
+            const dialog = renderGallery(1);
+            fireEvent.click(dialog.querySelector(".lightbox-zoom") as HTMLElement);
+            fireEvent.click(dialog);
+            fireEvent.click(dialog);
+            expect(dialog.open).toBe(true);
+            act(() => runs.at(-1)?.finish());
+            expect(dialog.open).toBe(false);
+
+            fireEvent.click(screen.getByRole("link"));
+            expect(dialog.open).toBe(true);
+            const img = dialog.querySelector<HTMLImageElement>(".lightbox-img");
+            expect(img?.style.opacity).not.toBe("0");
+        } finally {
+            if (original) Object.defineProperty(Element.prototype, "animate", original);
+            else Reflect.deleteProperty(Element.prototype, "animate");
+        }
+    });
     it("puts the shot over the picture it opened from: offset by the gap, scaled by the ratio", () => {
         const from = new DOMRect(100, 400, 500, 250);
         const to = new DOMRect(300, 100, 1000, 500);
