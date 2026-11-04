@@ -126,6 +126,9 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
         const run = img.animate(frames, { duration: BEAT, easing: BEAT_EASE, fill: "forwards" });
         run.onfinish = run.oncancel = () => {
             run.onfinish = run.oncancel = null;
+            // hide the dialog before dropping the fill: cancelling first snaps the shot back to
+            // its fit box for the frame before react's re-render closes the dialog
+            dialogRef.current?.close();
             run.cancel();
             setOpen(false);
             setClosing(false);
