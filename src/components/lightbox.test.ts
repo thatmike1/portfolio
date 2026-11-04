@@ -162,6 +162,37 @@ describe("the viewer's beat", () => {
             else Reflect.deleteProperty(Element.prototype, "animate");
         }
     });
+    it("hides the dialog before the finished close beat lets go of its last frame", () => {
+        const runs: Array<{ onfinish: (() => void) | null; oncancel: (() => void) | null }> = [];
+        let openAtCancel: boolean | null = null;
+        const original = Object.getOwnPropertyDescriptor(Element.prototype, "animate");
+        Object.defineProperty(Element.prototype, "animate", {
+            configurable: true,
+            value: function (this: HTMLElement) {
+                const node = this;
+                const run = {
+                    onfinish: null as (() => void) | null,
+                    oncancel: null as (() => void) | null,
+                    cancel: () => {
+                        // a visible dialog here would paint the shot back at full size
+                        openAtCancel = node.closest("dialog")?.open ?? null;
+                    },
+                };
+                runs.push(run);
+                return run;
+            },
+        });
+        try {
+            const dialog = renderGallery(1);
+            fireEvent.click(dialog);
+            act(() => runs.at(-1)?.onfinish?.());
+            expect(openAtCancel).toBe(false);
+            expect(dialog.open).toBe(false);
+        } finally {
+            if (original) Object.defineProperty(Element.prototype, "animate", original);
+            else Reflect.deleteProperty(Element.prototype, "animate");
+        }
+    });
     it("puts the shot over the picture it opened from: offset by the gap, scaled by the ratio", () => {
         const from = new DOMRect(100, 400, 500, 250);
         const to = new DOMRect(300, 100, 1000, 500);
